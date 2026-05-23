@@ -14,22 +14,22 @@ func TestRender_Heading(t *testing.T) {
 		{
 			name:  "h1",
 			input: "# Heading 1\n",
-			want:  "\x1b[1m\x1b[4m\x1b[38;5;15mHeading 1\x1b[22m\x1b[24m\x1b[39m\n\n",
+			want:  "\x1b[48;5;234m\x1b[1m\x1b[4m\x1b[38;5;15mHeading 1\x1b[22m\x1b[24m\x1b[39m\n\n",
 		},
 		{
 			name:  "h2",
 			input: "## Heading 2\n",
-			want:  "\x1b[1m\x1b[38;5;11mHeading 2\x1b[22m\x1b[39m\n\n",
+			want:  "\x1b[48;5;234m\x1b[1m\x1b[38;5;11mHeading 2\x1b[22m\x1b[39m\n\n",
 		},
 		{
 			name:  "h6",
 			input: "###### Heading 6\n",
-			want:  "\x1b[38;5;8mHeading 6\x1b[39m\n\n",
+			want:  "\x1b[48;5;234m\x1b[38;5;8mHeading 6\x1b[39m\n\n",
 		},
 		{
 			name:  "heading with inline",
 			input: "# **Bold** heading\n",
-			want:  "\x1b[1m\x1b[4m\x1b[38;5;15m\x1b[1mBold\x1b[22m heading\x1b[22m\x1b[24m\x1b[39m\n\n",
+			want:  "\x1b[48;5;234m\x1b[1m\x1b[4m\x1b[38;5;15m\x1b[1mBold\x1b[22m heading\x1b[22m\x1b[24m\x1b[39m\n\n",
 		},
 	}
 
@@ -55,27 +55,27 @@ func TestRender_BoldItalic(t *testing.T) {
 		{
 			name:  "bold",
 			input: "**bold**\n",
-			want:  "\x1b[1mbold\x1b[22m\n\n",
+			want:  "\x1b[48;5;234m\x1b[1mbold\x1b[22m\n\n",
 		},
 		{
 			name:  "italic",
 			input: "*italic*\n",
-			want:  "\x1b[3mitalic\x1b[23m\n\n",
+			want:  "\x1b[48;5;234m\x1b[3mitalic\x1b[23m\n\n",
 		},
 		{
 			name:  "bold italic",
 			input: "***both***\n",
-			want:  "\x1b[3m\x1b[1mboth\x1b[22m\x1b[23m\n\n",
+			want:  "\x1b[48;5;234m\x1b[3m\x1b[1mboth\x1b[22m\x1b[23m\n\n",
 		},
 		{
 			name:  "nested bold in italic",
 			input: "*italic and **bold** inside*\n",
-			want:  "\x1b[3mitalic and \x1b[1mbold\x1b[22m inside\x1b[23m\n\n",
+			want:  "\x1b[48;5;234m\x1b[3mitalic and \x1b[1mbold\x1b[22m inside\x1b[23m\n\n",
 		},
 		{
 			name:  "mixed inline paragraph",
 			input: "plain **bold** and *italic*.\n",
-			want:  "plain \x1b[1mbold\x1b[22m and \x1b[3mitalic\x1b[23m.\n\n",
+			want:  "\x1b[48;5;234mplain \x1b[1mbold\x1b[22m and \x1b[3mitalic\x1b[23m.\n\n",
 		},
 	}
 

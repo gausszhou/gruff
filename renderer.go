@@ -27,6 +27,9 @@ func renderMarkdown(source []byte, th Theme, wordWrap int, node ast.Node) string
 func (r *nodeRenderer) renderNode(node ast.Node) {
 	switch n := node.(type) {
 	case *ast.Document:
+		if r.th.Background != 0 {
+			r.buf.WriteString(string(ansiBg(r.th.Background)))
+		}
 		r.renderChildren(n)
 
 	case *ast.Paragraph:
@@ -39,7 +42,7 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 		st := r.headingStyle(n.Level)
 		r.buf.WriteString(string(st.start()))
 		r.renderChildren(n)
-		r.buf.WriteString(string(st.end()))
+		r.buf.WriteString(string(st.end(r.th.Background)))
 		r.buf.WriteString("\n\n")
 
 	case *ast.List:
@@ -65,7 +68,7 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 		}
 		r.buf.WriteString(string(st.start()))
 		r.renderChildren(n)
-		r.buf.WriteString(string(st.end()))
+		r.buf.WriteString(string(st.end(r.th.Background)))
 
 	case *ast.CodeSpan:
 		r.buf.WriteString(string(r.th.Code.start()))
@@ -74,13 +77,13 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 				r.buf.Write(text.Value(r.source))
 			}
 		}
-		r.buf.WriteString(string(r.th.Code.end()))
+		r.buf.WriteString(string(r.th.Code.end(r.th.Background)))
 
 	case *ast.Link:
 		st := r.th.Link
 		r.buf.WriteString(string(st.start()))
 		r.renderChildren(n)
-		r.buf.WriteString(string(st.end()))
+		r.buf.WriteString(string(st.end(r.th.Background)))
 		if len(n.Destination) > 0 {
 			url := string(n.Destination)
 			uSt := r.th.LinkURL
@@ -89,7 +92,7 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 			r.buf.WriteByte('(')
 			r.buf.WriteString(url)
 			r.buf.WriteByte(')')
-			r.buf.WriteString(string(uSt.end()))
+			r.buf.WriteString(string(uSt.end(r.th.Background)))
 		}
 
 	case *ast.Image:
@@ -100,7 +103,7 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 		}
 
 	case *ast.ThematicBreak:
-		r.buf.WriteString("\x1b[90m────────────────────\x1b[0m\n\n")
+		r.buf.WriteString("\x1b[90m────────────────────\x1b[39m\n\n")
 
 	case *extensionAst.Table:
 		r.renderTable(n)
@@ -146,12 +149,12 @@ func (r *nodeRenderer) renderListItem(node ast.Node) {
 		r.buf.WriteString(string(r.th.Numbered.start()))
 		r.buf.WriteString(itoa(num))
 		r.buf.WriteString(". ")
-		r.buf.WriteString(string(r.th.Numbered.end()))
+		r.buf.WriteString(string(r.th.Numbered.end(r.th.Background)))
 	} else {
 		r.buf.WriteString("  ")
 		r.buf.WriteString(string(r.th.Bullet.start()))
 		r.buf.WriteString("• ")
-		r.buf.WriteString(string(r.th.Bullet.end()))
+		r.buf.WriteString(string(r.th.Bullet.end(r.th.Background)))
 	}
 
 	for c := node.FirstChild(); c != nil; c = c.NextSibling() {
@@ -411,6 +414,11 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 		}
 	}
 
+	bgReset := "\x1b[49m"
+	if r.th.Background != 0 {
+		bgReset = string(ansiBg(r.th.Background))
+	}
+
 	for lineIdx := 0; lineIdx < maxLines; lineIdx++ {
 		for i, cell := range cells {
 			if i >= len(widths) {
@@ -439,7 +447,8 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 					r.buf.WriteByte(' ')
 				}
 				r.buf.WriteString(content)
-				r.buf.WriteString("\x1b[39m\x1b[49m")
+				r.buf.WriteString("\x1b[39m")
+				r.buf.WriteString(bgReset)
 			case extensionAst.AlignCenter:
 				leftPad := padding / 2
 				rightPad := padding - leftPad
@@ -447,13 +456,15 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 					r.buf.WriteByte(' ')
 				}
 				r.buf.WriteString(content)
-				r.buf.WriteString("\x1b[39m\x1b[49m")
+				r.buf.WriteString("\x1b[39m")
+				r.buf.WriteString(bgReset)
 				for j := 0; j < rightPad; j++ {
 					r.buf.WriteByte(' ')
 				}
 			default:
 				r.buf.WriteString(content)
-				r.buf.WriteString("\x1b[39m\x1b[49m")
+				r.buf.WriteString("\x1b[39m")
+				r.buf.WriteString(bgReset)
 				for j := 0; j < padding; j++ {
 					r.buf.WriteByte(' ')
 				}

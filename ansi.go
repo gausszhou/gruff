@@ -37,6 +37,7 @@ const (
 	cCyan    Color = 14
 	cWhite   Color = 15
 	cDarkBG  Color = 236
+	cDocBG   Color = 234 // ~#141414
 )
 
 func ansiFg(c Color) ansiCode {
@@ -85,7 +86,7 @@ func (s Style) start() ansiCode {
 
 var ansiResetStr = string(ansiReset)
 
-func (s Style) end() ansiCode {
+func (s Style) end(bg Color) ansiCode {
 	var out string
 	if s.Italic {
 		out += string(ansiNoItalic)
@@ -100,7 +101,11 @@ func (s Style) end() ansiCode {
 		out += "\x1b[39m"
 	}
 	if s.Bg != 0 {
-		out += "\x1b[49m"
+		if bg != 0 {
+			out += string(ansiBg(bg))
+		} else {
+			out += "\x1b[49m"
+		}
 	}
 	if out == "" {
 		out = string(ansiReset)
@@ -109,6 +114,7 @@ func (s Style) end() ansiCode {
 }
 
 type Theme struct {
+	Background              Color
 	H1, H2, H3, H4, H5, H6 Style
 	Strong                  Style
 	Em                      Style
@@ -120,35 +126,37 @@ type Theme struct {
 }
 
 var darkTheme = Theme{
-	H1:       Style{Bold: true, Underline: true, Fg: cWhite},
-	H2:       Style{Bold: true, Fg: cYellow},
-	H3:       Style{Bold: true, Fg: cGreen},
-	H4:       Style{Bold: true, Fg: cCyan},
-	H5:       Style{Bold: true, Fg: cGrey},
-	H6:       Style{Fg: cGrey},
-	Strong:   Style{Bold: true},
-	Em:       Style{Italic: true},
-	Code:     Style{Bg: cDarkBG, Fg: cWhite},
-	Link:     Style{Underline: true, Fg: cCyan},
-	LinkURL:  Style{Fg: cGrey},
-	Bullet:   Style{Fg: cYellow},
-	Numbered: Style{Fg: cYellow},
+	Background: cDocBG,
+	H1:         Style{Bold: true, Underline: true, Fg: cWhite},
+	H2:         Style{Bold: true, Fg: cYellow},
+	H3:         Style{Bold: true, Fg: cGreen},
+	H4:         Style{Bold: true, Fg: cCyan},
+	H5:         Style{Bold: true, Fg: cGrey},
+	H6:         Style{Fg: cGrey},
+	Strong:     Style{Bold: true},
+	Em:         Style{Italic: true},
+	Code:       Style{Bg: cDarkBG, Fg: cWhite},
+	Link:       Style{Underline: true, Fg: cCyan},
+	LinkURL:    Style{Fg: cGrey},
+	Bullet:     Style{Fg: cYellow},
+	Numbered:   Style{Fg: cYellow},
 }
 
 var lightTheme = Theme{
-	H1:       Style{Bold: true, Underline: true, Fg: cBlack},
-	H2:       Style{Bold: true, Fg: cNavy},
-	H3:       Style{Bold: true, Fg: cGreen},
-	H4:       Style{Bold: true, Fg: cTeal},
-	H5:       Style{Bold: true, Fg: cGrey},
-	H6:       Style{Fg: cGrey},
-	Strong:   Style{Bold: true},
-	Em:       Style{Italic: true},
-	Code:     Style{Bg: 7, Fg: cBlack},
-	Link:     Style{Underline: true, Fg: cNavy},
-	LinkURL:  Style{Fg: cGrey},
-	Bullet:   Style{Fg: cMaroon},
-	Numbered: Style{Fg: cMaroon},
+	Background: 0,
+	H1:         Style{Bold: true, Underline: true, Fg: cBlack},
+	H2:         Style{Bold: true, Fg: cNavy},
+	H3:         Style{Bold: true, Fg: cGreen},
+	H4:         Style{Bold: true, Fg: cTeal},
+	H5:         Style{Bold: true, Fg: cGrey},
+	H6:         Style{Fg: cGrey},
+	Strong:     Style{Bold: true},
+	Em:         Style{Italic: true},
+	Code:       Style{Bg: 7, Fg: cBlack},
+	Link:       Style{Underline: true, Fg: cNavy},
+	LinkURL:    Style{Fg: cGrey},
+	Bullet:     Style{Fg: cMaroon},
+	Numbered:   Style{Fg: cMaroon},
 }
 
 func displayWidth(s string) int {
