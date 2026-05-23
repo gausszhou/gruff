@@ -1,10 +1,11 @@
-package gruff
+package benchmark
 
 import (
 	_ "embed"
 	"testing"
 
 	"github.com/charmbracelet/glamour"
+	"github.com/gausszhou/gruff"
 )
 
 //go:embed testdata/sample.md
@@ -13,7 +14,7 @@ var sampleMD string
 func BenchmarkGruff(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		Render(sampleMD)
+		gruff.Render(sampleMD)
 	}
 }
 

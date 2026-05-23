@@ -123,6 +123,42 @@ func TestRender_InlineCode(t *testing.T) {
 	}
 }
 
+func TestRender_Link(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "basic link",
+			input: "[Gruff](https://example.com)\n",
+			want:  "\x1b[4m\x1b[38;5;14mGruff\x1b[24m\x1b[39m \x1b[38;5;8m(https://example.com)\x1b[39m\n\n",
+		},
+		{
+			name:  "link with bold text",
+			input: "[**bold**](https://example.com)\n",
+			want:  "\x1b[4m\x1b[38;5;14m\x1b[1mbold\x1b[22m\x1b[24m\x1b[39m \x1b[38;5;8m(https://example.com)\x1b[39m\n\n",
+		},
+		{
+			name:  "link in paragraph",
+			input: "click [here](https://example.com) now\n",
+			want:  "click \x1b[4m\x1b[38;5;14mhere\x1b[24m\x1b[39m \x1b[38;5;8m(https://example.com)\x1b[39m now\n\n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Render(tt.input)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got != tt.want {
+				t.Errorf("Render() =\n%q\nwant:\n%q", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestRender_List(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -155,7 +191,7 @@ func TestRender_List(t *testing.T) {
 }
 
 func TestRender_Mixed(t *testing.T) {
-	input := "# Title\n\nThis is **bold** and *italic* and `code`.\n\n- list with **bold**\n- list with `code`\n\n1. first\n2. second\n"
+	input := "# Title\n\nThis is **bold** and *italic* and `code`.\n\nA [link](https://example.com) here.\n\n- list with **bold**\n- list with `code`\n\n1. first\n2. second\n"
 
 	got, err := Render(input)
 	if err != nil {
@@ -170,6 +206,8 @@ func TestRender_Mixed(t *testing.T) {
 		{"contains bold ANSI", func(s string) bool { return strings.Contains(s, "\x1b[1m") }},
 		{"contains italic ANSI", func(s string) bool { return strings.Contains(s, "\x1b[3m") }},
 		{"contains code ANSI", func(s string) bool { return strings.Contains(s, "\x1b[48;5;236m") }},
+		{"contains link underline", func(s string) bool { return strings.Contains(s, "\x1b[4m") }},
+		{"contains link URL", func(s string) bool { return strings.Contains(s, "example.com") }},
 		{"contains bullet", func(s string) bool { return strings.Contains(s, "•") }},
 		{"contains ordered num", func(s string) bool { return strings.Contains(s, "1.") }},
 	}

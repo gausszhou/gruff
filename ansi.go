@@ -111,6 +111,8 @@ type theme struct {
 	strong                  style
 	em                      style
 	code                    style
+	link                    style
+	linkURL                 style
 	bullet                  style
 	numbered                style
 }
@@ -125,6 +127,8 @@ var darkTheme = theme{
 	strong:   style{bold: true},
 	em:       style{italic: true},
 	code:     style{bg: cDarkBG, fg: cWhite},
+	link:     style{underline: true, fg: cCyan},
+	linkURL:  style{fg: cGrey},
 	bullet:   style{fg: cYellow},
 	numbered: style{fg: cYellow},
 }
@@ -139,6 +143,8 @@ var lightTheme = theme{
 	strong:   style{bold: true},
 	em:       style{italic: true},
 	code:     style{bg: 7, fg: cBlack},
+	link:     style{underline: true, fg: cNavy},
+	linkURL:  style{fg: cGrey},
 	bullet:   style{fg: cMaroon},
 	numbered: style{fg: cMaroon},
 }

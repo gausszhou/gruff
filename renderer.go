@@ -73,7 +73,20 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 		r.buf.WriteString(string(r.th.code.end()))
 
 	case *ast.Link:
+		st := r.th.link
+		r.buf.WriteString(string(st.start()))
 		r.renderChildren(n)
+		r.buf.WriteString(string(st.end()))
+		if len(n.Destination) > 0 {
+			url := string(n.Destination)
+			uSt := r.th.linkURL
+			r.buf.WriteByte(' ')
+			r.buf.WriteString(string(uSt.start()))
+			r.buf.WriteByte('(')
+			r.buf.WriteString(url)
+			r.buf.WriteByte(')')
+			r.buf.WriteString(string(uSt.end()))
+		}
 
 	case *ast.Image:
 		for c := n.FirstChild(); c != nil; c = c.NextSibling() {
