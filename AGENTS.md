@@ -16,6 +16,10 @@
 - `gruff_test.go` — table-driven tests per syntax element
 - `benchmark/` — embedded markdown benchmark comparing gruff vs glamour
 
+## Table rendering
+
+Two-pass: collect all cell content + calculate column widths (Pass 1), then render with UTF-8 box‑drawing borders (Pass 2). Columns auto-expand to fit content; no word‑wrap within cells — long text widens the column. Alignment is per‑cell from `TableCell.Alignment` (not from `TableHeader.Alignments` which is unset).
+
 ## Important
 
 - Do NOT use `\x1b[0m` (full reset) in inline styles — use specific undo codes (`\x1b[22m` noBold, `\x1b[39m` default fg, `\x1b[49m` default bg) to preserve outer style state during nesting

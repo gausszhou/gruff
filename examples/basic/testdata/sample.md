@@ -132,12 +132,27 @@ Visit [Gruff on GitHub](https://github.com/gausszhou/gruff) for more information
 
 ## Table
 
-| Feature   | Status | Priority |
-|:----------|:------:|:--------:|
-| Headings  | ✅     | High     |
-| Bold      | ✅     | High     |
-| Italic    | ✅     | High     |
-| Inline Code | ✅   | High     |
-| Lists     | ✅     | High     |
-| Links     | ✅     | Medium   |
-| Tables    | ✅     | Medium   |
+| Feature     | Status | Priority | Notes                                      |
+|:------------|:------:|:--------:|:-------------------------------------------|
+| Headings    | ✅     | High     | H1 through H6 with decreasing intensity    |
+| Bold        | ✅     | High     | `**double asterisks**` or `__underscores__`|
+| Italic      | ✅     | High     | `*single asterisks*` or `_underscores_`    |
+| Inline Code | ✅     | High     | `` `backticks` `` for inline `code`        |
+| Lists       | ✅     | High     | Ordered and unordered with nesting         |
+| Links       | ✅     | Medium   | `[text](url)` with underlined link text    |
+| Tables      | ✅     | Medium   | GFM tables with alignment support          |
+| Blockquotes | ❌     | Low      | Planned for next release                   |
+| Code Blocks | ❌     | Low      | Planned for next release                   |
+
+## Benchmarks
+
+Performance comparison between **Gruff** and **Glamour** (Charmbracelet):
+
+| Metric            | Gruff       | Glamour     | Improvement |
+|:------------------|:-----------:|:-----------:|:-----------:|
+| Time per op       | ~77 µs      | ~3,620 µs   | **~47x**    |
+| Memory per op     | ~64 KB      | ~1,316 KB   | **~20x**    |
+| Allocations per op| 496         | 29,878      | **~60x**    |
+| Runtime deps      | 1 (goldmark)| 18+         | **~18x**    |
+| Binary size       | ~6 MB       | ~15 MB      | **~2.5x**   |
+| Lines of code     | ~1,200      | ~10,000+    | **~8x**     |
