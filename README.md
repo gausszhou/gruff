@@ -1,13 +1,13 @@
 # gruff
 
-A lightweight, high-performance [Go](https://go.dev) library for rendering Markdown to ANSI-colored terminal output. No runtime dependencies beyond `goldmark` — a fraction of the size and overhead compared to alternatives like `glamour`.
+A lightweight, high-performance [Go](https://go.dev) library for rendering Markdown to ANSI-colored terminal output.
 
 ## Features
 
 - **Headings** (H1–H6) with distinct styles per level
 - **Bold**, *italic*, and ***bold italic***
-- `Inline code` with background color
-- [Links](https://github.com/gausszhou/gruff) — underlined + colored text with grey URL suffix
+- `Inline code` and fenced/indented **code blocks** — green text, language tag in gray
+- [Links](https://github.com/gausszhou/gruff) — underlined + blue text with gray URL suffix
 - Unordered (`-`, `*`) and ordered (`1.`) lists
 - GFM tables with **UTF-8 box‑drawing borders**, alignment (left/center/right), inline formatting inside cells, and **automatic text wrapping** at a max column width
 - Strikethrough text (`~~strikethrough~~`)
@@ -15,7 +15,6 @@ A lightweight, high-performance [Go](https://go.dev) library for rendering Markd
 - Thematic break (`---`)
 - Dark and light themes
 - ANSI-aware word wrap (`WithWordWrap`)
-- **Zero runtime dependencies** (only `goldmark` for parsing)
 
 ## Installation
 
@@ -72,10 +71,9 @@ Benchmarked against `glamour` using a large Markdown file with multiple tables, 
 
 | Metric         | gruff            | glamour            | Improvement |
 |----------------|------------------|--------------------|-------------|
-| Time/op        | ~3.1 ms          | ~3,198 ms          | **~1,000×** |
-| Memory/op      | ~2.7 MB          | ~116 MB            | **~43×**    |
-| Allocations/op | ~17,641          | ~3,193,178         | **~181×**   |
-| Runtime deps   | 1 (goldmark)     | 18+                | **~18×**    |
+| Time/op        | ~10.4 ms         | ~3,206 ms          | **~308×**   |
+| Memory/op      | ~11.1 MB         | ~98.7 MB           | **~9×**     |
+| Allocations/op | ~71,289          | ~6,053,581         | **~85×**    |
 
 Run benchmarks locally:
 
@@ -91,6 +89,7 @@ Ready-to-run examples are in the [`examples/`](examples/) directory:
 |---------|-------------|
 | [`basic`](examples/basic/) | Render markdown with CLI flags (`--light`, `--wrap`) |
 | [`table`](examples/table/) | Table-specific demo showing alignment and word wrap |
+| [`codeblock`](examples/codeblock/) | Code block rendering with language tags |
 | [`custom-theme`](examples/custom-theme/) | Custom ANSI color and style customization |
 | [`api`](examples/api/) | `Render`, `RenderBytes`, and `WithWordWrap` usage |
 | [`lipgloss`](examples/lipgloss/) | Wrap gruff output with [lipgloss](https://github.com/charmbracelet/lipgloss) borders and styles |
@@ -98,6 +97,7 @@ Ready-to-run examples are in the [`examples/`](examples/) directory:
 ```bash
 go run examples/basic/main.go
 go run examples/table/main.go
+go run examples/codeblock/main.go
 go run examples/custom-theme/main.go
 go run examples/api/main.go
 go run examples/lipgloss/main.go
@@ -112,9 +112,10 @@ import "github.com/gausszhou/gruff"
 
 customTheme := func() gruff.Option {
     return func(o *gruff.Options) {
-        o.Theme.H1 = gruff.Style{Fg: gruff.Color(196), Bold: true}    // red
-        o.Theme.Strong = gruff.Style{Bold: true, Fg: gruff.Color(51)} // cyan
-        o.Theme.Code = gruff.Style{Bg: gruff.Color(235), Fg: gruff.Color(120)}
+        o.Theme.H1 = gruff.Style{Fg: gruff.Color(196), Bold: true}       // red
+        o.Theme.Strong = gruff.Style{Bold: true, Fg: gruff.Color(51)}    // cyan
+        o.Theme.Code = gruff.Style{Fg: gruff.Color("#50865a")}            // green
+        o.Theme.Link = gruff.Style{Underline: true, Fg: gruff.Color("#5c9cf5")}
     }
 }
 
@@ -127,9 +128,11 @@ Parsing is handled by [`goldmark`](https://github.com/yuin/goldmark). The AST is
 
 Table rendering uses a two-pass approach: collect all cell content and calculate column widths, then emit UTF-8 box‑drawing borders and padded cell content. Columns cap at a maximum width with automatic word wrapping.
 
+Code blocks are rendered line-by-line with language tags shown in gray, content in green, and each line padded to the document width for a clean full-width appearance.
+
 ## Dependencies
 
-**Runtime:** `github.com/yuin/goldmark`
+**Runtime:** `github.com/yuin/goldmark`, `github.com/mattn/go-runewidth`
 
 **Test/Benchmark only:** `github.com/charmbracelet/glamour` (not included in production builds)
 

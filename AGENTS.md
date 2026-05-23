@@ -7,7 +7,8 @@
 - Benchmark gruff vs glamour: `go test -bench=BenchmarkGruff,BenchmarkGlamour -benchmem ./benchmark/`
 - Lint: `go vet ./...`
 - Single test: `go test -run TestRender_Heading/h1 ./...`
-- Build all: `go build -o bin/ ./...` (all build artifacts go to `bin/`)
+- Build all: `go build -o bin/ ./...`
+- **IMPORTANT:** All build artifacts must go to `bin/` — never build in-place or create binaries in the project root
 
 ## Architecture
 
