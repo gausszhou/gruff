@@ -3,20 +3,23 @@ package gruff
 import (
 	"strings"
 
+	"github.com/mattn/go-runewidth"
 	"github.com/yuin/goldmark/ast"
 	extensionAst "github.com/yuin/goldmark/extension/ast"
 )
 
 type nodeRenderer struct {
-	buf    strings.Builder
-	source []byte
-	th     Theme
+	buf      strings.Builder
+	source   []byte
+	th       Theme
+	wordWrap int
 }
 
-func renderMarkdown(source []byte, th Theme, node ast.Node) string {
+func renderMarkdown(source []byte, th Theme, wordWrap int, node ast.Node) string {
 	var r nodeRenderer
 	r.source = source
 	r.th = th
+	r.wordWrap = wordWrap
 	r.renderNode(node)
 	return r.buf.String()
 }
@@ -192,8 +195,6 @@ func (r *nodeRenderer) headingStyle(level int) Style {
 	}
 }
 
-const tableMaxColWidth = 40
-
 type cellData struct {
 	content string
 	align   extensionAst.Alignment
@@ -215,7 +216,7 @@ func wrapCellLines(content string, width int) []string {
 	flushWord := func() {
 		w := word.String()
 		word.Reset()
-		if len(w) == 0 {
+		if len(w) == 0 && wordVisLen == 0 {
 			return
 		}
 		if lineVisLen > 0 && lineVisLen+1+wordVisLen > width {
@@ -223,7 +224,7 @@ func wrapCellLines(content string, width int) []string {
 			line.Reset()
 			lineVisLen = 0
 		}
-		if lineVisLen > 0 {
+		if lineVisLen > 0 && wordVisLen > 0 {
 			line.WriteByte(' ')
 			lineVisLen++
 		}
@@ -247,6 +248,18 @@ func wrapCellLines(content string, width int) []string {
 		}
 		if r == ' ' || r == '\n' {
 			flushWord()
+			continue
+		}
+		if runewidth.RuneWidth(r) > 1 {
+			flushWord()
+			rw := runewidth.RuneWidth(r)
+			if lineVisLen+rw > width && lineVisLen > 0 {
+				lines = append(lines, line.String())
+				line.Reset()
+				lineVisLen = 0
+			}
+			line.WriteRune(r)
+			lineVisLen += rw
 			continue
 		}
 		word.WriteRune(r)
@@ -331,11 +344,17 @@ func (r *nodeRenderer) renderTable(table *extensionAst.Table) {
 		}
 	}
 
+	overhead := 3 * (numCols - 1)
+	maxCol := (r.wordWrap - overhead) / numCols
+	if maxCol < 20 {
+		maxCol = 20
+	}
+
 	for i := range colWidths {
 		if colWidths[i] < 3 {
 			colWidths[i] = 3
-		} else if colWidths[i] > tableMaxColWidth {
-			colWidths[i] = tableMaxColWidth
+		} else if colWidths[i] > maxCol {
+			colWidths[i] = maxCol
 		}
 	}
 
@@ -359,35 +378,29 @@ func (r *nodeRenderer) renderTable(table *extensionAst.Table) {
 		return s
 	}
 
-	hline := func(left, mid, right string) {
+	hline := func() {
 		r.buf.WriteString(border)
-		r.buf.WriteString(left)
 		for i, w := range colWidths {
 			r.buf.WriteString(seg(w))
 			if i < len(colWidths)-1 {
-				r.buf.WriteString(mid)
+				r.buf.WriteString("\u253c") // ┼
 			}
 		}
-		r.buf.WriteString(right)
 		r.buf.WriteString(reset)
 		r.buf.WriteByte('\n')
 	}
 
-	hline("\u250c", "\u252c", "\u2510") // ┌─┬─┐
-
 	if len(headers) > 0 {
 		r.renderTableRow(headers, colWidths, colAligns)
-		hline("\u251c", "\u253c", "\u2524") // ├─┼─┤
+		hline()
 	}
 
 	for i, row := range bodyRows {
 		r.renderTableRow(row, colWidths, colAligns)
 		if i < len(bodyRows)-1 {
-			hline("\u251c", "\u253c", "\u2524")
+			hline()
 		}
 	}
-
-	hline("\u2514", "\u2534", "\u2518") // └─┴─┘
 }
 
 func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []extensionAst.Alignment) {
@@ -399,10 +412,13 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 	}
 
 	for lineIdx := 0; lineIdx < maxLines; lineIdx++ {
-		r.buf.WriteString("\x1b[38;5;8m\u2502\x1b[39m") // │
 		for i, cell := range cells {
 			if i >= len(widths) {
 				break
+			}
+
+			if i > 0 {
+				r.buf.WriteString("\x1b[38;5;8m\u2502\x1b[39m") // │
 			}
 
 			var content string
@@ -423,6 +439,7 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 					r.buf.WriteByte(' ')
 				}
 				r.buf.WriteString(content)
+				r.buf.WriteString("\x1b[39m\x1b[49m")
 			case extensionAst.AlignCenter:
 				leftPad := padding / 2
 				rightPad := padding - leftPad
@@ -430,17 +447,18 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 					r.buf.WriteByte(' ')
 				}
 				r.buf.WriteString(content)
+				r.buf.WriteString("\x1b[39m\x1b[49m")
 				for j := 0; j < rightPad; j++ {
 					r.buf.WriteByte(' ')
 				}
 			default:
 				r.buf.WriteString(content)
+				r.buf.WriteString("\x1b[39m\x1b[49m")
 				for j := 0; j < padding; j++ {
 					r.buf.WriteByte(' ')
 				}
 			}
 			r.buf.WriteByte(' ')
-			r.buf.WriteString("\x1b[38;5;8m\u2502\x1b[39m") // │
 		}
 		r.buf.WriteByte('\n')
 	}

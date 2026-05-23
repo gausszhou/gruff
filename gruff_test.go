@@ -199,12 +199,12 @@ func TestRender_Table(t *testing.T) {
 		{
 			name:  "simple table",
 			input: "| H1 | H2 |\n| --- | --- |\n| A | B |\n",
-			want:  []string{"\u250c", "\u2500", "\u252c", "\u2510", "H1", "H2", "A", "B", "\u2502"},
+			want:  []string{"\u2502", "H1", "H2", "A", "B"},
 		},
 		{
 			name:  "table with alignment",
 			input: "| Left | Center | Right |\n|:-----|:------:|------:|\n| a    | b      | c     |\n",
-			want:  []string{"\u250c", "Left", "Center", "Right", "a", "b", "c", "\u251c", "\u2524", "\u2514", "\u2518"},
+			want:  []string{"Left", "Center", "Right", "a", "b", "c"},
 		},
 		{
 			name:  "table with inline",
@@ -248,7 +248,7 @@ func TestRender_Mixed(t *testing.T) {
 		{"contains link URL", func(s string) bool { return strings.Contains(s, "example.com") }},
 		{"contains bullet", func(s string) bool { return strings.Contains(s, "•") }},
 		{"contains ordered num", func(s string) bool { return strings.Contains(s, "1.") }},
-		{"contains table border", func(s string) bool { return strings.Contains(s, "\u250c") }},
+		{"contains table separator", func(s string) bool { return strings.Contains(s, "\u2502") }},
 	}
 
 	for _, c := range checks {

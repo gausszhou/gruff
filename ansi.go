@@ -1,6 +1,10 @@
 package gruff
 
-import "unicode/utf8"
+import (
+	"unicode/utf8"
+
+	"github.com/mattn/go-runewidth"
+)
 
 type ansiCode string
 
@@ -148,18 +152,7 @@ var lightTheme = Theme{
 }
 
 func displayWidth(s string) int {
-	w := 0
-	for _, r := range s {
-		if r >= 0x4E00 && r <= 0x9FFF ||
-			r >= 0x3000 && r <= 0x303F ||
-			r >= 0xFF00 && r <= 0xFFEF ||
-			r >= 0x20000 && r <= 0x2FFFF {
-			w += 2
-		} else {
-			w++
-		}
-	}
-	return w
+	return runewidth.StringWidth(s)
 }
 
 func stripANSI(s string) string {

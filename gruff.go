@@ -9,6 +9,8 @@ import (
 	"github.com/yuin/goldmark/text"
 )
 
+const defaultWordWrap = 120
+
 type Options struct {
 	Theme    Theme
 	WordWrap int
@@ -36,7 +38,8 @@ func WithWordWrap(n int) Option {
 
 func Render(source string, opts ...Option) (string, error) {
 	o := Options{
-		Theme: darkTheme,
+		Theme:    darkTheme,
+		WordWrap: defaultWordWrap,
 	}
 	for _, opt := range opts {
 		opt(&o)
@@ -57,7 +60,7 @@ func Render(source string, opts ...Option) (string, error) {
 	reader := text.NewReader(sourceBytes)
 	doc := md.Parser().Parse(reader)
 
-	out := renderMarkdown(sourceBytes, o.Theme, doc)
+	out := renderMarkdown(sourceBytes, o.Theme, o.WordWrap, doc)
 
 	if o.WordWrap > 0 {
 		out = wrapText(out, o.WordWrap)
@@ -91,12 +94,9 @@ func wrapText(s string, width int) string {
 		if w == "" {
 			return
 		}
-		if lineLen > 0 && lineLen+1+wordLen > width {
+		if lineLen > 0 && lineLen+wordLen > width {
 			out.WriteByte('\n')
 			lineLen = 0
-		} else if lineLen > 0 {
-			out.WriteByte(' ')
-			lineLen++
 		}
 		out.WriteString(w)
 		lineLen += wordLen
@@ -116,12 +116,16 @@ func wrapText(s string, width int) string {
 			word.WriteRune(r)
 			continue
 		}
-		if r == ' ' || r == '\n' {
+		if r == '\n' {
 			flushWord()
-			if r == '\n' {
-				out.WriteByte('\n')
-				lineLen = 0
-			}
+			out.WriteByte('\n')
+			lineLen = 0
+			continue
+		}
+		if r == ' ' {
+			flushWord()
+			out.WriteByte(' ')
+			lineLen++
 			continue
 		}
 		word.WriteRune(r)
