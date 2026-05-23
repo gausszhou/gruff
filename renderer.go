@@ -41,11 +41,9 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 
 	case *ast.Heading:
 		st := r.headingStyle(n.Level)
-		content := r.renderSubtree(n)
 		r.buf.WriteString(string(st.start()))
-		r.buf.WriteString(content)
-		visLen := displayWidth(stripANSI(content))
-		r.padLine(visLen)
+		r.renderChildren(n)
+		r.buf.WriteString("\x1b[K")
 		r.buf.WriteString(string(st.end(r.th.Background)))
 		r.buf.WriteString("\n\n")
 
@@ -150,7 +148,7 @@ func (r *nodeRenderer) renderCodeBlock(lines *text.Segments, lang []byte) {
 			r.buf.WriteByte(' ')
 		}
 		r.buf.Write(lang)
-		r.padLine(padding + len(lang))
+		r.buf.WriteString("\x1b[K")
 		r.buf.WriteString(string(ls.end(bg)))
 		r.buf.WriteByte('\n')
 	}
@@ -164,20 +162,11 @@ func (r *nodeRenderer) renderCodeBlock(lines *text.Segments, lang []byte) {
 			r.buf.WriteByte(' ')
 		}
 		r.buf.WriteString(content)
-		r.padLine(padding + displayWidth(content))
+		r.buf.WriteString("\x1b[K")
 		r.buf.WriteString(string(st.end(bg)))
 		r.buf.WriteByte('\n')
 	}
 	r.buf.WriteByte('\n')
-}
-
-func (r *nodeRenderer) padLine(visLen int) {
-	ww := r.wordWrap
-	if ww > 0 && visLen < ww {
-		for j := 0; j < ww-visLen; j++ {
-			r.buf.WriteByte(' ')
-		}
-	}
 }
 
 func (r *nodeRenderer) renderListItem(node ast.Node) {

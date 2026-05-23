@@ -71,9 +71,9 @@ Benchmarked against `glamour` using a large Markdown file with multiple tables, 
 
 | Metric         | gruff            | glamour            | Improvement |
 |----------------|------------------|--------------------|-------------|
-| Time/op        | ~10.4 ms         | ~3,206 ms          | **~308×**   |
-| Memory/op      | ~11.1 MB         | ~98.7 MB           | **~9×**     |
-| Allocations/op | ~71,289          | ~6,053,581         | **~85×**    |
+| Time/op        | ~7.0 ms          | ~3,188 ms          | **~455×**   |
+| Memory/op      | ~5.9 MB          | ~99.0 MB           | **~17×**    |
+| Allocations/op | ~67,467          | ~6,053,610         | **~90×**    |
 
 Run benchmarks locally:
 
@@ -94,6 +94,7 @@ Ready-to-run examples are in the [`examples/`](examples/) directory:
 | [`custom-theme`](examples/custom-theme/) | Custom ANSI color and style customization |
 | [`api`](examples/api/) | `Render`, `RenderBytes`, and `WithWordWrap` usage |
 | [`lipgloss`](examples/lipgloss/) | Wrap gruff output with [lipgloss](https://github.com/charmbracelet/lipgloss) borders and styles |
+| [`glamour`](examples/glamour/) | Render same markdown with [glamour](https://github.com/charmbracelet/glamour) for comparison |
 
 ```bash
 go run examples/basic/main.go
@@ -103,6 +104,7 @@ go run examples/codeblock/main.go
 go run examples/custom-theme/main.go
 go run examples/api/main.go
 go run examples/lipgloss/main.go
+go run examples/glamour/main.go
 ```
 
 ## Theme Customization

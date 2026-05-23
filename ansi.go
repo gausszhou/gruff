@@ -154,7 +154,7 @@ type Theme struct {
 
 var darkTheme = Theme{
 	Background: "#141414",
-	H1:         Style{Bold: true, Underline: true, Fg: cWhite},
+	H1:         Style{Bold: true, Fg: cWhite},
 	H2:         Style{Bold: true, Fg: cYellow},
 	H3:         Style{Bold: true, Fg: cGreen},
 	H4:         Style{Bold: true, Fg: cCyan},

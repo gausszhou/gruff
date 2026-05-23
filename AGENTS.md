@@ -9,6 +9,7 @@
 - Single test: `go test -run TestRender_Heading/h1 ./...`
 - Build all: `go build -o bin/ ./...`
 - **IMPORTANT:** All build artifacts must go to `bin/` — never build in-place or create binaries in the project root
+- **NEVER commit changes** unless the user explicitly asks you to. It is VERY IMPORTANT to only commit when explicitly asked, otherwise the user will feel that you are being too proactive.
 
 ## Architecture
 
