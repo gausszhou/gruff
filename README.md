@@ -93,12 +93,14 @@ Ready-to-run examples are in the [`examples/`](examples/) directory:
 | [`table`](examples/table/) | Table-specific demo showing alignment and word wrap |
 | [`custom-theme`](examples/custom-theme/) | Custom ANSI color and style customization |
 | [`api`](examples/api/) | `Render`, `RenderBytes`, and `WithWordWrap` usage |
+| [`lipgloss`](examples/lipgloss/) | Wrap gruff output with [lipgloss](https://github.com/charmbracelet/lipgloss) borders and styles |
 
 ```bash
 go run examples/basic/main.go
 go run examples/table/main.go
 go run examples/custom-theme/main.go
 go run examples/api/main.go
+go run examples/lipgloss/main.go
 ```
 
 ## Theme Customization
