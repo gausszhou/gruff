@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/charmbracelet/glamour"
+	"charm.land/glamour/v2"
 	"github.com/gausszhou/gruff"
 )
 

@@ -9,15 +9,15 @@ import (
 
 func customTheme() gruff.Option {
 	return func(o *gruff.Options) {
-		o.Theme.H1 = gruff.Style{Fg: gruff.Color(196), Bold: true}
-		o.Theme.H2 = gruff.Style{Fg: gruff.Color(208), Bold: true}
-		o.Theme.H3 = gruff.Style{Fg: gruff.Color(220), Bold: true}
-		o.Theme.Strong = gruff.Style{Bold: true, Fg: gruff.Color(51)}
-		o.Theme.Em = gruff.Style{Italic: true, Fg: gruff.Color(213)}
-		o.Theme.Code = gruff.Style{Bg: gruff.Color(235), Fg: gruff.Color(120)}
-		o.Theme.Link = gruff.Style{Underline: true, Fg: gruff.Color(39)}
-		o.Theme.Bullet = gruff.Style{Fg: gruff.Color(202)}
-		o.Theme.Numbered = gruff.Style{Fg: gruff.Color(202)}
+	o.Theme.H1 = gruff.Style{Fg: "196", Bold: true}
+	o.Theme.H2 = gruff.Style{Fg: "208", Bold: true}
+	o.Theme.H3 = gruff.Style{Fg: "220", Bold: true}
+	o.Theme.Strong = gruff.Style{Bold: true, Fg: "51"}
+	o.Theme.Em = gruff.Style{Italic: true, Fg: "213"}
+	o.Theme.Code = gruff.Style{Bg: "235", Fg: "120"}
+	o.Theme.Link = gruff.Style{Underline: true, Fg: "39"}
+	o.Theme.Bullet = gruff.Style{Fg: "202"}
+	o.Theme.Numbered = gruff.Style{Fg: "202"}
 	}
 }
 

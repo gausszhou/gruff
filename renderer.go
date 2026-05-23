@@ -27,7 +27,7 @@ func renderMarkdown(source []byte, th Theme, wordWrap int, node ast.Node) string
 func (r *nodeRenderer) renderNode(node ast.Node) {
 	switch n := node.(type) {
 	case *ast.Document:
-		if r.th.Background != 0 {
+		if r.th.Background != "" {
 			r.buf.WriteString(string(ansiBg(r.th.Background)))
 		}
 		r.renderChildren(n)
@@ -415,7 +415,7 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 	}
 
 	bgReset := "\x1b[49m"
-	if r.th.Background != 0 {
+	if r.th.Background != "" {
 		bgReset = string(ansiBg(r.th.Background))
 	}
 

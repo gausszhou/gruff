@@ -14,22 +14,22 @@ func TestRender_Heading(t *testing.T) {
 		{
 			name:  "h1",
 			input: "# Heading 1\n",
-			want:  "\x1b[48;5;234m\x1b[1m\x1b[4m\x1b[38;5;15mHeading 1\x1b[22m\x1b[24m\x1b[39m\n\n",
+			want:  "\x1b[48;2;20;20;20m\x1b[1m\x1b[4m\x1b[38;5;15mHeading 1\x1b[22m\x1b[24m\x1b[39m\n\n",
 		},
 		{
 			name:  "h2",
 			input: "## Heading 2\n",
-			want:  "\x1b[48;5;234m\x1b[1m\x1b[38;5;11mHeading 2\x1b[22m\x1b[39m\n\n",
+			want:  "\x1b[48;2;20;20;20m\x1b[1m\x1b[38;5;11mHeading 2\x1b[22m\x1b[39m\n\n",
 		},
 		{
 			name:  "h6",
 			input: "###### Heading 6\n",
-			want:  "\x1b[48;5;234m\x1b[38;5;8mHeading 6\x1b[39m\n\n",
+			want:  "\x1b[48;2;20;20;20m\x1b[38;5;8mHeading 6\x1b[39m\n\n",
 		},
 		{
 			name:  "heading with inline",
 			input: "# **Bold** heading\n",
-			want:  "\x1b[48;5;234m\x1b[1m\x1b[4m\x1b[38;5;15m\x1b[1mBold\x1b[22m heading\x1b[22m\x1b[24m\x1b[39m\n\n",
+			want:  "\x1b[48;2;20;20;20m\x1b[1m\x1b[4m\x1b[38;5;15m\x1b[1mBold\x1b[22m heading\x1b[22m\x1b[24m\x1b[39m\n\n",
 		},
 	}
 
@@ -55,27 +55,27 @@ func TestRender_BoldItalic(t *testing.T) {
 		{
 			name:  "bold",
 			input: "**bold**\n",
-			want:  "\x1b[48;5;234m\x1b[1mbold\x1b[22m\n\n",
+			want:  "\x1b[48;2;20;20;20m\x1b[1mbold\x1b[22m\n\n",
 		},
 		{
 			name:  "italic",
 			input: "*italic*\n",
-			want:  "\x1b[48;5;234m\x1b[3mitalic\x1b[23m\n\n",
+			want:  "\x1b[48;2;20;20;20m\x1b[3mitalic\x1b[23m\n\n",
 		},
 		{
 			name:  "bold italic",
 			input: "***both***\n",
-			want:  "\x1b[48;5;234m\x1b[3m\x1b[1mboth\x1b[22m\x1b[23m\n\n",
+			want:  "\x1b[48;2;20;20;20m\x1b[3m\x1b[1mboth\x1b[22m\x1b[23m\n\n",
 		},
 		{
 			name:  "nested bold in italic",
 			input: "*italic and **bold** inside*\n",
-			want:  "\x1b[48;5;234m\x1b[3mitalic and \x1b[1mbold\x1b[22m inside\x1b[23m\n\n",
+			want:  "\x1b[48;2;20;20;20m\x1b[3mitalic and \x1b[1mbold\x1b[22m inside\x1b[23m\n\n",
 		},
 		{
 			name:  "mixed inline paragraph",
 			input: "plain **bold** and *italic*.\n",
-			want:  "\x1b[48;5;234mplain \x1b[1mbold\x1b[22m and \x1b[3mitalic\x1b[23m.\n\n",
+			want:  "\x1b[48;2;20;20;20mplain \x1b[1mbold\x1b[22m and \x1b[3mitalic\x1b[23m.\n\n",
 		},
 	}
 
@@ -101,12 +101,12 @@ func TestRender_InlineCode(t *testing.T) {
 		{
 			name:  "inline code",
 			input: "Use `code` here\n",
-			want:  "Use \x1b[38;5;15m\x1b[48;5;236mcode\x1b[39m\x1b[49m here\n\n",
+			want:  "\x1b[48;2;20;20;20mUse \x1b[38;5;15m\x1b[48;5;236mcode\x1b[39m\x1b[48;2;20;20;20m here\n\n",
 		},
 		{
 			name:  "code with bold",
 			input: "**bold and `code`**\n",
-			want:  "\x1b[1mbold and \x1b[38;5;15m\x1b[48;5;236mcode\x1b[39m\x1b[49m\x1b[22m\n\n",
+			want: "\x1b[48;2;20;20;20m\x1b[1mbold and \x1b[38;5;15m\x1b[48;5;236mcode\x1b[39m\x1b[48;2;20;20;20m\x1b[22m\n\n",
 		},
 	}
 
@@ -132,17 +132,17 @@ func TestRender_Link(t *testing.T) {
 		{
 			name:  "basic link",
 			input: "[Gruff](https://example.com)\n",
-			want:  "\x1b[4m\x1b[38;5;14mGruff\x1b[24m\x1b[39m \x1b[38;5;8m(https://example.com)\x1b[39m\n\n",
+			want:  "\x1b[48;2;20;20;20m\x1b[4m\x1b[38;5;14mGruff\x1b[24m\x1b[39m \x1b[38;5;8m(https://example.com)\x1b[39m\n\n",
 		},
 		{
 			name:  "link with bold text",
 			input: "[**bold**](https://example.com)\n",
-			want:  "\x1b[4m\x1b[38;5;14m\x1b[1mbold\x1b[22m\x1b[24m\x1b[39m \x1b[38;5;8m(https://example.com)\x1b[39m\n\n",
+			want:  "\x1b[48;2;20;20;20m\x1b[4m\x1b[38;5;14m\x1b[1mbold\x1b[22m\x1b[24m\x1b[39m \x1b[38;5;8m(https://example.com)\x1b[39m\n\n",
 		},
 		{
 			name:  "link in paragraph",
 			input: "click [here](https://example.com) now\n",
-			want:  "click \x1b[4m\x1b[38;5;14mhere\x1b[24m\x1b[39m \x1b[38;5;8m(https://example.com)\x1b[39m now\n\n",
+			want:  "\x1b[48;2;20;20;20mclick \x1b[4m\x1b[38;5;14mhere\x1b[24m\x1b[39m \x1b[38;5;8m(https://example.com)\x1b[39m now\n\n",
 		},
 	}
 
@@ -168,12 +168,12 @@ func TestRender_List(t *testing.T) {
 		{
 			name:  "unordered",
 			input: "- item 1\n- item 2\n",
-			want:  "  \x1b[38;5;11m• \x1b[39mitem 1\n  \x1b[38;5;11m• \x1b[39mitem 2\n\n",
+			want:  "\x1b[48;2;20;20;20m  \x1b[38;5;11m• \x1b[39mitem 1\n  \x1b[38;5;11m• \x1b[39mitem 2\n\n",
 		},
 		{
 			name:  "ordered",
 			input: "1. first\n2. second\n",
-			want:  "  \x1b[38;5;11m1. \x1b[39mfirst\n  \x1b[38;5;11m2. \x1b[39msecond\n\n",
+			want:  "\x1b[48;2;20;20;20m  \x1b[38;5;11m1. \x1b[39mfirst\n  \x1b[38;5;11m2. \x1b[39msecond\n\n",
 		},
 	}
 
@@ -263,8 +263,8 @@ func TestRender_Empty(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got != "" {
-		t.Errorf("Render() = %q, want empty string", got)
+	if got != "\x1b[48;2;20;20;20m" {
+		t.Errorf("Render() = %q, want background-only", got)
 	}
 }
 
@@ -273,7 +273,7 @@ func TestRender_PlainText(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := "Hello, world!\n\n"
+	want := "\x1b[48;2;20;20;20mHello, world!\n\n"
 	if got != want {
 		t.Errorf("Render() = %q, want %q", got, want)
 	}

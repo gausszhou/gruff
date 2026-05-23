@@ -3,6 +3,7 @@ package gruff
 import (
 	"unicode/utf8"
 
+	"charm.land/lipgloss/v2"
 	"github.com/mattn/go-runewidth"
 )
 
@@ -17,41 +18,68 @@ const (
 	ansiNoItalic  ansiCode = "\x1b[23m"
 )
 
-type Color uint8
+type Color string
 
 const (
-	cBlack   Color = 0
-	cMaroon  Color = 1
-	cGreen   Color = 2
-	cOlive   Color = 3
-	cNavy    Color = 4
-	cPurple  Color = 5
-	cTeal    Color = 6
-	cSilver  Color = 7
-	cGrey    Color = 8
-	cRed     Color = 9
-	cLime    Color = 10
-	cYellow  Color = 11
-	cBlue    Color = 12
-	cFuchsia Color = 13
-	cCyan    Color = 14
-	cWhite   Color = 15
-	cDarkBG  Color = 236
-	cDocBG   Color = 234 // ~#141414
+	cBlack   Color = "0"
+	cMaroon  Color = "1"
+	cGreen   Color = "2"
+	cOlive   Color = "3"
+	cNavy    Color = "4"
+	cPurple  Color = "5"
+	cTeal    Color = "6"
+	cSilver  Color = "7"
+	cGrey    Color = "8"
+	cRed     Color = "9"
+	cLime    Color = "10"
+	cYellow  Color = "11"
+	cBlue    Color = "12"
+	cFuchsia Color = "13"
+	cCyan    Color = "14"
+	cWhite   Color = "15"
+	cDarkBG  Color = "236"
 )
 
+func is4bit(c Color) bool {
+	return len(c) == 1 && c[0] >= '0' && c[0] <= '7'
+}
+
+func isHex(c Color) bool {
+	return len(c) >= 4 && c[0] == '#'
+}
+
+func hexRGB(c Color) (r, g, b uint8) {
+	cc := lipgloss.Color(string(c))
+	rr, gg, bb, _ := cc.RGBA()
+	return uint8(rr >> 8), uint8(gg >> 8), uint8(bb >> 8)
+}
+
 func ansiFg(c Color) ansiCode {
-	if c <= 7 {
-		return ansiCode("\x1b[3") + ansiCode('0'+c) + ansiCode("m")
+	if c == "" {
+		return ""
 	}
-	return ansiCode("\x1b[38;5;") + ansiCode(itoa(int(c))) + ansiCode("m")
+	if isHex(c) {
+		r, g, b := hexRGB(c)
+		return ansiCode("\x1b[38;2;" + itoa(int(r)) + ";" + itoa(int(g)) + ";" + itoa(int(b)) + "m")
+	}
+	if is4bit(c) {
+		return ansiCode("\x1b[3") + ansiCode(string(c)) + ansiCode("m")
+	}
+	return ansiCode("\x1b[38;5;" + string(c) + "m")
 }
 
 func ansiBg(c Color) ansiCode {
-	if c <= 7 {
-		return ansiCode("\x1b[4") + ansiCode('0'+c) + ansiCode("m")
+	if c == "" {
+		return ""
 	}
-	return ansiCode("\x1b[48;5;") + ansiCode(itoa(int(c))) + ansiCode("m")
+	if isHex(c) {
+		r, g, b := hexRGB(c)
+		return ansiCode("\x1b[48;2;" + itoa(int(r)) + ";" + itoa(int(g)) + ";" + itoa(int(b)) + "m")
+	}
+	if is4bit(c) {
+		return ansiCode("\x1b[4") + ansiCode(string(c)) + ansiCode("m")
+	}
+	return ansiCode("\x1b[48;5;" + string(c) + "m")
 }
 
 type Style struct {
@@ -73,11 +101,11 @@ func (s Style) start() ansiCode {
 	if s.Underline {
 		out += string(ansiUnderline)
 	}
-	if s.Fg != 0 || s.Bg != 0 {
-		if s.Fg != 0 {
+	if s.Fg != "" || s.Bg != "" {
+		if s.Fg != "" {
 			out += string(ansiFg(s.Fg))
 		}
-		if s.Bg != 0 {
+		if s.Bg != "" {
 			out += string(ansiBg(s.Bg))
 		}
 	}
@@ -97,11 +125,11 @@ func (s Style) end(bg Color) ansiCode {
 	if s.Underline {
 		out += "\x1b[24m"
 	}
-	if s.Fg != 0 {
+	if s.Fg != "" {
 		out += "\x1b[39m"
 	}
-	if s.Bg != 0 {
-		if bg != 0 {
+	if s.Bg != "" {
+		if bg != "" {
 			out += string(ansiBg(bg))
 		} else {
 			out += "\x1b[49m"
@@ -126,7 +154,7 @@ type Theme struct {
 }
 
 var darkTheme = Theme{
-	Background: cDocBG,
+	Background: "#141414",
 	H1:         Style{Bold: true, Underline: true, Fg: cWhite},
 	H2:         Style{Bold: true, Fg: cYellow},
 	H3:         Style{Bold: true, Fg: cGreen},
@@ -143,7 +171,7 @@ var darkTheme = Theme{
 }
 
 var lightTheme = Theme{
-	Background: 0,
+	Background: "",
 	H1:         Style{Bold: true, Underline: true, Fg: cBlack},
 	H2:         Style{Bold: true, Fg: cNavy},
 	H3:         Style{Bold: true, Fg: cGreen},
@@ -152,7 +180,7 @@ var lightTheme = Theme{
 	H6:         Style{Fg: cGrey},
 	Strong:     Style{Bold: true},
 	Em:         Style{Italic: true},
-	Code:       Style{Bg: 7, Fg: cBlack},
+	Code:       Style{Bg: cSilver, Fg: cBlack},
 	Link:       Style{Underline: true, Fg: cNavy},
 	LinkURL:    Style{Fg: cGrey},
 	Bullet:     Style{Fg: cMaroon},
