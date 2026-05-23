@@ -88,6 +88,7 @@ Ready-to-run examples are in the [`examples/`](examples/) directory:
 | Example | Description |
 |---------|-------------|
 | [`basic`](examples/basic/) | Render markdown with CLI flags (`--light`, `--wrap`) |
+| [`headings`](examples/headings/) | All H1–H6 levels with inline formatting and Unicode |
 | [`table`](examples/table/) | Table-specific demo showing alignment and word wrap |
 | [`codeblock`](examples/codeblock/) | Code block rendering with language tags |
 | [`custom-theme`](examples/custom-theme/) | Custom ANSI color and style customization |
@@ -96,6 +97,7 @@ Ready-to-run examples are in the [`examples/`](examples/) directory:
 
 ```bash
 go run examples/basic/main.go
+go run examples/headings/main.go
 go run examples/table/main.go
 go run examples/codeblock/main.go
 go run examples/custom-theme/main.go
