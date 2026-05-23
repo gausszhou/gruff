@@ -10,10 +10,10 @@ import (
 type nodeRenderer struct {
 	buf    strings.Builder
 	source []byte
-	th     theme
+	th     Theme
 }
 
-func renderMarkdown(source []byte, th theme, node ast.Node) string {
+func renderMarkdown(source []byte, th Theme, node ast.Node) string {
 	var r nodeRenderer
 	r.source = source
 	r.th = th
@@ -56,31 +56,31 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 		r.buf.Write(n.Value)
 
 	case *ast.Emphasis:
-		st := r.th.em
+		st := r.th.Em
 		if n.Level == 2 {
-			st = r.th.strong
+			st = r.th.Strong
 		}
 		r.buf.WriteString(string(st.start()))
 		r.renderChildren(n)
 		r.buf.WriteString(string(st.end()))
 
 	case *ast.CodeSpan:
-		r.buf.WriteString(string(r.th.code.start()))
+		r.buf.WriteString(string(r.th.Code.start()))
 		for c := n.FirstChild(); c != nil; c = c.NextSibling() {
 			if text, ok := c.(*ast.Text); ok {
 				r.buf.Write(text.Value(r.source))
 			}
 		}
-		r.buf.WriteString(string(r.th.code.end()))
+		r.buf.WriteString(string(r.th.Code.end()))
 
 	case *ast.Link:
-		st := r.th.link
+		st := r.th.Link
 		r.buf.WriteString(string(st.start()))
 		r.renderChildren(n)
 		r.buf.WriteString(string(st.end()))
 		if len(n.Destination) > 0 {
 			url := string(n.Destination)
-			uSt := r.th.linkURL
+			uSt := r.th.LinkURL
 			r.buf.WriteByte(' ')
 			r.buf.WriteString(string(uSt.start()))
 			r.buf.WriteByte('(')
@@ -140,15 +140,15 @@ func (r *nodeRenderer) renderListItem(node ast.Node) {
 	if list.IsOrdered() {
 		num := list.Start + index
 		r.buf.WriteString("  ")
-		r.buf.WriteString(string(r.th.numbered.start()))
+		r.buf.WriteString(string(r.th.Numbered.start()))
 		r.buf.WriteString(itoa(num))
 		r.buf.WriteString(". ")
-		r.buf.WriteString(string(r.th.numbered.end()))
+		r.buf.WriteString(string(r.th.Numbered.end()))
 	} else {
 		r.buf.WriteString("  ")
-		r.buf.WriteString(string(r.th.bullet.start()))
+		r.buf.WriteString(string(r.th.Bullet.start()))
 		r.buf.WriteString("• ")
-		r.buf.WriteString(string(r.th.bullet.end()))
+		r.buf.WriteString(string(r.th.Bullet.end()))
 	}
 
 	for c := node.FirstChild(); c != nil; c = c.NextSibling() {
@@ -175,26 +175,92 @@ func (r *nodeRenderer) isInsideTable(node ast.Node) bool {
 	return false
 }
 
-func (r *nodeRenderer) headingStyle(level int) style {
+func (r *nodeRenderer) headingStyle(level int) Style {
 	switch level {
 	case 1:
-		return r.th.h1
+		return r.th.H1
 	case 2:
-		return r.th.h2
+		return r.th.H2
 	case 3:
-		return r.th.h3
+		return r.th.H3
 	case 4:
-		return r.th.h4
+		return r.th.H4
 	case 5:
-		return r.th.h5
+		return r.th.H5
 	default:
-		return r.th.h6
+		return r.th.H6
 	}
 }
+
+const tableMaxColWidth = 40
 
 type cellData struct {
 	content string
 	align   extensionAst.Alignment
+	lines   []string
+}
+
+func wrapCellLines(content string, width int) []string {
+	if displayWidth(stripANSI(content)) <= width {
+		return []string{content}
+	}
+
+	var lines []string
+	var line strings.Builder
+	var word strings.Builder
+	lineVisLen := 0
+	wordVisLen := 0
+	inAnsi := false
+
+	flushWord := func() {
+		w := word.String()
+		word.Reset()
+		if len(w) == 0 {
+			return
+		}
+		if lineVisLen > 0 && lineVisLen+1+wordVisLen > width {
+			lines = append(lines, line.String())
+			line.Reset()
+			lineVisLen = 0
+		}
+		if lineVisLen > 0 {
+			line.WriteByte(' ')
+			lineVisLen++
+		}
+		line.WriteString(w)
+		lineVisLen += wordVisLen
+		wordVisLen = 0
+	}
+
+	for _, r := range content {
+		if inAnsi {
+			word.WriteRune(r)
+			if r == 'm' {
+				inAnsi = false
+			}
+			continue
+		}
+		if r == '\x1b' {
+			inAnsi = true
+			word.WriteRune(r)
+			continue
+		}
+		if r == ' ' || r == '\n' {
+			flushWord()
+			continue
+		}
+		word.WriteRune(r)
+		wordVisLen++
+	}
+	flushWord()
+
+	if line.Len() > 0 {
+		lines = append(lines, line.String())
+	} else if len(lines) == 0 {
+		lines = []string{""}
+	}
+
+	return lines
 }
 
 func (r *nodeRenderer) renderTable(table *extensionAst.Table) {
@@ -268,6 +334,17 @@ func (r *nodeRenderer) renderTable(table *extensionAst.Table) {
 	for i := range colWidths {
 		if colWidths[i] < 3 {
 			colWidths[i] = 3
+		} else if colWidths[i] > tableMaxColWidth {
+			colWidths[i] = tableMaxColWidth
+		}
+	}
+
+	for i, h := range headers {
+		headers[i].lines = wrapCellLines(h.content, colWidths[i])
+	}
+	for _, row := range bodyRows {
+		for i, cell := range row {
+			row[i].lines = wrapCellLines(cell.content, colWidths[i])
 		}
 	}
 
@@ -314,43 +391,57 @@ func (r *nodeRenderer) renderTable(table *extensionAst.Table) {
 }
 
 func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []extensionAst.Alignment) {
-	r.buf.WriteString("\x1b[38;5;8m\u2502\x1b[39m") // │
-	for i, cell := range cells {
-		if i >= len(widths) {
-			break
+	maxLines := 1
+	for _, cell := range cells {
+		if len(cell.lines) > maxLines {
+			maxLines = len(cell.lines)
 		}
-		content := cell.content
-		visLen := displayWidth(stripANSI(content))
-		padding := widths[i] - visLen
-		if padding < 0 {
-			padding = 0
-		}
-
-		r.buf.WriteByte(' ')
-		switch aligns[i] {
-		case extensionAst.AlignRight:
-			for j := 0; j < padding; j++ {
-				r.buf.WriteByte(' ')
-			}
-			r.buf.WriteString(content)
-		case extensionAst.AlignCenter:
-			leftPad := padding / 2
-			rightPad := padding - leftPad
-			for j := 0; j < leftPad; j++ {
-				r.buf.WriteByte(' ')
-			}
-			r.buf.WriteString(content)
-			for j := 0; j < rightPad; j++ {
-				r.buf.WriteByte(' ')
-			}
-		default:
-			r.buf.WriteString(content)
-			for j := 0; j < padding; j++ {
-				r.buf.WriteByte(' ')
-			}
-		}
-		r.buf.WriteByte(' ')
-		r.buf.WriteString("\x1b[38;5;8m\u2502\x1b[39m") // │
 	}
-	r.buf.WriteByte('\n')
+
+	for lineIdx := 0; lineIdx < maxLines; lineIdx++ {
+		r.buf.WriteString("\x1b[38;5;8m\u2502\x1b[39m") // │
+		for i, cell := range cells {
+			if i >= len(widths) {
+				break
+			}
+
+			var content string
+			if lineIdx < len(cell.lines) {
+				content = cell.lines[lineIdx]
+			}
+
+			visLen := displayWidth(stripANSI(content))
+			padding := widths[i] - visLen
+			if padding < 0 {
+				padding = 0
+			}
+
+			r.buf.WriteByte(' ')
+			switch aligns[i] {
+			case extensionAst.AlignRight:
+				for j := 0; j < padding; j++ {
+					r.buf.WriteByte(' ')
+				}
+				r.buf.WriteString(content)
+			case extensionAst.AlignCenter:
+				leftPad := padding / 2
+				rightPad := padding - leftPad
+				for j := 0; j < leftPad; j++ {
+					r.buf.WriteByte(' ')
+				}
+				r.buf.WriteString(content)
+				for j := 0; j < rightPad; j++ {
+					r.buf.WriteByte(' ')
+				}
+			default:
+				r.buf.WriteString(content)
+				for j := 0; j < padding; j++ {
+					r.buf.WriteByte(' ')
+				}
+			}
+			r.buf.WriteByte(' ')
+			r.buf.WriteString("\x1b[38;5;8m\u2502\x1b[39m") // │
+		}
+		r.buf.WriteByte('\n')
+	}
 }

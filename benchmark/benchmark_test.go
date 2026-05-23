@@ -8,8 +8,8 @@ import (
 	"github.com/gausszhou/gruff"
 )
 
-func BenchmarkGruff(b *testing.B) {
-	source, err := os.ReadFile("../testdata/sample.md")
+func benchGruff(b *testing.B, file string) {
+	source, err := os.ReadFile("../" + file)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -22,8 +22,10 @@ func BenchmarkGruff(b *testing.B) {
 	}
 }
 
-func BenchmarkGlamour(b *testing.B) {
-	source, err := os.ReadFile("../testdata/sample.md")
+func BenchmarkGruff(b *testing.B) { benchGruff(b, "testdata/_data.md") }
+
+func benchGlamour(b *testing.B, file string) {
+	source, err := os.ReadFile("../" + file)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -42,3 +44,5 @@ func BenchmarkGlamour(b *testing.B) {
 		r.Render(input)
 	}
 }
+
+func BenchmarkGlamour(b *testing.B) { benchGlamour(b, "testdata/_data.md") }

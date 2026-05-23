@@ -13,69 +13,67 @@ const (
 	ansiNoItalic  ansiCode = "\x1b[23m"
 )
 
-type color8bit uint8
+type Color uint8
 
 const (
-	cBlack   color8bit = 0
-	cMaroon  color8bit = 1
-	cGreen   color8bit = 2
-	cOlive   color8bit = 3
-	cNavy    color8bit = 4
-	cPurple  color8bit = 5
-	cTeal    color8bit = 6
-	cSilver  color8bit = 7
-	cGrey    color8bit = 8
-	cRed     color8bit = 9
-	cLime    color8bit = 10
-	cYellow  color8bit = 11
-	cBlue    color8bit = 12
-	cFuchsia color8bit = 13
-	cCyan    color8bit = 14
-	cWhite   color8bit = 15
-	cDarkBG  color8bit = 236
+	cBlack   Color = 0
+	cMaroon  Color = 1
+	cGreen   Color = 2
+	cOlive   Color = 3
+	cNavy    Color = 4
+	cPurple  Color = 5
+	cTeal    Color = 6
+	cSilver  Color = 7
+	cGrey    Color = 8
+	cRed     Color = 9
+	cLime    Color = 10
+	cYellow  Color = 11
+	cBlue    Color = 12
+	cFuchsia Color = 13
+	cCyan    Color = 14
+	cWhite   Color = 15
+	cDarkBG  Color = 236
 )
 
-func ansiFg(c color8bit) ansiCode {
+func ansiFg(c Color) ansiCode {
 	if c <= 7 {
 		return ansiCode("\x1b[3") + ansiCode('0'+c) + ansiCode("m")
 	}
 	return ansiCode("\x1b[38;5;") + ansiCode(itoa(int(c))) + ansiCode("m")
 }
 
-func ansiBg(c color8bit) ansiCode {
+func ansiBg(c Color) ansiCode {
 	if c <= 7 {
 		return ansiCode("\x1b[4") + ansiCode('0'+c) + ansiCode("m")
 	}
 	return ansiCode("\x1b[48;5;") + ansiCode(itoa(int(c))) + ansiCode("m")
 }
 
-type style struct {
-	fg        color8bit
-	bg        color8bit
-	bold      bool
-	italic    bool
-	underline bool
-	prefix    string
-	suffix    string
+type Style struct {
+	Fg        Color
+	Bg        Color
+	Bold      bool
+	Italic    bool
+	Underline bool
 }
 
-func (s style) start() ansiCode {
+func (s Style) start() ansiCode {
 	var out string
-	if s.bold {
+	if s.Bold {
 		out += string(ansiBold)
 	}
-	if s.italic {
+	if s.Italic {
 		out += string(ansiItalic)
 	}
-	if s.underline {
+	if s.Underline {
 		out += string(ansiUnderline)
 	}
-	if s.fg != 0 || s.bg != 0 {
-		if s.fg != 0 {
-			out += string(ansiFg(s.fg))
+	if s.Fg != 0 || s.Bg != 0 {
+		if s.Fg != 0 {
+			out += string(ansiFg(s.Fg))
 		}
-		if s.bg != 0 {
-			out += string(ansiBg(s.bg))
+		if s.Bg != 0 {
+			out += string(ansiBg(s.Bg))
 		}
 	}
 	return ansiCode(out)
@@ -83,21 +81,21 @@ func (s style) start() ansiCode {
 
 var ansiResetStr = string(ansiReset)
 
-func (s style) end() ansiCode {
+func (s Style) end() ansiCode {
 	var out string
-	if s.italic {
+	if s.Italic {
 		out += string(ansiNoItalic)
 	}
-	if s.bold {
+	if s.Bold {
 		out += string(ansiNoBold)
 	}
-	if s.underline {
+	if s.Underline {
 		out += "\x1b[24m"
 	}
-	if s.fg != 0 {
+	if s.Fg != 0 {
 		out += "\x1b[39m"
 	}
-	if s.bg != 0 {
+	if s.Bg != 0 {
 		out += "\x1b[49m"
 	}
 	if out == "" {
@@ -106,47 +104,47 @@ func (s style) end() ansiCode {
 	return ansiCode(out)
 }
 
-type theme struct {
-	h1, h2, h3, h4, h5, h6 style
-	strong                  style
-	em                      style
-	code                    style
-	link                    style
-	linkURL                 style
-	bullet                  style
-	numbered                style
+type Theme struct {
+	H1, H2, H3, H4, H5, H6 Style
+	Strong                  Style
+	Em                      Style
+	Code                    Style
+	Link                    Style
+	LinkURL                 Style
+	Bullet                  Style
+	Numbered                Style
 }
 
-var darkTheme = theme{
-	h1:       style{bold: true, underline: true, fg: cWhite},
-	h2:       style{bold: true, fg: cYellow},
-	h3:       style{bold: true, fg: cGreen},
-	h4:       style{bold: true, fg: cCyan},
-	h5:       style{bold: true, fg: cGrey},
-	h6:       style{fg: cGrey},
-	strong:   style{bold: true},
-	em:       style{italic: true},
-	code:     style{bg: cDarkBG, fg: cWhite},
-	link:     style{underline: true, fg: cCyan},
-	linkURL:  style{fg: cGrey},
-	bullet:   style{fg: cYellow},
-	numbered: style{fg: cYellow},
+var darkTheme = Theme{
+	H1:       Style{Bold: true, Underline: true, Fg: cWhite},
+	H2:       Style{Bold: true, Fg: cYellow},
+	H3:       Style{Bold: true, Fg: cGreen},
+	H4:       Style{Bold: true, Fg: cCyan},
+	H5:       Style{Bold: true, Fg: cGrey},
+	H6:       Style{Fg: cGrey},
+	Strong:   Style{Bold: true},
+	Em:       Style{Italic: true},
+	Code:     Style{Bg: cDarkBG, Fg: cWhite},
+	Link:     Style{Underline: true, Fg: cCyan},
+	LinkURL:  Style{Fg: cGrey},
+	Bullet:   Style{Fg: cYellow},
+	Numbered: Style{Fg: cYellow},
 }
 
-var lightTheme = theme{
-	h1:       style{bold: true, underline: true, fg: cBlack},
-	h2:       style{bold: true, fg: cNavy},
-	h3:       style{bold: true, fg: cGreen},
-	h4:       style{bold: true, fg: cTeal},
-	h5:       style{bold: true, fg: cGrey},
-	h6:       style{fg: cGrey},
-	strong:   style{bold: true},
-	em:       style{italic: true},
-	code:     style{bg: 7, fg: cBlack},
-	link:     style{underline: true, fg: cNavy},
-	linkURL:  style{fg: cGrey},
-	bullet:   style{fg: cMaroon},
-	numbered: style{fg: cMaroon},
+var lightTheme = Theme{
+	H1:       Style{Bold: true, Underline: true, Fg: cBlack},
+	H2:       Style{Bold: true, Fg: cNavy},
+	H3:       Style{Bold: true, Fg: cGreen},
+	H4:       Style{Bold: true, Fg: cTeal},
+	H5:       Style{Bold: true, Fg: cGrey},
+	H6:       Style{Fg: cGrey},
+	Strong:   Style{Bold: true},
+	Em:       Style{Italic: true},
+	Code:     Style{Bg: 7, Fg: cBlack},
+	Link:     Style{Underline: true, Fg: cNavy},
+	LinkURL:  Style{Fg: cGrey},
+	Bullet:   Style{Fg: cMaroon},
+	Numbered: Style{Fg: cMaroon},
 }
 
 func displayWidth(s string) int {

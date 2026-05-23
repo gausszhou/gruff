@@ -9,34 +9,34 @@ import (
 	"github.com/yuin/goldmark/text"
 )
 
-type Option func(*options)
-
-type options struct {
-	theme    theme
-	wordWrap int
+type Options struct {
+	Theme    Theme
+	WordWrap int
 }
 
+type Option func(*Options)
+
 func WithDark() Option {
-	return func(o *options) {
-		o.theme = darkTheme
+	return func(o *Options) {
+		o.Theme = darkTheme
 	}
 }
 
 func WithLight() Option {
-	return func(o *options) {
-		o.theme = lightTheme
+	return func(o *Options) {
+		o.Theme = lightTheme
 	}
 }
 
 func WithWordWrap(n int) Option {
-	return func(o *options) {
-		o.wordWrap = n
+	return func(o *Options) {
+		o.WordWrap = n
 	}
 }
 
 func Render(source string, opts ...Option) (string, error) {
-	o := options{
-		theme: darkTheme,
+	o := Options{
+		Theme: darkTheme,
 	}
 	for _, opt := range opts {
 		opt(&o)
@@ -57,10 +57,10 @@ func Render(source string, opts ...Option) (string, error) {
 	reader := text.NewReader(sourceBytes)
 	doc := md.Parser().Parse(reader)
 
-	out := renderMarkdown(sourceBytes, o.theme, doc)
+	out := renderMarkdown(sourceBytes, o.Theme, doc)
 
-	if o.wordWrap > 0 {
-		out = wrapText(out, o.wordWrap)
+	if o.WordWrap > 0 {
+		out = wrapText(out, o.WordWrap)
 	}
 
 	return out, nil

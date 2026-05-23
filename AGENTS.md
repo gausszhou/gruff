@@ -26,8 +26,8 @@ Two-pass: collect all cell content + calculate column widths (Pass 1), then rend
 - goldmark `Emphasis{Level: 2}` = bold; `Emphasis{Level: 1}` = italic; `***both***` nests Level 1 wrapping Level 2
 - `ast.Strong` does NOT exist in goldmark — use `ast.Emphasis` with Level check
 - `name` and `Theme` struct fields in `ansi.go` must be updated together
-- `benchmark/testdata/sample.md` must mirror `testdata/sample.md`
-- `testdata/sample.md` is the single source of truth for example content; `examples/basic/main.go` reads its own copy via `//go:embed`
+- `testdata/_data.md` is the single benchmark input file
+- `examples/basic/main.go` has its own copy `testdata/sample.md` via `//go:embed`
 - Do NOT create `cmd/` directory for diagnostics — use inline test or remove after use
 
 ## Constraints
