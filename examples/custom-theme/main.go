@@ -34,7 +34,15 @@ func main() {
 		"| Feature | Status |\n" +
 		"|---------|--------|\n" +
 		"| Custom colors | ✅ |\n" +
-		"| No external deps | ✅ |\n"
+		"| No external deps | ✅ |\n\n" +
+		"## Code Block\n\n" +
+		"```go\n" +
+		"package main\n\n" +
+		"import \"fmt\"\n\n" +
+		"func main() {\n" +
+		"    fmt.Println(\"Custom theme code block\")\n" +
+		"}\n" +
+		"```\n"
 
 	out, err := gruff.Render(md, customTheme())
 	if err != nil {

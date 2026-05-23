@@ -31,6 +31,7 @@ Two-pass: collect all cell content + calculate column widths (Pass 1), then rend
 - `WithWordWrap` sets document width (default 120); tables inherit this for column width capping
 - `displayWidth` uses `go-runewidth` (not hand-rolled ranges) for correct Unicode width
 - Do NOT create `cmd/` directory for diagnostics — use inline test or remove after use
+- Put temporary/verification files in `tmp/` directory (already gitignored)
 
 ## Constraints
 

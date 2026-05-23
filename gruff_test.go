@@ -96,17 +96,55 @@ func TestRender_InlineCode(t *testing.T) {
 	tests := []struct {
 		name  string
 		input string
-		want  string
+		check []string
 	}{
 		{
 			name:  "inline code",
 			input: "Use `code` here\n",
-			want:  "\x1b[48;2;20;20;20mUse \x1b[38;5;15m\x1b[48;5;236mcode\x1b[39m\x1b[48;2;20;20;20m here\n\n",
+			check: []string{"\x1b[38;2;80;134;90mcode\x1b[39m"},
 		},
 		{
 			name:  "code with bold",
 			input: "**bold and `code`**\n",
-			want: "\x1b[48;2;20;20;20m\x1b[1mbold and \x1b[38;5;15m\x1b[48;5;236mcode\x1b[39m\x1b[48;2;20;20;20m\x1b[22m\n\n",
+			check: []string{"\x1b[1mbold and \x1b[38;2;80;134;90mcode\x1b[39m\x1b[22m"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Render(tt.input)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, c := range tt.check {
+				if !strings.Contains(got, c) {
+					t.Errorf("output missing %q\n got: %q", c, got)
+				}
+			}
+		})
+	}
+}
+
+func TestRender_Link(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "basic link",
+			input: "[Gruff](https://example.com)\n",
+			want:  "\x1b[48;2;20;20;20m\x1b[4m\x1b[38;2;92;156;245mGruff\x1b[24m\x1b[39m \x1b[38;5;8m(https://example.com)\x1b[39m\n\n",
+		},
+		{
+			name:  "link with bold text",
+			input: "[**bold**](https://example.com)\n",
+			want:  "\x1b[48;2;20;20;20m\x1b[4m\x1b[38;2;92;156;245m\x1b[1mbold\x1b[22m\x1b[24m\x1b[39m \x1b[38;5;8m(https://example.com)\x1b[39m\n\n",
+		},
+		{
+			name:  "link in paragraph",
+			input: "click [here](https://example.com) now\n",
+			want:  "\x1b[48;2;20;20;20mclick \x1b[4m\x1b[38;2;92;156;245mhere\x1b[24m\x1b[39m \x1b[38;5;8m(https://example.com)\x1b[39m now\n\n",
 		},
 	}
 
@@ -123,26 +161,31 @@ func TestRender_InlineCode(t *testing.T) {
 	}
 }
 
-func TestRender_Link(t *testing.T) {
+func TestRender_CodeBlock(t *testing.T) {
 	tests := []struct {
 		name  string
 		input string
-		want  string
+		check []string
 	}{
 		{
-			name:  "basic link",
-			input: "[Gruff](https://example.com)\n",
-			want:  "\x1b[48;2;20;20;20m\x1b[4m\x1b[38;5;14mGruff\x1b[24m\x1b[39m \x1b[38;5;8m(https://example.com)\x1b[39m\n\n",
+			name:  "fenced code block",
+			input: "```\ncode\n```\n",
+			check: []string{"\x1b[38;2;80;134;90m  code", "\x1b[39m"},
 		},
 		{
-			name:  "link with bold text",
-			input: "[**bold**](https://example.com)\n",
-			want:  "\x1b[48;2;20;20;20m\x1b[4m\x1b[38;5;14m\x1b[1mbold\x1b[22m\x1b[24m\x1b[39m \x1b[38;5;8m(https://example.com)\x1b[39m\n\n",
+			name:  "fenced code with language",
+			input: "```go\nvar x = 1\n```\n",
+			check: []string{"\x1b[38;5;8m  go", "\x1b[38;2;80;134;90m  var x = 1"},
 		},
 		{
-			name:  "link in paragraph",
-			input: "click [here](https://example.com) now\n",
-			want:  "\x1b[48;2;20;20;20mclick \x1b[4m\x1b[38;5;14mhere\x1b[24m\x1b[39m \x1b[38;5;8m(https://example.com)\x1b[39m now\n\n",
+			name:  "indented code block",
+			input: "    indented\n",
+			check: []string{"\x1b[38;2;80;134;90m  indented"},
+		},
+		{
+			name:  "multi-line fenced code",
+			input: "```\nline1\nline2\n```\n",
+			check: []string{"\x1b[38;2;80;134;90m  line1", "\x1b[38;2;80;134;90m  line2"},
 		},
 	}
 
@@ -152,8 +195,10 @@ func TestRender_Link(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if got != tt.want {
-				t.Errorf("Render() =\n%q\nwant:\n%q", got, tt.want)
+			for _, c := range tt.check {
+				if !strings.Contains(got, c) {
+					t.Errorf("output missing %q\n got: %q", c, got)
+				}
 			}
 		})
 	}
@@ -209,7 +254,7 @@ func TestRender_Table(t *testing.T) {
 		{
 			name:  "table with inline",
 			input: "| Col1 | Col2 |\n|------|------|\n| `code` | **bold** |\n",
-			want:  []string{"\x1b[48;5;236m", "\x1b[1m", "code", "bold"},
+			want:  []string{"\x1b[38;2;80;134;90m", "\x1b[1m", "code", "bold"},
 		},
 	}
 
@@ -243,7 +288,7 @@ func TestRender_Mixed(t *testing.T) {
 		{"contains Title", func(s string) bool { return strings.Contains(s, "Title") }},
 		{"contains bold ANSI", func(s string) bool { return strings.Contains(s, "\x1b[1m") }},
 		{"contains italic ANSI", func(s string) bool { return strings.Contains(s, "\x1b[3m") }},
-		{"contains code ANSI", func(s string) bool { return strings.Contains(s, "\x1b[48;5;236m") }},
+		{"contains code ANSI", func(s string) bool { return strings.Contains(s, "\x1b[38;2;80;134;90m") }},
 		{"contains link underline", func(s string) bool { return strings.Contains(s, "\x1b[4m") }},
 		{"contains link URL", func(s string) bool { return strings.Contains(s, "example.com") }},
 		{"contains bullet", func(s string) bool { return strings.Contains(s, "•") }},

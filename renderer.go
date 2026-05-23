@@ -6,6 +6,7 @@ import (
 	"github.com/mattn/go-runewidth"
 	"github.com/yuin/goldmark/ast"
 	extensionAst "github.com/yuin/goldmark/extension/ast"
+	"github.com/yuin/goldmark/text"
 )
 
 type nodeRenderer struct {
@@ -102,6 +103,12 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 			}
 		}
 
+	case *ast.FencedCodeBlock:
+		r.renderCodeBlock(n.Lines(), n.Language(r.source))
+
+	case *ast.CodeBlock:
+		r.renderCodeBlock(n.Lines(), nil)
+
 	case *ast.ThematicBreak:
 		r.buf.WriteString("\x1b[90m────────────────────\x1b[39m\n\n")
 
@@ -125,6 +132,49 @@ func (r *nodeRenderer) renderSubtree(node ast.Node) string {
 	sub.th = r.th
 	sub.renderChildren(node)
 	return sub.buf.String()
+}
+
+func (r *nodeRenderer) renderCodeBlock(lines *text.Segments, lang []byte) {
+	st := r.th.Code
+	bg := r.th.Background
+	codeStyleStart := string(st.start())
+	const padding = 2
+
+	if len(lang) > 0 {
+		ls := r.th.LinkURL
+		r.buf.WriteString(string(ls.start()))
+		for j := 0; j < padding; j++ {
+			r.buf.WriteByte(' ')
+		}
+		r.buf.Write(lang)
+		r.padLine(padding + len(lang))
+		r.buf.WriteString(string(ls.end(bg)))
+		r.buf.WriteByte('\n')
+	}
+
+	for i := 0; i < lines.Len(); i++ {
+		seg := lines.At(i)
+		content := string(seg.Value(r.source))
+		content = strings.TrimRight(content, "\n\r")
+		r.buf.WriteString(codeStyleStart)
+		for j := 0; j < padding; j++ {
+			r.buf.WriteByte(' ')
+		}
+		r.buf.WriteString(content)
+		r.padLine(padding + displayWidth(content))
+		r.buf.WriteString(string(st.end(bg)))
+		r.buf.WriteByte('\n')
+	}
+	r.buf.WriteByte('\n')
+}
+
+func (r *nodeRenderer) padLine(visLen int) {
+	ww := r.wordWrap
+	if ww > 0 && visLen < ww {
+		for j := 0; j < ww-visLen; j++ {
+			r.buf.WriteByte(' ')
+		}
+	}
 }
 
 func (r *nodeRenderer) renderListItem(node ast.Node) {

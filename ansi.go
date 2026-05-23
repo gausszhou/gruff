@@ -37,7 +37,6 @@ const (
 	cFuchsia Color = "13"
 	cCyan    Color = "14"
 	cWhite   Color = "15"
-	cDarkBG  Color = "236"
 )
 
 func is4bit(c Color) bool {
@@ -163,8 +162,8 @@ var darkTheme = Theme{
 	H6:         Style{Fg: cGrey},
 	Strong:     Style{Bold: true},
 	Em:         Style{Italic: true},
-	Code:       Style{Bg: cDarkBG, Fg: cWhite},
-	Link:       Style{Underline: true, Fg: cCyan},
+	Code:       Style{Fg: "#50865a"},
+	Link:       Style{Underline: true, Fg: "#5c9cf5"},
 	LinkURL:    Style{Fg: cGrey},
 	Bullet:     Style{Fg: cYellow},
 	Numbered:   Style{Fg: cYellow},

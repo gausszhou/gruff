@@ -70,6 +70,16 @@ var sampleMD = "# Gruff Markdown Renderer\n\n" +
 	"- `Code with math`: `E = mc² ≈ ∑π²`\n" +
 	"- ***Mixed styles***: ***✅ 你好 ★ π → €***\n" +
 	"- Link with unicode: [你好世界](https://example.com)\n\n" +
+	"## Code Blocks\n\n" +
+	"Fenced code block:\n\n" +
+	"```\n" +
+	"func hello() {\n" +
+	"    fmt.Println(\"Hello, World!\")\n" +
+	"}\n" +
+	"```\n\n" +
+	"Indented code block:\n\n" +
+	"    line1\n" +
+	"    line2\n\n" +
 	"Visit [Gruff on GitHub](https://github.com/gausszhou/gruff) for more information.\n"
 
 func main() {
