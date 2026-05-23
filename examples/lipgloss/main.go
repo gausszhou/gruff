@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"charm.land/lipgloss/v2"
 	"github.com/gausszhou/gruff"
+	"golang.org/x/term"
 )
 
 var docStyle = lipgloss.NewStyle().
@@ -24,10 +26,17 @@ var noteStyle = lipgloss.NewStyle().
 	Italic(true).
 	Padding(0, 2)
 
+func termWidth() int {
+	if w, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil && w > 0 {
+		return w
+	}
+	return 0
+}
+
 func main() {
 	title := "# gruff + lipgloss\n\n" +
 		"Render markdown with **gruff** and wrap it with *lipgloss* styling.\n"
-	out, err := gruff.Render(title)
+	out, err := gruff.Render(title, gruff.WithWordWrap(termWidth()))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -40,7 +49,7 @@ func main() {
 		"| Bold | ✅ |\n" +
 		"| Italic | ✅ |\n" +
 		"| Tables | ✅ |\n"
-	out, err = gruff.Render(md)
+	out, err = gruff.Render(md, gruff.WithWordWrap(termWidth()))
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -9,7 +9,7 @@ import (
 	"github.com/yuin/goldmark/text"
 )
 
-const defaultWordWrap = 120
+const defaultWordWrap = 80
 
 type Options struct {
 	Theme    Theme
@@ -85,7 +85,6 @@ func wrapText(s string, width int) string {
 	var out strings.Builder
 	var word strings.Builder
 	lineLen := 0
-	wordLen := 0
 	inAnsi := false
 
 	flushWord := func() {
@@ -94,13 +93,13 @@ func wrapText(s string, width int) string {
 		if w == "" {
 			return
 		}
-		if lineLen > 0 && lineLen+wordLen > width {
+		wLen := displayWidth(stripANSI(w))
+		if lineLen > 0 && lineLen+wLen > width {
 			out.WriteByte('\n')
 			lineLen = 0
 		}
 		out.WriteString(w)
-		lineLen += wordLen
-		wordLen = 0
+		lineLen += wLen
 	}
 
 	for _, r := range s {
@@ -129,7 +128,6 @@ func wrapText(s string, width int) string {
 			continue
 		}
 		word.WriteRune(r)
-		wordLen++
 	}
 	flushWord()
 

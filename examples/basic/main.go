@@ -4,8 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/gausszhou/gruff"
+	"golang.org/x/term"
 )
 
 var sampleMD = "# Gruff Markdown Renderer\n\n" +
@@ -93,6 +95,8 @@ func main() {
 	}
 	if *wrap > 0 {
 		opts = append(opts, gruff.WithWordWrap(*wrap))
+	} else if w, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil && w > 0 {
+		opts = append(opts, gruff.WithWordWrap(w))
 	}
 
 	out, err := gruff.Render(sampleMD, opts...)

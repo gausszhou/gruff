@@ -389,17 +389,27 @@ func (r *nodeRenderer) renderTable(table *extensionAst.Table) {
 		}
 	}
 
-	overhead := 3 * (numCols - 1)
-	maxCol := (r.wordWrap - overhead) / numCols
-	if maxCol < 20 {
-		maxCol = 20
-	}
+	overhead := 3*(numCols-1) + 2
 
-	for i := range colWidths {
-		if colWidths[i] < 3 {
-			colWidths[i] = 3
-		} else if colWidths[i] > maxCol {
-			colWidths[i] = maxCol
+	totalNat := 0
+	for _, w := range colWidths {
+		totalNat += w
+	}
+	totalNat += overhead
+
+	if totalNat <= r.wordWrap {
+		for i := range colWidths {
+			if colWidths[i] < 3 {
+				colWidths[i] = 3
+			}
+		}
+	} else {
+		equal := (r.wordWrap - overhead) / numCols
+		if equal < 3 {
+			equal = 3
+		}
+		for i := range colWidths {
+			colWidths[i] = equal
 		}
 	}
 
