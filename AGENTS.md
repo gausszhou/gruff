@@ -23,7 +23,7 @@
 - `ast.Strong` does NOT exist in goldmark — use `ast.Emphasis` with Level check
 - `name` and `Theme` struct fields in `ansi.go` must be updated together
 - `benchmark/testdata/sample.md` must mirror `testdata/sample.md`
-- `testdata/sample.md` is the single source of truth for example content; `examples/basic/main.go` and `benchmark/benchmark_test.go` read it at runtime via relative path
+- `testdata/sample.md` is the single source of truth for example content; `examples/basic/main.go` reads its own copy via `//go:embed`
 - Do NOT create `cmd/` directory for diagnostics — use inline test or remove after use
 
 ## Constraints

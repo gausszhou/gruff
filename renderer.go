@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/yuin/goldmark/ast"
+	extensionAst "github.com/yuin/goldmark/extension/ast"
 )
 
 type nodeRenderer struct {
@@ -27,7 +28,7 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 
 	case *ast.Paragraph:
 		r.renderChildren(n)
-		if !r.isInsideList(n) {
+		if !r.isInsideList(n) && !r.isInsideTable(n) {
 			r.buf.WriteString("\n\n")
 		}
 
@@ -98,6 +99,9 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 	case *ast.ThematicBreak:
 		r.buf.WriteString("\x1b[90m────────────────────\x1b[0m\n\n")
 
+	case *extensionAst.Table:
+		r.renderTable(n)
+
 	default:
 		r.renderChildren(n)
 	}
@@ -107,6 +111,14 @@ func (r *nodeRenderer) renderChildren(node ast.Node) {
 	for c := node.FirstChild(); c != nil; c = c.NextSibling() {
 		r.renderNode(c)
 	}
+}
+
+func (r *nodeRenderer) renderSubtree(node ast.Node) string {
+	var sub nodeRenderer
+	sub.source = r.source
+	sub.th = r.th
+	sub.renderChildren(node)
+	return sub.buf.String()
 }
 
 func (r *nodeRenderer) renderListItem(node ast.Node) {
@@ -154,6 +166,15 @@ func (r *nodeRenderer) isInsideList(node ast.Node) bool {
 	return false
 }
 
+func (r *nodeRenderer) isInsideTable(node ast.Node) bool {
+	for p := node.Parent(); p != nil; p = p.Parent() {
+		if _, ok := p.(*extensionAst.Table); ok {
+			return true
+		}
+	}
+	return false
+}
+
 func (r *nodeRenderer) headingStyle(level int) style {
 	switch level {
 	case 1:
@@ -169,4 +190,167 @@ func (r *nodeRenderer) headingStyle(level int) style {
 	default:
 		return r.th.h6
 	}
+}
+
+type cellData struct {
+	content string
+	align   extensionAst.Alignment
+}
+
+func (r *nodeRenderer) renderTable(table *extensionAst.Table) {
+	var headers []cellData
+	var bodyRows [][]cellData
+
+	for child := table.FirstChild(); child != nil; child = child.NextSibling() {
+		switch n := child.(type) {
+		case *extensionAst.TableHeader:
+			for c := n.FirstChild(); c != nil; c = c.NextSibling() {
+				if cell, ok := c.(*extensionAst.TableCell); ok {
+					headers = append(headers, cellData{
+						content: r.renderSubtree(cell),
+						align:   cell.Alignment,
+					})
+				}
+			}
+		case *extensionAst.TableRow:
+			var rowCells []cellData
+			for c := n.FirstChild(); c != nil; c = c.NextSibling() {
+				if cell, ok := c.(*extensionAst.TableCell); ok {
+					rowCells = append(rowCells, cellData{
+						content: r.renderSubtree(cell),
+						align:   cell.Alignment,
+					})
+				}
+			}
+			bodyRows = append(bodyRows, rowCells)
+		}
+	}
+
+	numCols := len(headers)
+	if numCols == 0 && len(bodyRows) > 0 {
+		numCols = len(bodyRows[0])
+	}
+	if numCols == 0 {
+		return
+	}
+
+	colWidths := make([]int, numCols)
+	colAligns := make([]extensionAst.Alignment, numCols)
+
+	for i, h := range headers {
+		if i >= numCols {
+			break
+		}
+		w := displayWidth(stripANSI(h.content))
+		if w > colWidths[i] {
+			colWidths[i] = w
+		}
+		if h.align != 0 {
+			colAligns[i] = h.align
+		}
+	}
+
+	for _, row := range bodyRows {
+		for i, cell := range row {
+			if i >= numCols {
+				break
+			}
+			w := displayWidth(stripANSI(cell.content))
+			if w > colWidths[i] {
+				colWidths[i] = w
+			}
+			if cell.align != 0 {
+				colAligns[i] = cell.align
+			}
+		}
+	}
+
+	for i := range colWidths {
+		if colWidths[i] < 3 {
+			colWidths[i] = 3
+		}
+	}
+
+	border := "\x1b[38;5;8m"
+	reset := "\x1b[39m"
+
+	seg := func(w int) string {
+		s := ""
+		for j := 0; j < w+2; j++ {
+			s += "\u2500"
+		}
+		return s
+	}
+
+	hline := func(left, mid, right string) {
+		r.buf.WriteString(border)
+		r.buf.WriteString(left)
+		for i, w := range colWidths {
+			r.buf.WriteString(seg(w))
+			if i < len(colWidths)-1 {
+				r.buf.WriteString(mid)
+			}
+		}
+		r.buf.WriteString(right)
+		r.buf.WriteString(reset)
+		r.buf.WriteByte('\n')
+	}
+
+	hline("\u250c", "\u252c", "\u2510") // ┌─┬─┐
+
+	if len(headers) > 0 {
+		r.renderTableRow(headers, colWidths, colAligns)
+		hline("\u251c", "\u253c", "\u2524") // ├─┼─┤
+	}
+
+	for i, row := range bodyRows {
+		r.renderTableRow(row, colWidths, colAligns)
+		if i < len(bodyRows)-1 {
+			hline("\u251c", "\u253c", "\u2524")
+		}
+	}
+
+	hline("\u2514", "\u2534", "\u2518") // └─┴─┘
+}
+
+func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []extensionAst.Alignment) {
+	r.buf.WriteString("\x1b[38;5;8m\u2502\x1b[39m") // │
+	for i, cell := range cells {
+		if i >= len(widths) {
+			break
+		}
+		content := cell.content
+		visLen := displayWidth(stripANSI(content))
+		padding := widths[i] - visLen
+		if padding < 0 {
+			padding = 0
+		}
+
+		r.buf.WriteByte(' ')
+		switch aligns[i] {
+		case extensionAst.AlignRight:
+			for j := 0; j < padding; j++ {
+				r.buf.WriteByte(' ')
+			}
+			r.buf.WriteString(content)
+		case extensionAst.AlignCenter:
+			leftPad := padding / 2
+			rightPad := padding - leftPad
+			for j := 0; j < leftPad; j++ {
+				r.buf.WriteByte(' ')
+			}
+			r.buf.WriteString(content)
+			for j := 0; j < rightPad; j++ {
+				r.buf.WriteByte(' ')
+			}
+		default:
+			r.buf.WriteString(content)
+			for j := 0; j < padding; j++ {
+				r.buf.WriteByte(' ')
+			}
+		}
+		r.buf.WriteByte(' ')
+		r.buf.WriteString("\x1b[38;5;8m\u2502\x1b[39m") // │
+	}
+	r.buf.WriteByte('\n')
 }

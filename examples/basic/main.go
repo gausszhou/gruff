@@ -1,20 +1,18 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/gausszhou/gruff"
 )
 
-func main() {
-	source, err := os.ReadFile("../../testdata/sample.md")
-	if err != nil {
-		log.Fatal(err)
-	}
+//go:embed testdata/sample.md
+var sampleMD string
 
-	out, err := gruff.Render(string(source))
+func main() {
+	out, err := gruff.Render(sampleMD)
 	if err != nil {
 		log.Fatal(err)
 	}

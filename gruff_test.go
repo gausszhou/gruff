@@ -190,8 +190,46 @@ func TestRender_List(t *testing.T) {
 	}
 }
 
+func TestRender_Table(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  []string
+	}{
+		{
+			name:  "simple table",
+			input: "| H1 | H2 |\n| --- | --- |\n| A | B |\n",
+			want:  []string{"\u250c", "\u2500", "\u252c", "\u2510", "H1", "H2", "A", "B", "\u2502"},
+		},
+		{
+			name:  "table with alignment",
+			input: "| Left | Center | Right |\n|:-----|:------:|------:|\n| a    | b      | c     |\n",
+			want:  []string{"\u250c", "Left", "Center", "Right", "a", "b", "c", "\u251c", "\u2524", "\u2514", "\u2518"},
+		},
+		{
+			name:  "table with inline",
+			input: "| Col1 | Col2 |\n|------|------|\n| `code` | **bold** |\n",
+			want:  []string{"\x1b[48;5;236m", "\x1b[1m", "code", "bold"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Render(tt.input)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, w := range tt.want {
+				if !strings.Contains(got, w) {
+					t.Errorf("output missing %q", w)
+				}
+			}
+		})
+	}
+}
+
 func TestRender_Mixed(t *testing.T) {
-	input := "# Title\n\nThis is **bold** and *italic* and `code`.\n\nA [link](https://example.com) here.\n\n- list with **bold**\n- list with `code`\n\n1. first\n2. second\n"
+	input := "# Title\n\nThis is **bold** and *italic* and `code`.\n\nA [link](https://example.com) here.\n\n- list with **bold**\n- list with `code`\n\n1. first\n2. second\n\n| A | B |\n|---|---|\n| 1 | 2 |\n"
 
 	got, err := Render(input)
 	if err != nil {
@@ -210,6 +248,7 @@ func TestRender_Mixed(t *testing.T) {
 		{"contains link URL", func(s string) bool { return strings.Contains(s, "example.com") }},
 		{"contains bullet", func(s string) bool { return strings.Contains(s, "•") }},
 		{"contains ordered num", func(s string) bool { return strings.Contains(s, "1.") }},
+		{"contains table border", func(s string) bool { return strings.Contains(s, "\u250c") }},
 	}
 
 	for _, c := range checks {
