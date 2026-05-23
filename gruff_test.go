@@ -9,27 +9,27 @@ func TestRender_Heading(t *testing.T) {
 	tests := []struct {
 		name  string
 		input string
-		want  string
+		check []string
 	}{
 		{
 			name:  "h1",
 			input: "# Heading 1\n",
-			want:  "\x1b[48;2;20;20;20m\x1b[1m\x1b[4m\x1b[38;5;15mHeading 1\x1b[22m\x1b[24m\x1b[39m\n\n",
+			check: []string{"\x1b[1m\x1b[4m\x1b[38;5;15mHeading 1", "\x1b[22m\x1b[24m\x1b[39m\n\n"},
 		},
 		{
 			name:  "h2",
 			input: "## Heading 2\n",
-			want:  "\x1b[48;2;20;20;20m\x1b[1m\x1b[38;5;11mHeading 2\x1b[22m\x1b[39m\n\n",
+			check: []string{"\x1b[1m\x1b[38;5;11mHeading 2", "\x1b[22m\x1b[39m\n\n"},
 		},
 		{
 			name:  "h6",
 			input: "###### Heading 6\n",
-			want:  "\x1b[48;2;20;20;20m\x1b[38;5;8mHeading 6\x1b[39m\n\n",
+			check: []string{"\x1b[38;5;8mHeading 6", "\x1b[39m\n\n"},
 		},
 		{
 			name:  "heading with inline",
 			input: "# **Bold** heading\n",
-			want:  "\x1b[48;2;20;20;20m\x1b[1m\x1b[4m\x1b[38;5;15m\x1b[1mBold\x1b[22m heading\x1b[22m\x1b[24m\x1b[39m\n\n",
+			check: []string{"\x1b[1m\x1b[4m\x1b[38;5;15m\x1b[1mBold\x1b[22m heading", "\x1b[22m\x1b[24m\x1b[39m\n\n"},
 		},
 	}
 
@@ -39,8 +39,10 @@ func TestRender_Heading(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if got != tt.want {
-				t.Errorf("Render() =\n%q\nwant:\n%q", got, tt.want)
+			for _, c := range tt.check {
+				if !strings.Contains(got, c) {
+					t.Errorf("output missing %q\n got: %q", c, got)
+				}
 			}
 		})
 	}

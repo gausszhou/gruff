@@ -41,8 +41,11 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 
 	case *ast.Heading:
 		st := r.headingStyle(n.Level)
+		content := r.renderSubtree(n)
 		r.buf.WriteString(string(st.start()))
-		r.renderChildren(n)
+		r.buf.WriteString(content)
+		visLen := displayWidth(stripANSI(content))
+		r.padLine(visLen)
 		r.buf.WriteString(string(st.end(r.th.Background)))
 		r.buf.WriteString("\n\n")
 
