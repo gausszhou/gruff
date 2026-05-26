@@ -308,7 +308,7 @@ func wrapCellLines(content string, width int) []string {
 			continue
 		}
 		word.WriteRune(r)
-		wordVisLen++
+		wordVisLen += runewidth.RuneWidth(r)
 	}
 	flushWord()
 
