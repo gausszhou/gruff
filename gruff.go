@@ -131,5 +131,11 @@ func wrapText(s string, width int) string {
 	}
 	flushWord()
 
-	return out.String()
+	// Trim trailing spaces from each line (leftover from space-before-word-break)
+	raw := out.String()
+	lines := strings.Split(raw, "\n")
+	for i, line := range lines {
+		lines[i] = strings.TrimRight(line, " ")
+	}
+	return strings.Join(lines, "\n")
 }
