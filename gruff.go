@@ -96,7 +96,7 @@ func wrapText(s string, width int) string {
 			return
 		}
 		wLen := ansiDisplayWidth(word)
-		if lineLen > 0 && lineLen+wLen > width {
+		if lineLen > 0 && lineLen+wLen+(b2i(spaces > 0)) > width {
 			out.WriteByte('\n')
 			lineLen = 0
 			spaces = 0
@@ -148,4 +148,11 @@ func wrapText(s string, width int) string {
 	}
 
 	return out.String()
+}
+
+func b2i(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
 }

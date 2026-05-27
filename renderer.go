@@ -56,9 +56,10 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 		r.renderListItem(n)
 
 	case *ast.Text:
-		r.buf.Write(n.Value(r.source))
+		v := n.Value(r.source)
+		r.buf.Write(v)
 		if n.SoftLineBreak() {
-			r.buf.WriteByte('\n')
+			r.buf.WriteByte(' ')
 		}
 
 	case *ast.String:
