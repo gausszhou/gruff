@@ -2,6 +2,7 @@ package gruff
 
 import (
 	"strings"
+	"unicode/utf8"
 
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
@@ -83,28 +84,37 @@ func wrapText(s string, width int) string {
 	}
 
 	var out strings.Builder
-	var word strings.Builder
+	out.Grow(len(s) + len(s)/(width+1) + 16)
+
+	word := make([]byte, 0, 64)
 	lineLen := 0
+	spaces := 0
 	inAnsi := false
 
 	flushWord := func() {
-		w := word.String()
-		word.Reset()
-		if w == "" {
+		if len(word) == 0 {
 			return
 		}
-		wLen := displayWidth(stripANSI(w))
+		wLen := ansiDisplayWidth(word)
 		if lineLen > 0 && lineLen+wLen > width {
 			out.WriteByte('\n')
 			lineLen = 0
+			spaces = 0
+		} else if spaces > 0 {
+			for i := 0; i < spaces; i++ {
+				out.WriteByte(' ')
+			}
+			lineLen += spaces
 		}
-		out.WriteString(w)
+		out.Write(word)
 		lineLen += wLen
+		spaces = 0
+		word = word[:0]
 	}
 
 	for _, r := range s {
 		if inAnsi {
-			word.WriteRune(r)
+			word = utf8.AppendRune(word, r)
 			if r == 'm' {
 				inAnsi = false
 			}
@@ -112,30 +122,30 @@ func wrapText(s string, width int) string {
 		}
 		if r == '\x1b' {
 			inAnsi = true
-			word.WriteRune(r)
+			word = utf8.AppendRune(word, r)
 			continue
 		}
 		if r == '\n' {
 			flushWord()
 			out.WriteByte('\n')
 			lineLen = 0
+			spaces = 0
 			continue
 		}
 		if r == ' ' {
 			flushWord()
-			out.WriteByte(' ')
-			lineLen++
+			spaces++
 			continue
 		}
-		word.WriteRune(r)
+		word = utf8.AppendRune(word, r)
 	}
 	flushWord()
 
-	// Trim trailing spaces from each line (leftover from space-before-word-break)
-	raw := out.String()
-	lines := strings.Split(raw, "\n")
-	for i, line := range lines {
-		lines[i] = strings.TrimRight(line, " ")
+	if spaces > 0 {
+		for i := 0; i < spaces; i++ {
+			out.WriteByte(' ')
+		}
 	}
-	return strings.Join(lines, "\n")
+
+	return out.String()
 }

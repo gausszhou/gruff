@@ -2,6 +2,7 @@ package gruff
 
 import (
 	"strings"
+	"unicode/utf8"
 
 	"github.com/mattn/go-runewidth"
 	"github.com/yuin/goldmark/ast"
@@ -111,7 +112,10 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 		r.renderCodeBlock(n.Lines(), nil)
 
 	case *ast.ThematicBreak:
-		r.buf.WriteString("\x1b[90m────────────────────\x1b[39m\n\n")
+		r.buf.WriteString(string(r.th.Hr.start()))
+		r.buf.WriteString("────────────────────")
+		r.buf.WriteString(string(r.th.Hr.end(r.th.Background)))
+		r.buf.WriteString("\n\n")
 
 	case *extensionAst.Table:
 		r.renderTable(n)
@@ -253,15 +257,13 @@ func wrapCellLines(content string, width int) []string {
 
 	var lines []string
 	var line strings.Builder
-	var word strings.Builder
+	word := make([]byte, 0, 64)
 	lineVisLen := 0
 	wordVisLen := 0
 	inAnsi := false
 
 	flushWord := func() {
-		w := word.String()
-		word.Reset()
-		if len(w) == 0 && wordVisLen == 0 {
+		if len(word) == 0 && wordVisLen == 0 {
 			return
 		}
 		if lineVisLen > 0 && lineVisLen+1+wordVisLen > width {
@@ -273,14 +275,15 @@ func wrapCellLines(content string, width int) []string {
 			line.WriteByte(' ')
 			lineVisLen++
 		}
-		line.WriteString(w)
+		line.Write(word)
 		lineVisLen += wordVisLen
 		wordVisLen = 0
+		word = word[:0]
 	}
 
 	for _, r := range content {
 		if inAnsi {
-			word.WriteRune(r)
+			word = utf8.AppendRune(word, r)
 			if r == 'm' {
 				inAnsi = false
 			}
@@ -288,11 +291,22 @@ func wrapCellLines(content string, width int) []string {
 		}
 		if r == '\x1b' {
 			inAnsi = true
-			word.WriteRune(r)
+			word = utf8.AppendRune(word, r)
 			continue
 		}
-		if r == ' ' || r == '\n' {
+		if r == ' ' {
 			flushWord()
+			continue
+		}
+		if r == '\n' {
+			flushWord()
+			if line.Len() > 0 {
+				lines = append(lines, line.String())
+				line.Reset()
+				lineVisLen = 0
+			} else {
+				lines = append(lines, "")
+			}
 			continue
 		}
 		if runewidth.RuneWidth(r) > 1 {
@@ -307,7 +321,7 @@ func wrapCellLines(content string, width int) []string {
 			lineVisLen += rw
 			continue
 		}
-		word.WriteRune(r)
+		word = utf8.AppendRune(word, r)
 		wordVisLen += runewidth.RuneWidth(r)
 	}
 	flushWord()
@@ -422,8 +436,8 @@ func (r *nodeRenderer) renderTable(table *extensionAst.Table) {
 		}
 	}
 
-	border := "\x1b[38;5;8m"
-	reset := "\x1b[39m"
+	border := string(r.th.Border.start())
+	reset := string(r.th.Border.end(r.th.Background))
 
 	seg := func(w int) string {
 		s := ""
@@ -478,7 +492,9 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 			}
 
 			if i > 0 {
-				r.buf.WriteString("\x1b[38;5;8m\u2502\x1b[39m") // │
+				r.buf.WriteString(string(r.th.Border.start()))
+				r.buf.WriteString("\u2502")
+				r.buf.WriteString(string(r.th.Border.end(r.th.Background)))
 			}
 
 			var content string

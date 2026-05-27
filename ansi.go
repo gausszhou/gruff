@@ -3,7 +3,6 @@ package gruff
 import (
 	"unicode/utf8"
 
-	"charm.land/lipgloss/v2"
 	"github.com/mattn/go-runewidth"
 )
 
@@ -48,9 +47,21 @@ func isHex(c Color) bool {
 }
 
 func hexRGB(c Color) (r, g, b uint8) {
-	cc := lipgloss.Color(string(c))
-	rr, gg, bb, _ := cc.RGBA()
-	return uint8(rr >> 8), uint8(gg >> 8), uint8(bb >> 8)
+	if len(c) < 7 || c[0] != '#' {
+		return 0, 0, 0
+	}
+	hex := func(b1, b2 byte) uint8 {
+		n1 := b1 - '0'
+		if n1 > 9 {
+			n1 = 10 + b1 - 'a'
+		}
+		n2 := b2 - '0'
+		if n2 > 9 {
+			n2 = 10 + b2 - 'a'
+		}
+		return n1<<4 | n2
+	}
+	return hex(c[1], c[2]), hex(c[3], c[4]), hex(c[5], c[6])
 }
 
 func ansiFg(c Color) ansiCode {
@@ -135,7 +146,7 @@ func (s Style) end(bg Color) ansiCode {
 		}
 	}
 	if out == "" {
-		out = string(ansiReset)
+		out = "\x1b[39m\x1b[49m"
 	}
 	return ansiCode(out)
 }
@@ -150,6 +161,8 @@ type Theme struct {
 	LinkURL                 Style
 	Bullet                  Style
 	Numbered                Style
+	Hr                      Style
+	Border                  Style
 }
 
 var darkTheme = Theme{
@@ -167,6 +180,8 @@ var darkTheme = Theme{
 	LinkURL:    Style{Fg: cGrey},
 	Bullet:     Style{Fg: cYellow},
 	Numbered:   Style{Fg: cYellow},
+	Hr:         Style{Fg: cGrey},
+	Border:     Style{Fg: cGrey},
 }
 
 var lightTheme = Theme{
@@ -184,6 +199,8 @@ var lightTheme = Theme{
 	LinkURL:    Style{Fg: cGrey},
 	Bullet:     Style{Fg: cMaroon},
 	Numbered:   Style{Fg: cMaroon},
+	Hr:         Style{Fg: cGrey},
+	Border:     Style{Fg: cGrey},
 }
 
 func displayWidth(s string) int {
@@ -207,6 +224,25 @@ func stripANSI(s string) string {
 	return string(out)
 }
 
+func ansiDisplayWidth(b []byte) int {
+	w := 0
+	for i := 0; i < len(b); {
+		if b[i] == '\x1b' && i+1 < len(b) && b[i+1] == '[' {
+			for j := i + 2; j < len(b); j++ {
+				if b[j] == 'm' {
+					i = j + 1
+					break
+				}
+			}
+			continue
+		}
+		r, size := utf8.DecodeRune(b[i:])
+		w += runewidth.RuneWidth(r)
+		i += size
+	}
+	return w
+}
+
 func itoa(n int) string {
 	if n == 0 {
 		return "0"
@@ -221,10 +257,4 @@ func itoa(n int) string {
 	return string(buf[i:])
 }
 
-func truncateUTF8(s string, max int) string {
-	if utf8.RuneCountInString(s) <= max {
-		return s
-	}
-	runes := []rune(s)
-	return string(runes[:max])
-}
+
