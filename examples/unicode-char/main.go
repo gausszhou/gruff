@@ -13,15 +13,16 @@ import (
 )
 
 var noBgTheme = gruff.Theme{
-	H1:       gruff.Style{Bold: true, Fg: "#ffffff"},
-	H2:       gruff.Style{Bold: true, Fg: "#ffff00"},
-	H3:       gruff.Style{Bold: true, Fg: "#00ff00"},
-	H4:       gruff.Style{Bold: true, Fg: "#00ffff"},
-	H5:       gruff.Style{Bold: true, Fg: "#808080"},
-	H6:       gruff.Style{Fg: "#808080"},
+	Document: gruff.Style{Padding: 2},
+	H1:       gruff.Style{Bold: true, Fg: "#FFFF87", Bg: "#5F5FFF"},
+	H2:       gruff.Style{Bold: true, Fg: "#00AFFF"},
+	H3:       gruff.Style{Bold: true, Fg: "#00AFFF"},
+	H4:       gruff.Style{Bold: true, Fg: "#00AFFF"},
+	H5:       gruff.Style{Bold: true, Fg: "#00AFFF"},
+	H6:       gruff.Style{Fg: "#00AF5F"},
 	Strong:   gruff.Style{Bold: true},
 	Em:       gruff.Style{Italic: true},
-	Code:     gruff.Style{Fg: "#50865a"},
+	Code:     gruff.Style{Fg: "#FF5F5F"},
 	Link:     gruff.Style{Underline: true, Fg: "#5c9cf5"},
 	LinkURL:  gruff.Style{Fg: "#808080"},
 	Bullet:   gruff.Style{Fg: "#ffff00"},

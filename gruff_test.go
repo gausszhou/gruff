@@ -14,22 +14,22 @@ func TestRender_Heading(t *testing.T) {
 		{
 			name:  "h1",
 			input: "# Heading 1\n",
-			check: []string{"\x1b[1m\x1b[38;5;15mHeading 1\x1b[K", "\x1b[22m\x1b[39m\n\n"},
+			check: []string{"\x1b[1m\x1b[38;2;255;255;135m", "Heading 1\x1b[K", "\x1b[22m\x1b[39m"},
 		},
 		{
 			name:  "h2",
 			input: "## Heading 2\n",
-			check: []string{"\x1b[1m\x1b[38;5;11mHeading 2", "\x1b[22m\x1b[39m\n\n"},
+			check: []string{"\x1b[1m\x1b[38;2;0;175;255mHeading 2", "\x1b[22m\x1b[39m"},
 		},
 		{
 			name:  "h6",
 			input: "###### Heading 6\n",
-			check: []string{"\x1b[38;5;8mHeading 6", "\x1b[39m\n\n"},
+			check: []string{"\x1b[38;2;0;175;95mHeading 6", "\x1b[39m"},
 		},
 		{
 			name:  "heading with inline",
 			input: "# **Bold** heading\n",
-			check: []string{"\x1b[1m\x1b[38;5;15m\x1b[1mBold\x1b[22m heading\x1b[K", "\x1b[22m\x1b[39m\n\n"},
+			check: []string{"\x1b[1m\x1b[38;2;255;255;135m", "Bold\x1b[22m heading\x1b[K", "\x1b[22m\x1b[39m"},
 		},
 	}
 
@@ -57,27 +57,27 @@ func TestRender_BoldItalic(t *testing.T) {
 		{
 			name:  "bold",
 			input: "**bold**\n",
-			check: []string{"\x1b[48;2;20;20;20m\x1b[1mbold\x1b[22m"},
+			check: []string{"\x1b[1mbold\x1b[22m"},
 		},
 		{
 			name:  "italic",
 			input: "*italic*\n",
-			check: []string{"\x1b[48;2;20;20;20m\x1b[3mitalic\x1b[23m"},
+			check: []string{"\x1b[3mitalic\x1b[23m"},
 		},
 		{
 			name:  "bold italic",
 			input: "***both***\n",
-			check: []string{"\x1b[48;2;20;20;20m\x1b[3m\x1b[1mboth\x1b[22m\x1b[23m"},
+			check: []string{"\x1b[3m\x1b[1mboth\x1b[22m\x1b[23m"},
 		},
 		{
 			name:  "nested bold in italic",
 			input: "*italic and **bold** inside*\n",
-			check: []string{"\x1b[48;2;20;20;20m\x1b[3mitalic and \x1b[1mbold\x1b[22m inside\x1b[23m"},
+			check: []string{"\x1b[3mitalic and \x1b[1mbold\x1b[22m inside\x1b[23m"},
 		},
 		{
 			name:  "mixed inline paragraph",
 			input: "plain **bold** and *italic*.\n",
-			check: []string{"\x1b[48;2;20;20;20mplain \x1b[1mbold\x1b[22m and \x1b[3mitalic\x1b[23m."},
+			check: []string{"plain \x1b[1mbold\x1b[22m and \x1b[3mitalic\x1b[23m."},
 		},
 	}
 
@@ -105,12 +105,12 @@ func TestRender_InlineCode(t *testing.T) {
 		{
 			name:  "inline code",
 			input: "Use `code` here\n",
-			check: []string{"\x1b[38;2;80;134;90mcode\x1b[39m"},
+			check: []string{"\x1b[38;2;166;226;46mcode\x1b[39m"},
 		},
 		{
 			name:  "code with bold",
 			input: "**bold and `code`**\n",
-			check: []string{"\x1b[1mbold and \x1b[38;2;80;134;90mcode\x1b[39m\x1b[22m"},
+			check: []string{"\x1b[1mbold and \x1b[38;2;166;226;46mcode\x1b[39m"},
 		},
 	}
 
@@ -138,17 +138,17 @@ func TestRender_Link(t *testing.T) {
 		{
 			name:  "basic link",
 			input: "[Gruff](https://example.com)\n",
-			check: []string{"\x1b[4m\x1b[38;2;92;156;245mGruff\x1b[24m\x1b[39m \x1b[38;5;8m(https://example.com)\x1b[39m"},
+			check: []string{"\x1b[4m\x1b[38;2;92;156;245mGruff\x1b[24m\x1b[39m \x1b[38;2;128;128;128m(https://example.com)\x1b[39m"},
 		},
 		{
 			name:  "link with bold text",
 			input: "[**bold**](https://example.com)\n",
-			check: []string{"\x1b[4m\x1b[38;2;92;156;245m\x1b[1mbold\x1b[22m\x1b[24m\x1b[39m \x1b[38;5;8m(https://example.com)\x1b[39m"},
+			check: []string{"\x1b[4m\x1b[38;2;92;156;245m\x1b[1mbold\x1b[22m\x1b[24m\x1b[39m \x1b[38;2;128;128;128m(https://example.com)\x1b[39m"},
 		},
 		{
 			name:  "link in paragraph",
 			input: "click [here](https://example.com) now\n",
-			check: []string{"\x1b[4m\x1b[38;2;92;156;245mhere\x1b[24m\x1b[39m \x1b[38;5;8m(https://example.com)\x1b[39m now"},
+			check: []string{"\x1b[4m\x1b[38;2;92;156;245mhere\x1b[24m\x1b[39m \x1b[38;2;128;128;128m(https://example.com)\x1b[39m now"},
 		},
 	}
 
@@ -176,22 +176,22 @@ func TestRender_CodeBlock(t *testing.T) {
 		{
 			name:  "fenced code block",
 			input: "```\ncode\n```\n",
-			check: []string{"\x1b[38;2;80;134;90m  code\x1b[K", "\x1b[39m"},
+			check: []string{"\x1b[38;2;166;226;46m  code\x1b[K", "\x1b[39m"},
 		},
 		{
 			name:  "fenced code with language",
 			input: "```go\nvar x = 1\n```\n",
-			check: []string{"\x1b[38;5;8m  go\x1b[K", "\x1b[38;2;80;134;90m  var x = 1\x1b[K"},
+			check: []string{"\x1b[38;2;128;128;128m  go\x1b[K", "\x1b[38;2;166;226;46m  var x = 1\x1b[K"},
 		},
 		{
 			name:  "indented code block",
 			input: "    indented\n",
-			check: []string{"\x1b[38;2;80;134;90m  indented\x1b[K"},
+			check: []string{"\x1b[38;2;166;226;46m  indented\x1b[K"},
 		},
 		{
 			name:  "multi-line fenced code",
 			input: "```\nline1\nline2\n```\n",
-			check: []string{"\x1b[38;2;80;134;90m  line1\x1b[K", "\x1b[38;2;80;134;90m  line2\x1b[K"},
+			check: []string{"\x1b[38;2;166;226;46m  line1\x1b[K", "\x1b[38;2;166;226;46m  line2\x1b[K"},
 		},
 	}
 
@@ -219,12 +219,12 @@ func TestRender_List(t *testing.T) {
 		{
 			name:  "unordered",
 			input: "- item 1\n- item 2\n",
-			want:  "\x1b[48;2;20;20;20m  \x1b[38;5;11m• \x1b[39mitem 1\n  \x1b[38;5;11m• \x1b[39mitem 2\n\n",
+			want:  "    \x1b[38;2;255;255;0m• \x1b[39mitem 1  \n    \x1b[38;2;255;255;0m• \x1b[39mitem 2  \n    \n  ",
 		},
 		{
 			name:  "ordered",
 			input: "1. first\n2. second\n",
-			want:  "\x1b[48;2;20;20;20m  \x1b[38;5;11m1. \x1b[39mfirst\n  \x1b[38;5;11m2. \x1b[39msecond\n\n",
+			want:  "    \x1b[38;2;255;255;0m1. \x1b[39mfirst  \n    \x1b[38;2;255;255;0m2. \x1b[39msecond  \n    \n  ",
 		},
 	}
 
@@ -260,7 +260,7 @@ func TestRender_Table(t *testing.T) {
 		{
 			name:  "table with inline",
 			input: "| Col1 | Col2 |\n|------|------|\n| `code` | **bold** |\n",
-			want:  []string{"\x1b[38;2;80;134;90m", "\x1b[1m", "code", "bold"},
+			want:  []string{"\x1b[38;2;166;226;46m", "\x1b[1m", "code", "bold"},
 		},
 	}
 
@@ -294,7 +294,7 @@ func TestRender_Mixed(t *testing.T) {
 		{"contains Title", func(s string) bool { return strings.Contains(s, "Title") }},
 		{"contains bold ANSI", func(s string) bool { return strings.Contains(s, "\x1b[1m") }},
 		{"contains italic ANSI", func(s string) bool { return strings.Contains(s, "\x1b[3m") }},
-		{"contains code ANSI", func(s string) bool { return strings.Contains(s, "\x1b[38;2;80;134;90m") }},
+		{"contains code ANSI", func(s string) bool { return strings.Contains(s, "\x1b[38;2;166;226;46m") }},
 		{"contains link underline", func(s string) bool { return strings.Contains(s, "\x1b[4m") }},
 		{"contains link URL", func(s string) bool { return strings.Contains(s, "example.com") }},
 		{"contains bullet", func(s string) bool { return strings.Contains(s, "•") }},
@@ -314,8 +314,8 @@ func TestRender_Empty(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got != "\x1b[48;2;20;20;20m" {
-		t.Errorf("Render() = %q, want background-only", got)
+	if got != "  " {
+		t.Errorf("Render() = %q, want padding-only", got)
 	}
 }
 

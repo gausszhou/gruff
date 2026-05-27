@@ -198,7 +198,7 @@ func TestStripANSI_Unicode(t *testing.T) {
 		want  string
 	}{
 		{"\x1b[1m中文\x1b[22m", "中文"},
-		{"\x1b[38;2;80;134;90m世界\x1b[39m", "世界"},
+		{"\x1b[38;2;166;226;46m世界\x1b[39m", "世界"},
 		{"\x1b[1m👍\x1b[22m", "👍"},
 		{"彩\x1b[31m虹\x1b[39m色", "彩虹色"},
 	}
@@ -373,7 +373,7 @@ func TestWrapText_CJK(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			wrapped := wrapText(tt.input, tt.width)
+			wrapped := wrapText(tt.input, tt.width, 0)
 			for _, line := range strings.Split(wrapped, "\n") {
 				w := runewidth.StringWidth(line)
 				if w > tt.width {

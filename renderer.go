@@ -29,8 +29,8 @@ func renderMarkdown(source []byte, th Theme, wordWrap int, node ast.Node) string
 func (r *nodeRenderer) renderNode(node ast.Node) {
 	switch n := node.(type) {
 	case *ast.Document:
-		if r.th.Background != "" {
-			r.buf.WriteString(string(ansiBg(r.th.Background)))
+		if r.th.Document.Bg != "" {
+			r.buf.WriteString(string(ansiBg(r.th.Document.Bg)))
 		}
 		r.renderChildren(n)
 
@@ -45,7 +45,7 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 		r.buf.WriteString(string(st.start()))
 		r.renderChildren(n)
 		r.buf.WriteString("\x1b[K")
-		r.buf.WriteString(string(st.end(r.th.Background)))
+		r.buf.WriteString(string(st.end(r.th.Document.Bg)))
 		r.buf.WriteString("\n\n")
 
 	case *ast.List:
@@ -72,22 +72,28 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 		}
 		r.buf.WriteString(string(st.start()))
 		r.renderChildren(n)
-		r.buf.WriteString(string(st.end(r.th.Background)))
+		r.buf.WriteString(string(st.end(r.th.Document.Bg)))
 
 	case *ast.CodeSpan:
 		r.buf.WriteString(string(r.th.Code.start()))
+		for range r.th.Code.Padding {
+			r.buf.WriteByte(' ')
+		}
 		for c := n.FirstChild(); c != nil; c = c.NextSibling() {
 			if text, ok := c.(*ast.Text); ok {
 				r.buf.Write(text.Value(r.source))
 			}
 		}
-		r.buf.WriteString(string(r.th.Code.end(r.th.Background)))
+		for range r.th.Code.Padding {
+			r.buf.WriteByte(' ')
+		}
+		r.buf.WriteString(string(r.th.Code.end(r.th.Document.Bg)))
 
 	case *ast.Link:
 		st := r.th.Link
 		r.buf.WriteString(string(st.start()))
 		r.renderChildren(n)
-		r.buf.WriteString(string(st.end(r.th.Background)))
+		r.buf.WriteString(string(st.end(r.th.Document.Bg)))
 		if len(n.Destination) > 0 {
 			url := string(n.Destination)
 			uSt := r.th.LinkURL
@@ -96,7 +102,7 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 			r.buf.WriteByte('(')
 			r.buf.WriteString(url)
 			r.buf.WriteByte(')')
-			r.buf.WriteString(string(uSt.end(r.th.Background)))
+			r.buf.WriteString(string(uSt.end(r.th.Document.Bg)))
 		}
 
 	case *ast.Image:
@@ -115,7 +121,7 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 	case *ast.ThematicBreak:
 		r.buf.WriteString(string(r.th.Hr.start()))
 		r.buf.WriteString("────────────────────")
-		r.buf.WriteString(string(r.th.Hr.end(r.th.Background)))
+		r.buf.WriteString(string(r.th.Hr.end(r.th.Document.Bg)))
 		r.buf.WriteString("\n\n")
 
 	case *extensionAst.Table:
@@ -142,7 +148,7 @@ func (r *nodeRenderer) renderSubtree(node ast.Node) string {
 
 func (r *nodeRenderer) renderCodeBlock(lines *text.Segments, lang []byte) {
 	st := r.th.Code
-	bg := r.th.Background
+	bg := r.th.Document.Bg
 	codeStyleStart := string(st.start())
 	const padding = 2
 
@@ -196,12 +202,12 @@ func (r *nodeRenderer) renderListItem(node ast.Node) {
 		r.buf.WriteString(string(r.th.Numbered.start()))
 		r.buf.WriteString(itoa(num))
 		r.buf.WriteString(". ")
-		r.buf.WriteString(string(r.th.Numbered.end(r.th.Background)))
+		r.buf.WriteString(string(r.th.Numbered.end(r.th.Document.Bg)))
 	} else {
 		r.buf.WriteString("  ")
 		r.buf.WriteString(string(r.th.Bullet.start()))
 		r.buf.WriteString("• ")
-		r.buf.WriteString(string(r.th.Bullet.end(r.th.Background)))
+		r.buf.WriteString(string(r.th.Bullet.end(r.th.Document.Bg)))
 	}
 
 	for c := node.FirstChild(); c != nil; c = c.NextSibling() {
@@ -438,7 +444,7 @@ func (r *nodeRenderer) renderTable(table *extensionAst.Table) {
 	}
 
 	border := string(r.th.Border.start())
-	reset := string(r.th.Border.end(r.th.Background))
+	reset := string(r.th.Border.end(r.th.Document.Bg))
 
 	seg := func(w int) string {
 		s := ""
@@ -482,8 +488,8 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 	}
 
 	bgReset := "\x1b[49m"
-	if r.th.Background != "" {
-		bgReset = string(ansiBg(r.th.Background))
+	if r.th.Document.Bg != "" {
+		bgReset = string(ansiBg(r.th.Document.Bg))
 	}
 
 	for lineIdx := 0; lineIdx < maxLines; lineIdx++ {
@@ -495,7 +501,7 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 			if i > 0 {
 				r.buf.WriteString(string(r.th.Border.start()))
 				r.buf.WriteString("\u2502")
-				r.buf.WriteString(string(r.th.Border.end(r.th.Background)))
+				r.buf.WriteString(string(r.th.Border.end(r.th.Document.Bg)))
 			}
 
 			var content string

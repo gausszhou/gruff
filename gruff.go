@@ -64,7 +64,7 @@ func Render(source string, opts ...Option) (string, error) {
 	out := renderMarkdown(sourceBytes, o.Theme, o.WordWrap, doc)
 
 	if o.WordWrap > 0 {
-		out = wrapText(out, o.WordWrap)
+		out = wrapText(out, o.WordWrap, o.Theme.Document.Padding)
 	}
 
 	return out, nil
@@ -78,16 +78,20 @@ func RenderBytes(source []byte, opts ...Option) ([]byte, error) {
 	return []byte(s), nil
 }
 
-func wrapText(s string, width int) string {
+func wrapText(s string, width int, padding int) string {
 	if width <= 0 {
 		return s
 	}
 
 	var out strings.Builder
-	out.Grow(len(s) + len(s)/(width+1) + 16)
+	out.Grow(len(s) + len(s)/(width+1) + 32)
+
+	for range padding {
+		out.WriteByte(' ')
+	}
+	lineLen := padding
 
 	word := make([]byte, 0, 64)
-	lineLen := 0
 	spaces := 0
 	inAnsi := false
 
@@ -96,9 +100,15 @@ func wrapText(s string, width int) string {
 			return
 		}
 		wLen := ansiDisplayWidth(word)
-		if lineLen > 0 && lineLen+wLen+(b2i(spaces > 0)) > width {
+		if lineLen > 0 && lineLen+wLen+(b2i(spaces > 0)) > width-padding {
+			for range padding {
+				out.WriteByte(' ')
+			}
 			out.WriteByte('\n')
-			lineLen = 0
+			for range padding {
+				out.WriteByte(' ')
+			}
+			lineLen = padding
 			spaces = 0
 		} else if spaces > 0 {
 			for i := 0; i < spaces; i++ {
@@ -127,8 +137,14 @@ func wrapText(s string, width int) string {
 		}
 		if r == '\n' {
 			flushWord()
+			for range padding {
+				out.WriteByte(' ')
+			}
 			out.WriteByte('\n')
-			lineLen = 0
+			for range padding {
+				out.WriteByte(' ')
+			}
+			lineLen = padding
 			spaces = 0
 			continue
 		}

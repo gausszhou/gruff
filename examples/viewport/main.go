@@ -14,22 +14,6 @@ import (
 	"github.com/gausszhou/gruff"
 )
 
-var noBgTheme = gruff.Theme{
-	H1:       gruff.Style{Bold: true, Fg: "#ffffff"},
-	H2:       gruff.Style{Bold: true, Fg: "#ffff00"},
-	H3:       gruff.Style{Bold: true, Fg: "#00ff00"},
-	H4:       gruff.Style{Bold: true, Fg: "#00ffff"},
-	H5:       gruff.Style{Bold: true, Fg: "#808080"},
-	H6:       gruff.Style{Fg: "#808080"},
-	Strong:   gruff.Style{Bold: true},
-	Em:       gruff.Style{Italic: true},
-	Code:     gruff.Style{Fg: "#50865a"},
-	Link:     gruff.Style{Underline: true, Fg: "#5c9cf5"},
-	LinkURL:  gruff.Style{Fg: "#808080"},
-	Bullet:   gruff.Style{Fg: "#ffff00"},
-	Numbered: gruff.Style{Fg: "#ffff00"},
-}
-
 type focus int
 
 const (
@@ -130,7 +114,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			t0 = time.Now()
 			out2, err := gruff.Render(md,
 				gruff.WithWordWrap(w-2),
-				func(o *gruff.Options) { o.Theme = noBgTheme },
 			)
 			if err != nil {
 				log.Fatal(err)

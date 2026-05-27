@@ -17,54 +17,37 @@ const (
 	ansiNoItalic  ansiCode = "\x1b[23m"
 )
 
-type Color string
-
-const (
-	cBlack   Color = "0"
-	cMaroon  Color = "1"
-	cGreen   Color = "2"
-	cOlive   Color = "3"
-	cNavy    Color = "4"
-	cPurple  Color = "5"
-	cTeal    Color = "6"
-	cSilver  Color = "7"
-	cGrey    Color = "8"
-	cRed     Color = "9"
-	cLime    Color = "10"
-	cYellow  Color = "11"
-	cBlue    Color = "12"
-	cFuchsia Color = "13"
-	cCyan    Color = "14"
-	cWhite   Color = "15"
-)
-
-func is4bit(c Color) bool {
+func is4bit(c string) bool {
 	return len(c) == 1 && c[0] >= '0' && c[0] <= '7'
 }
 
-func isHex(c Color) bool {
+func isHex(c string) bool {
 	return len(c) >= 4 && c[0] == '#'
 }
 
-func hexRGB(c Color) (r, g, b uint8) {
+func hexRGB(c string) (r, g, b uint8) {
 	if len(c) < 7 || c[0] != '#' {
 		return 0, 0, 0
 	}
 	hex := func(b1, b2 byte) uint8 {
-		n1 := b1 - '0'
-		if n1 > 9 {
-			n1 = 10 + b1 - 'a'
+		hn := func(b byte) uint8 {
+			switch {
+			case '0' <= b && b <= '9':
+				return b - '0'
+			case 'a' <= b && b <= 'f':
+				return 10 + b - 'a'
+			case 'A' <= b && b <= 'F':
+				return 10 + b - 'A'
+			default:
+				return 0
+			}
 		}
-		n2 := b2 - '0'
-		if n2 > 9 {
-			n2 = 10 + b2 - 'a'
-		}
-		return n1<<4 | n2
+		return hn(b1)<<4 | hn(b2)
 	}
 	return hex(c[1], c[2]), hex(c[3], c[4]), hex(c[5], c[6])
 }
 
-func ansiFg(c Color) ansiCode {
+func ansiFg(c string) ansiCode {
 	if c == "" {
 		return ""
 	}
@@ -78,7 +61,7 @@ func ansiFg(c Color) ansiCode {
 	return ansiCode("\x1b[38;5;" + string(c) + "m")
 }
 
-func ansiBg(c Color) ansiCode {
+func ansiBg(c string) ansiCode {
 	if c == "" {
 		return ""
 	}
@@ -93,11 +76,12 @@ func ansiBg(c Color) ansiCode {
 }
 
 type Style struct {
-	Fg        Color
-	Bg        Color
+	Fg        string
+	Bg        string
 	Bold      bool
 	Italic    bool
 	Underline bool
+	Padding   int
 }
 
 func (s Style) start() ansiCode {
@@ -124,7 +108,7 @@ func (s Style) start() ansiCode {
 
 var ansiResetStr = string(ansiReset)
 
-func (s Style) end(bg Color) ansiCode {
+func (s Style) end(bg string) ansiCode {
 	var out string
 	if s.Italic {
 		out += string(ansiNoItalic)
@@ -152,7 +136,7 @@ func (s Style) end(bg Color) ansiCode {
 }
 
 type Theme struct {
-	Background              Color
+	Document                Style
 	H1, H2, H3, H4, H5, H6 Style
 	Strong                  Style
 	Em                      Style
@@ -166,41 +150,41 @@ type Theme struct {
 }
 
 var darkTheme = Theme{
-	Background: "#141414",
-	H1:         Style{Bold: true, Fg: cWhite},
-	H2:         Style{Bold: true, Fg: cYellow},
-	H3:         Style{Bold: true, Fg: cGreen},
-	H4:         Style{Bold: true, Fg: cCyan},
-	H5:         Style{Bold: true, Fg: cGrey},
-	H6:         Style{Fg: cGrey},
+	Document:    Style{Padding: 2},
+	H1:          Style{Bold: true, Fg: "#FFFF87"},
+	H2:         Style{Bold: true, Fg: "#00AFFF"},
+	H3:         Style{Bold: true, Fg: "#00AFFF"},
+	H4:         Style{Bold: true, Fg: "#00AFFF"},
+	H5:         Style{Bold: true, Fg: "#00AFFF"},
+	H6:         Style{Fg: "#00AF5F"},
 	Strong:     Style{Bold: true},
 	Em:         Style{Italic: true},
-	Code:       Style{Fg: "#50865a"},
+	Code:       Style{Fg: "#A6E22E"},
 	Link:       Style{Underline: true, Fg: "#5c9cf5"},
-	LinkURL:    Style{Fg: cGrey},
-	Bullet:     Style{Fg: cYellow},
-	Numbered:   Style{Fg: cYellow},
-	Hr:         Style{Fg: cGrey},
-	Border:     Style{Fg: cGrey},
+	LinkURL:    Style{Fg: "#808080"},
+	Bullet:     Style{Fg: "#FFFF00"},
+	Numbered:   Style{Fg: "#FFFF00"},
+	Hr:         Style{Fg: "#808080"},
+	Border:     Style{Fg: "#808080"},
 }
 
 var lightTheme = Theme{
-	Background: "",
-	H1:         Style{Bold: true, Underline: true, Fg: cBlack},
-	H2:         Style{Bold: true, Fg: cNavy},
-	H3:         Style{Bold: true, Fg: cGreen},
-	H4:         Style{Bold: true, Fg: cTeal},
-	H5:         Style{Bold: true, Fg: cGrey},
-	H6:         Style{Fg: cGrey},
+	Document:    Style{Padding: 2},
+	H1:          Style{Bold: true, Underline: true, Fg: "#000000"},
+	H2:         Style{Bold: true, Fg: "#000080"},
+	H3:         Style{Bold: true, Fg: "#008000"},
+	H4:         Style{Bold: true, Fg: "#008080"},
+	H5:         Style{Bold: true, Fg: "#808080"},
+	H6:         Style{Fg: "#808080"},
 	Strong:     Style{Bold: true},
 	Em:         Style{Italic: true},
-	Code:       Style{Bg: cSilver, Fg: cBlack},
-	Link:       Style{Underline: true, Fg: cNavy},
-	LinkURL:    Style{Fg: cGrey},
-	Bullet:     Style{Fg: cMaroon},
-	Numbered:   Style{Fg: cMaroon},
-	Hr:         Style{Fg: cGrey},
-	Border:     Style{Fg: cGrey},
+	Code:       Style{Fg: "#000000", Padding: 1},
+	Link:       Style{Underline: true, Fg: "#000080"},
+	LinkURL:    Style{Fg: "#808080"},
+	Bullet:     Style{Fg: "#800000"},
+	Numbered:   Style{Fg: "#800000"},
+	Hr:         Style{Fg: "#808080"},
+	Border:     Style{Fg: "#808080"},
 }
 
 func displayWidth(s string) int {
