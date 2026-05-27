@@ -1,42 +1,42 @@
-# Word Wrap
+# 自动换行
 
-Gruff has two word-wrap subsystems:
+Gruff 有两个自动换行子系统：
 
-1. **`wrapText`** — document-level line wrapping (applied to the entire output)
-2. **`wrapCellLines`** — cell-level wrapping (per column, inside tables)
+1. **`wrapText`** — 文档级换行（应用于整个输出）
+2. **`wrapCellLines`** — 单元格级换行（按列，在表格内部）
 
-## Document Wrap (`wrapText` in `gruff.go`)
+## 文档换行（`gruff.go` 中的 `wrapText`）
 
-Applied after rendering, controlled by `WithWordWrap(n)` (default 120, disabled with `WithWordWrap(0)`).
+在渲染后应用，通过 `WithWordWrap(n)` 控制（默认 120，使用 `WithWordWrap(0)` 禁用）。
 
-- Accumulates words at space boundaries
-- ANSI escape sequences are transparent (counted as zero display width)
-- Wraps at the nearest word boundary when line exceeds width
-- Preserves existing `\n` line breaks
-- Preserves leading whitespace
+- 在空格边界处累积单词
+- ANSI 转义序列透明（计为零显示宽度）
+- 当行超过宽度时，在最近的单词边界处换行
+- 保留现有的 `\n` 换行符
+- 保留前导空格
 
-## Cell Wrap (`wrapCellLines` in `renderer.go`)
+## 单元格换行（`renderer.go` 中的 `wrapCellLines`）
 
-Applied per column during the table rendering Pass 2.
+在表格渲染的第二遍中按列应用。
 
-### Latin/ASCII Wrapping
+### 拉丁/ASCII 换行
 
-- Accumulates characters into "words" at space boundaries
-- When a word doesn't fit on the current line, it starts a new line
-- A space separator (ASCII 0x20) is inserted between words only when `wordVisLen > 0` (not for pure-ANSI "words")
+- 在空格边界处将字符累积为"单词"
+- 当单词不适合当前行时，开始新行
+- 仅当 `wordVisLen > 0` 时（不适用于纯 ANSI"单词"），在单词之间插入空格分隔符（ASCII 0x20）
 
-### CJK & Emoji Wrapping
+### CJK 和表情符号换行
 
-CJK characters (Chinese, Japanese, Korean) and emoji have `displayWidth > 1` (double-width). They **never have spaces between them** in natural text, so space-only word boundaries don't work.
+CJK 字符（中文、日文、韩文）和表情符号的 `displayWidth > 1`（双倍宽度）。它们在自然文本中**从不在彼此之间加空格**，因此仅基于空格的分词不适用。
 
-For any character where `runewidth.RuneWidth(r) > 1`:
+对于任何 `runewidth.RuneWidth(r) > 1` 的字符：
 
-1. Flush any pending word (Latin text accumulated before the CJK char)
-2. If the double-width char doesn't fit on the current line, start a new line
-3. Write the char directly (no space separator)
-4. Continue to next char
+1. 刷新任何待处理的单词（在 CJK 字符之前累积的拉丁文本）
+2. 如果双倍宽度字符不适合当前行，则开始新行
+3. 直接写入该字符（无空格分隔符）
+4. 继续下一个字符
 
-This ensures correct wrapping for:
+这确保了以下内容的正确换行：
 
 ```
 这是一个非常长的中文句子，它完全超过了
@@ -44,30 +44,30 @@ This ensures correct wrapping for:
 单元格内的多行才能完整显示。
 ```
 
-And mixed scripts:
+以及混合脚本：
 
 ```
-Hello你好🚀 This is a long🔥 mixed🌟  
-sentence with✅ emoji, CJK中文, and   
-long text that wraps...
+Hello你好🚀 这是一个很长的🔥 混合🌟
+句子，包含✅ 表情符号、CJK中文和
+需要换行的长文本...
 ```
 
-### ANSI Handling
+### ANSI 处理
 
-ANSI escape sequences can appear anywhere in the content (from inline styles like **bold** or `code`). The wrap function:
+ANSI 转义序列可以出现在内容的任何位置（来自内联样式，如**粗体**或`代码`）。换行函数：
 
-- Treats `\x1b[...m` sequences as zero-width tokens
-- Accumulates ANSI codes into the current word
-- Only strips ANSI for display-width calculation (`displayWidth(stripANSI(...))`)
-- Preserves ANSI codes across wrapped lines (no broken escapes)
-- Does not insert spaces before pure-ANSI "words" (wordVisLen == 0)
+- 将 `\x1b[...m` 序列视为零宽度标记
+- 将 ANSI 代码累积到当前单词中
+- 仅剥离 ANSI 用于显示宽度计算（`displayWidth(stripANSI(...))`）
+- 在换行后保留 ANSI 代码（无中断转义）
+- 不在纯 ANSI"单词"前插入空格（wordVisLen == 0）
 
-### Column Width
+### 列宽
 
-Max column width is calculated as:
+最大列宽按如下方式计算：
 
 ```go
-overhead := 3 * (numCols - 1)            // " │ " per gap
-maxCol := (wordWrap - overhead) / numCols // capped per col
-if maxCol < 20 { maxCol = 20 }           // min 20 chars
+overhead := 3 * (numCols - 1)            // " │ " 每个间隔
+maxCol := (wordWrap - overhead) / numCols // 每列上限
+if maxCol < 20 { maxCol = 20 }           // 最少 20 个字符
 ```

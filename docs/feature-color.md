@@ -1,18 +1,18 @@
-# Color System
+# 颜色系统
 
-## Type
+## 类型
 
 ```go
 type Color string
 ```
 
-A `Color` holds either:
-- **24-bit hex** — `"#RRGGBB"` or `"#RGB"` (shorthand), e.g. `"#141414"`
-- **8-bit palette index** — `"0"`-`"255"`, e.g. `"236"` (dark grey)
+`Color` 可以保存：
+- **24 位十六进制** — `"#RRGGBB"` 或 `"#RGB"`（简写），例如 `"#141414"`
+- **8 位调色板索引** — `"0"`-`"255"`，例如 `"236"`（深灰色）
 
-## Hex Parsing
+## 十六进制解析
 
-Hex colors are parsed by `lipgloss.Color(s)` from `charm.land/lipgloss/v2`, which returns a `color.Color` interface. Gruff calls `.RGBA()` to extract R/G/B values:
+十六进制颜色由 `charm.land/lipgloss/v2` 的 `lipgloss.Color(s)` 解析，返回 `color.Color` 接口。Gruff 调用 `.RGBA()` 提取 R/G/B 值：
 
 ```go
 func hexRGB(c Color) (r, g, b uint8) {
@@ -22,15 +22,15 @@ func hexRGB(c Color) (r, g, b uint8) {
 }
 ```
 
-## ANSI Code Generation
+## ANSI 代码生成
 
-| Input | Output | Format |
+| 输入 | 输出 | 格式 |
 |---|---|---|
-| `"#RRGGBB"` (hex) | `\x1b[38;2;R;G;Bm` (fg) / `\x1b[48;2;R;G;Bm` (bg) | 24-bit true color |
-| `"0"`-`"7"` (4-bit) | `\x1b[3Nm` (fg) / `\x1b[4Nm` (bg) | ANSI 3/4-bit |
-| `"8"`-`"255"` (8-bit) | `\x1b[38;5;Nm` (fg) / `\x1b[48;5;Nm` (bg) | ANSI 8-bit |
+| `"#RRGGBB"`（十六进制） | `\x1b[38;2;R;G;Bm`（前景色）/ `\x1b[48;2;R;G;Bm`（背景色） | 24 位真彩色 |
+| `"0"`-`"7"`（4 位） | `\x1b[3Nm`（前景色）/ `\x1b[4Nm`（背景色） | ANSI 3/4 位 |
+| `"8"`-`"255"`（8 位） | `\x1b[38;5;Nm`（前景色）/ `\x1b[48;5;Nm`（背景色） | ANSI 8 位 |
 
-## Built-in Palette Constants
+## 内置调色板常量
 
 ```go
 cBlack="0", cMaroon="1", cGreen="2",  cOlive="3",
@@ -40,30 +40,30 @@ cBlue="12", cFuchsia="13", cCyan="14", cWhite="15",
 cDarkBG="236"
 ```
 
-## Document Background
+## 文档背景色
 
-`Theme.Background` sets the entire document's background color (default `"#141414"` for dark theme, `""` for light theme).
+`Theme.Background` 设置整个文档的背景色（深色主题默认为 `"#141414"`，浅色主题默认为 `""`）。
 
-- Emitted once at document start: `\x1b[48;2;20;20;20m`
-- Restored after any style that sets a background (e.g., `Code` with `Bg: "236"`): `Style.end(bg)` emits `\x1b[48;2;20;20;20m` instead of `\x1b[49m`
-- In table cells, the background is restored after content, before padding, preventing inline-code background bleed
+- 在文档开始时输出一次：`\x1b[48;2;20;20;20m`
+- 在设置了背景色的样式（例如 `Code` 的 `Bg: "236"`）之后恢复：`Style.end(bg)` 输出 `\x1b[48;2;20;20;20m` 而不是 `\x1b[49m`
+- 在表格单元格中，背景色在内容之后、填充之前恢复，防止内联代码背景色扩散
 
-## Style
+## 样式
 
 ```go
 type Style struct {
-    Fg        Color  // foreground color
-    Bg        Color  // background color
+    Fg        Color  // 前景色
+    Bg        Color  // 背景色
     Bold      bool
     Italic    bool
     Underline bool
 }
 
-func (s Style) start() ansiCode   // emit ANSI codes to enter style
-func (s Style) end(bg Color) ansiCode  // emit ANSI codes to exit style, restore doc bg
+func (s Style) start() ansiCode   // 输出 ANSI 代码进入样式
+func (s Style) end(bg Color) ansiCode  // 输出 ANSI 代码退出样式，恢复文档背景色
 ```
 
-## Theme
+## 主题
 
 ```go
 type Theme struct {
@@ -76,26 +76,26 @@ type Theme struct {
 }
 ```
 
-### Dark Theme (default)
+### 深色主题（默认）
 
-| Element | Style |
+| 元素 | 样式 |
 |---|---|
-| Background | `"#141414"` |
-| H1 | Bold + Underline + White |
-| H2 | Bold + Yellow |
-| H3 | Bold + Green |
-| H4 | Bold + Cyan |
-| H5 | Bold + Grey |
-| H6 | Grey |
-| Code | Fg: White + Bg: 236 (dark grey) |
-| Link | Underline + Cyan |
+| 背景色 | `"#141414"` |
+| H1 | 粗体 + 下划线 + 白色 |
+| H2 | 粗体 + 黄色 |
+| H3 | 粗体 + 绿色 |
+| H4 | 粗体 + 青色 |
+| H5 | 粗体 + 灰色 |
+| H6 | 灰色 |
+| Code | 前景色：白色 + 背景色：236（深灰色） |
+| Link | 下划线 + 青色 |
 
-### Light Theme
+### 浅色主题
 
-| Element | Style |
+| 元素 | 样式 |
 |---|---|
-| Background | (none) |
-| H1 | Bold + Underline + Black |
-| H2 | Bold + Navy |
-| Code | Fg: Black + Bg: Silver |
-| Link | Underline + Navy |
+| 背景色 | (无) |
+| H1 | 粗体 + 下划线 + 黑色 |
+| H2 | 粗体 + 深蓝色 |
+| Code | 前景色：黑色 + 背景色：银色 |
+| Link | 下划线 + 深蓝色 |
