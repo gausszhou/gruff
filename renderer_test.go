@@ -375,7 +375,7 @@ func TestWrapText_CJK(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			wrapped := wrapText(tt.input, tt.width, 0)
 			for _, line := range strings.Split(wrapped, "\n") {
-				w := runewidth.StringWidth(line)
+				w := ansiDisplayWidth([]byte(line))
 				if w > tt.width {
 					t.Errorf("visLen=%d > width=%d: %q", w, tt.width, line)
 				}

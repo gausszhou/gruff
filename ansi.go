@@ -196,7 +196,7 @@ func stripANSI(s string) string {
 	for i := 0; i < len(s); i++ {
 		if s[i] == '\x1b' && i+1 < len(s) && s[i+1] == '[' {
 			for j := i + 2; j < len(s); j++ {
-				if s[j] == 'm' {
+				if s[j] >= 0x40 && s[j] <= 0x7E {
 					i = j
 					break
 				}
@@ -213,7 +213,7 @@ func ansiDisplayWidth(b []byte) int {
 	for i := 0; i < len(b); {
 		if b[i] == '\x1b' && i+1 < len(b) && b[i+1] == '[' {
 			for j := i + 2; j < len(b); j++ {
-				if b[j] == 'm' {
+				if b[j] >= 0x40 && b[j] <= 0x7E {
 					i = j + 1
 					break
 				}
