@@ -219,12 +219,12 @@ func TestRender_List(t *testing.T) {
 		{
 			name:  "unordered",
 			input: "- item 1\n- item 2\n",
-			want:  "    \x1b[38;2;255;255;0m• \x1b[39mitem 1  \n    \x1b[38;2;255;255;0m• \x1b[39mitem 2  \n    \n  ",
+			want:  "\x1b[48;2;20;20;20m    \x1b[38;2;255;255;0m• \x1b[39mitem 1  \x1b[K\n    \x1b[38;2;255;255;0m• \x1b[39mitem 2  \x1b[K\n    \x1b[K\n  ",
 		},
 		{
 			name:  "ordered",
 			input: "1. first\n2. second\n",
-			want:  "    \x1b[38;2;255;255;0m1. \x1b[39mfirst  \n    \x1b[38;2;255;255;0m2. \x1b[39msecond  \n    \n  ",
+			want:  "\x1b[48;2;20;20;20m    \x1b[38;2;255;255;0m1. \x1b[39mfirst  \x1b[K\n    \x1b[38;2;255;255;0m2. \x1b[39msecond  \x1b[K\n    \x1b[K\n  ",
 		},
 	}
 
@@ -314,8 +314,8 @@ func TestRender_Empty(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got != "  " {
-		t.Errorf("Render() = %q, want padding-only", got)
+	if got != "\x1b[48;2;20;20;20m  " {
+		t.Errorf("Render() = %q, want bg + padding", got)
 	}
 }
 

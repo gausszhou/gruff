@@ -29,9 +29,6 @@ func renderMarkdown(source []byte, th Theme, wordWrap int, node ast.Node) string
 func (r *nodeRenderer) renderNode(node ast.Node) {
 	switch n := node.(type) {
 	case *ast.Document:
-		if r.th.Document.Bg != "" {
-			r.buf.WriteString(string(ansiBg(r.th.Document.Bg)))
-		}
 		r.renderChildren(n)
 
 	case *ast.Paragraph:

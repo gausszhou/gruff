@@ -150,7 +150,7 @@ type Theme struct {
 }
 
 var darkTheme = Theme{
-	Document:    Style{Padding: 2},
+	Document:    Style{Bg: "#141414", Padding: 2},
 	H1:          Style{Bold: true, Fg: "#FFFF87"},
 	H2:         Style{Bold: true, Fg: "#00AFFF"},
 	H3:         Style{Bold: true, Fg: "#00AFFF"},
