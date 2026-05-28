@@ -14,7 +14,11 @@ func stripANSI(s string) string {
 	for i := 0; i < len(s); i++ {
 		if s[i] == '\x1b' && i+1 < len(s) && s[i+1] == '[' {
 			for j := i + 2; j < len(s); j++ {
-				if s[j] == 'm' {
+				if s[j] == 0x48 { // 'H' CUP — end of ANSI escape
+					i = j
+					break
+				}
+				if s[j] >= 0x40 && s[j] <= 0x7E && s[j] != 0x5B {
 					i = j
 					break
 				}
