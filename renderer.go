@@ -199,17 +199,18 @@ func (r *nodeRenderer) renderCodeBlock(lines *text.Segments, lang []byte) {
 	codeStyleStart := string(st.start())
 	const padding = 2
 
-	if len(lang) > 0 {
-		ls := r.th.LinkURL
-		r.buf.WriteString(string(ls.start()))
-		for j := 0; j < padding; j++ {
-			r.buf.WriteByte(' ')
-		}
-		r.buf.Write(lang)
-		r.buf.WriteString("\x1b[K")
-		r.buf.WriteString(string(ls.end()))
-		r.buf.WriteByte('\n')
+	for j := 0; j < padding; j++ {
+		r.buf.WriteByte(' ')
 	}
+	r.buf.WriteString("```")
+	ls := r.th.LinkURL
+	r.buf.WriteString(string(ls.start()))
+	if len(lang) > 0 {
+		r.buf.Write(lang)
+	}
+	r.buf.WriteString("\x1b[K")
+	r.buf.WriteString(string(ls.end()))
+	r.buf.WriteByte('\n')
 
 	for i := 0; i < lines.Len(); i++ {
 		seg := lines.At(i)
@@ -224,6 +225,10 @@ func (r *nodeRenderer) renderCodeBlock(lines *text.Segments, lang []byte) {
 		r.buf.WriteString(string(st.end()))
 		r.buf.WriteByte('\n')
 	}
+	for j := 0; j < padding; j++ {
+		r.buf.WriteByte(' ')
+	}
+	r.buf.WriteString("```")
 	r.buf.WriteByte('\n')
 }
 
