@@ -10,11 +10,26 @@ import (
 	"github.com/gausszhou/gruff"
 )
 
+func benchGruff(b *testing.B, file string) {
+	source, err := os.ReadFile("../" + file)
+	if err != nil {
+		b.Fatal(err)
+	}
+	input := string(source)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		gruff.Render(input)
+	}
+}
+
 // gruffMinimalStyle returns a style config based on "dark" but stripped to
 // match gruff's supported elements. Gruff handles:
-//   Document, Paragraph, Heading (H1-H6), List, ListItem,
-//   Text, String, Emphasis (bold/italic), CodeSpan, Link, Image,
-//   FencedCodeBlock, CodeBlock, ThematicBreak, Table
+//
+//	Document, Paragraph, Heading (H1-H6), List, ListItem,
+//	Text, String, Emphasis (bold/italic), CodeSpan, Link, Image,
+//	FencedCodeBlock, CodeBlock, ThematicBreak, Table
 //
 // Everything else (BlockQuote, Strikethrough, TaskCheckBox, HTMLBlock,
 // RawHTML, DefinitionList, etc.) is neutralized.
@@ -50,23 +65,28 @@ func gruffMinimalStyle() ansi.StyleConfig {
 	return cfg
 }
 
-func benchGruff(b *testing.B, file string) {
+func benchGlamourStandard(b *testing.B, file string) {
 	source, err := os.ReadFile("../" + file)
 	if err != nil {
 		b.Fatal(err)
 	}
 	input := string(source)
 
+	r, err := glamour.NewTermRenderer(
+		glamour.WithStandardStyle("dark"),
+	)
+	if err != nil {
+		b.Fatal(err)
+	}
+
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		gruff.Render(input)
+		r.Render(input)
 	}
 }
 
-func BenchmarkGruff(b *testing.B) { benchGruff(b, "testdata/benchmark.md") }
-
-func benchGlamour(b *testing.B, file string) {
+func benchGlamourMinimal(b *testing.B, file string) {
 	source, err := os.ReadFile("../" + file)
 	if err != nil {
 		b.Fatal(err)
@@ -90,4 +110,14 @@ func benchGlamour(b *testing.B, file string) {
 	}
 }
 
-func BenchmarkGlamour(b *testing.B) { benchGlamour(b, "testdata/benchmark.md") }
+func BenchmarkGruff(b *testing.B) { benchGruff(b, "testdata/benchmark.md") }
+
+func BenchmarkGlamourMinimal(b *testing.B) { benchGlamourMinimal(b, "testdata/benchmark.md") }
+
+func BenchmarkGlamourStandard(b *testing.B) { benchGlamourStandard(b, "testdata/benchmark.md") }
+
+func BenchmarkLargeGruff(b *testing.B) { benchGruff(b, "testdata/_data.md") }
+
+func BenchmarkLargeGlamourMinimal(b *testing.B) { benchGlamourMinimal(b, "testdata/_data.md") }
+
+func BenchmarkLargeGlamourStandard(b *testing.B) { benchGlamourStandard(b, "testdata/_data.md") }

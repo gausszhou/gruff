@@ -67,16 +67,25 @@ out, err := gruff.Render(source, gruff.WithLight(), gruff.WithWordWrap(80))
 
 ## Performance
 
-Benchmarked against `glamour` using `testdata/benchmark.md`, a balanced mix of headings,
-paragraphs, lists, code blocks, tables, links, and formatting. Glamour is configured in
-minimal mode (chroma disabled, word wrap off, table wrap off, inline table links on) to
-match gruff's feature set for a fair comparison.
+Benchmarked against `glamour` using `testdata/benchmark.md` (small) and `testdata/_data.md`
+(large — 202 KB CommonMark spec). Glamour is tested in both minimal mode (chroma disabled,
+word wrap off, table wrap off, inline table links on) and standard mode.
 
-| Metric         | gruff       | glamour (minimal) | Improvement |
-|----------------|-------------|-------------------|-------------|
-| Time/op        | ~0.59 ms    | ~6.67 ms          | **~11×**    |
-| Memory/op      | ~132 KB     | ~511 KB           | **~4×**     |
-| Allocations/op | ~983        | ~43,657           | **~44×**    |
+### Small document
+
+| Metric         | gruff      | glamour (minimal) | glamour (standard) | Improvement (vs minimal) |
+|----------------|------------|-------------------|--------------------|--------------------------|
+| Time/op        | ~0.19 ms   | ~1.91 ms          | ~8.22 ms           | **~10× / ~43×**          |
+| Memory/op      | ~131 KB    | ~505 KB           | ~2.3 MB            | **~4× / ~17×**           |
+| Allocations/op | ~983       | ~43,745           | ~201,546           | **~44× / ~205×**         |
+
+### Large document (202 KB)
+
+| Metric         | gruff      | glamour (minimal) | glamour (standard) | Improvement (vs minimal) |
+|----------------|------------|-------------------|--------------------|--------------------------|
+| Time/op        | ~5.9 ms    | ~81.8 ms          | ~3.15 s            | **~14× / ~530×**         |
+| Memory/op      | ~4.9 MB    | ~22.2 MB          | ~98.9 MB           | **~4.5× / ~20×**         |
+| Allocations/op | ~17,748    | ~2,489,690        | ~6,053,416         | **~140× / ~340×**        |
 
 See [`docs/why-gruff-faster.md`](docs/why-gruff-faster.md) for a detailed analysis of the
 performance gap.
