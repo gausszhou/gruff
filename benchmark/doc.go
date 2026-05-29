@@ -6,21 +6,23 @@ import (
 	"charm.land/glamour/v2/styles"
 )
 
-// GruffMinimalStyle returns a style config based on "dark" but stripped to
-// match gruff's supported elements. Gruff handles:
+func strPtr(s string) *string { return &s }
+
+// GruffMinimalStyle returns a style config based on "dark" with chroma disabled
+// (basic colors instead of full syntax highlighting) and elements gruff doesn't
+// handle neutralized, while preserving visual quality for supported features.
 //
-//	Document, Paragraph, Heading (H1-H6), List, ListItem,
-//	Text, String, Emphasis (bold/italic), CodeSpan, Link, Image,
-//	FencedCodeBlock, CodeBlock, ThematicBreak, Table
-//
-// Everything else (BlockQuote, Strikethrough, TaskCheckBox, HTMLBlock,
-// RawHTML, DefinitionList, etc.) is neutralized.
+// Gruff handles: Document, Paragraph, Heading (H1-H6), List, ListItem,
+// Text, String, Emphasis (bold/italic), CodeSpan, Link, Image,
+// FencedCodeBlock, CodeBlock, ThematicBreak, Table.
 func GruffMinimalStyle() ansi.StyleConfig {
 	cfg := styles.DarkStyleConfig
 
-	// Neutralize elements gruff doesn't support
 	cfg.CodeBlock.Chroma = nil
 	cfg.CodeBlock.Theme = ""
+	cfg.CodeBlock.Color = strPtr("#50fa7b")
+	cfg.CodeBlock.BackgroundColor = strPtr("#1e1e1e")
+
 	cfg.BlockQuote.IndentToken = nil
 	cfg.BlockQuote.Indent = nil
 	cfg.BlockQuote.Margin = nil
@@ -32,17 +34,6 @@ func GruffMinimalStyle() ansi.StyleConfig {
 	cfg.DefinitionDescription = ansi.StylePrimitive{}
 	cfg.HTMLBlock = ansi.StyleBlock{}
 	cfg.HTMLSpan = ansi.StyleBlock{}
-
-	// Strip ANSI decorations to reduce allocations
-	cfg.HorizontalRule.Format = "\n"
-	cfg.Item.BlockPrefix = " "
-	cfg.Enumeration.BlockPrefix = ""
-	cfg.Code.Prefix = ""
-	cfg.Code.Suffix = ""
-	cfg.ImageText.Format = ""
-	cfg.Image = ansi.StylePrimitive{}
-	cfg.Link = ansi.StylePrimitive{}
-	cfg.LinkText = ansi.StylePrimitive{}
 
 	return cfg
 }

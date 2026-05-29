@@ -67,25 +67,15 @@ out, err := gruff.Render(source, gruff.WithLight(), gruff.WithWordWrap(80))
 
 ## Performance
 
-Benchmarked against `glamour` using `testdata/benchmark.md` (small) and `testdata/_data.md`
-(large — 202 KB CommonMark spec). Glamour is tested in both minimal mode (chroma disabled,
-word wrap off, table wrap off, inline table links on) and standard mode.
-
-### Small document
+Benchmarked against `testdata/benchmark.md` (2.4 KB) repeated 100× (~240 KB input).
+Glamour is tested in both minimal mode (chroma disabled, word wrap off, table wrap off,
+inline table links on) and standard mode.
 
 | Metric         | gruff      | glamour (minimal) | glamour (standard) | Improvement (vs minimal) |
 |----------------|------------|-------------------|--------------------|--------------------------|
-| Time/op        | ~0.19 ms   | ~1.91 ms          | ~8.22 ms           | **~10× / ~43×**          |
-| Memory/op      | ~131 KB    | ~505 KB           | ~2.3 MB            | **~4× / ~17×**           |
-| Allocations/op | ~983       | ~43,745           | ~201,546           | **~44× / ~205×**         |
-
-### Large document (202 KB)
-
-| Metric         | gruff      | glamour (minimal) | glamour (standard) | Improvement (vs minimal) |
-|----------------|------------|-------------------|--------------------|--------------------------|
-| Time/op        | ~5.9 ms    | ~81.8 ms          | ~3.15 s            | **~14× / ~530×**         |
-| Memory/op      | ~4.9 MB    | ~22.2 MB          | ~98.9 MB           | **~4.5× / ~20×**         |
-| Allocations/op | ~17,748    | ~2,489,690        | ~6,053,416         | **~140× / ~340×**        |
+| Time/op        | ~25.7 ms   | ~265 ms           | ~1.19 s            | **~10× / ~46×**          |
+| Memory/op      | ~14.0 MB   | ~52.9 MB          | ~222 MB            | **~3.8× / ~16×**         |
+| Allocations/op | ~209,556   | ~4,505,093        | ~20,348,392        | **~21× / ~97×**          |
 
 See [`docs/why-gruff-faster.md`](docs/why-gruff-faster.md) for a detailed analysis of the
 performance gap.
@@ -110,6 +100,7 @@ Ready-to-run examples are in the [`examples/`](examples/) directory:
 | [`api`](examples/api/) | `Render`, `RenderBytes`, and `WithWordWrap` usage |
 | [`lipgloss`](examples/lipgloss/) | Wrap gruff output with [lipgloss](https://github.com/charmbracelet/lipgloss) borders and styles |
 | [`glamour`](examples/glamour/) | Render same markdown with [glamour](https://github.com/charmbracelet/glamour) for comparison |
+| [`benchmark-compare`](examples/benchmark-compare/) | Side-by-side rendering of the benchmark markdown with gruff vs glamour |
 
 ```bash
 go run examples/basic/main.go
@@ -120,6 +111,7 @@ go run examples/custom-theme/main.go
 go run examples/api/main.go
 go run examples/lipgloss/main.go
 go run examples/glamour/main.go
+go run examples/benchmark-compare/main.go
 ```
 
 ## Theme Customization
