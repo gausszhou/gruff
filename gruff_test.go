@@ -236,6 +236,16 @@ func TestRender_List(t *testing.T) {
 			input: "1. first\n2. second\n   1. deep\n   2. deeper\n",
 			want:  "\x1b[48;2;20;20;20m    \x1b[K\n    1. first  \x1b[K\n    2. second  \x1b[K\n      1. deep  \x1b[K\n      2. deeper  \x1b[K\n    \x1b[K\n  ",
 		},
+		{
+			name:  "task list",
+			input: "- [x] done\n- [ ] todo\n",
+			want:  "\x1b[48;2;20;20;20m    \x1b[K\n  \x1b[38;2;80;250;123m[✓]\x1b[39m done  \x1b[K\n  \x1b[38;2;128;128;128m[ ]\x1b[39m todo  \x1b[K\n    \x1b[K\n  ",
+		},
+		{
+			name:  "nested task list",
+			input: "- [x] checked\n- [ ] unchecked\n  - [x] nested checked\n  - [ ] nested unchecked\n",
+			want:  "\x1b[48;2;20;20;20m    \x1b[K\n  \x1b[38;2;80;250;123m[✓]\x1b[39m checked  \x1b[K\n  \x1b[38;2;128;128;128m[ ]\x1b[39m unchecked  \x1b[K\n  \x1b[38;2;80;250;123m[✓]\x1b[39m nested checked  \x1b[K\n  \x1b[38;2;128;128;128m[ ]\x1b[39m nested unchecked  \x1b[K\n    \x1b[K\n  ",
+		},
 	}
 
 	for _, tt := range tests {

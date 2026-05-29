@@ -127,6 +127,19 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 	case *extensionAst.Table:
 		r.renderTable(n)
 
+	case *extensionAst.TaskCheckBox:
+		if n.IsChecked {
+			r.buf.WriteString(string(r.th.TaskChecked.start()))
+			r.buf.WriteString("[\u2713]")
+			r.buf.WriteString(string(r.th.TaskChecked.end(r.th.Document.Bg)))
+			r.buf.WriteByte(' ')
+		} else {
+			r.buf.WriteString(string(r.th.TaskUnchecked.start()))
+			r.buf.WriteString("[ ]")
+			r.buf.WriteString(string(r.th.TaskUnchecked.end(r.th.Document.Bg)))
+			r.buf.WriteByte(' ')
+		}
+
 	default:
 		r.renderChildren(n)
 	}
@@ -218,12 +231,16 @@ func (r *nodeRenderer) renderListItem(node ast.Node) {
 		index++
 	}
 
-	r.buf.WriteString(indent)
-	if list.IsOrdered() {
+	isTask := r.isTaskItem(node)
+	if isTask {
+		// no thing
+	} else if list.IsOrdered() {
 		num := list.Start + index
+		r.buf.WriteString(indent)
 		r.buf.WriteString(itoa(num))
 		r.buf.WriteString(". ")
 	} else {
+		r.buf.WriteString(indent)
 		r.buf.WriteString("• ")
 	}
 
@@ -244,6 +261,22 @@ func (r *nodeRenderer) renderListItem(node ast.Node) {
 	if !hadNestedList {
 		r.buf.WriteByte('\n')
 	}
+}
+
+func (r *nodeRenderer) isTaskItem(node ast.Node) bool {
+	for c := node.FirstChild(); c != nil; c = c.NextSibling() {
+		if _, ok := c.(*extensionAst.TaskCheckBox); ok {
+			return true
+		}
+		if tb, ok := c.(*ast.TextBlock); ok {
+			for t := tb.FirstChild(); t != nil; t = t.NextSibling() {
+				if _, ok := t.(*extensionAst.TaskCheckBox); ok {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 func (r *nodeRenderer) isInsideList(node ast.Node) bool {

@@ -145,40 +145,46 @@ type Theme struct {
 	LinkURL                Style
 	Hr                     Style
 	Border                 Style
+	TaskChecked            Style
+	TaskUnchecked          Style
 }
 
 var darkTheme = Theme{
-	Document: Style{Bg: "#141414", Padding: 2},
-	H1:       Style{Bold: true, Fg: "#FFFF87"},
-	H2:       Style{Bold: true, Fg: "#00AFFF"},
-	H3:       Style{Bold: true, Fg: "#00AFFF"},
-	H4:       Style{Bold: true, Fg: "#00AFFF"},
-	H5:       Style{Bold: true, Fg: "#00AFFF"},
-	H6:       Style{Fg: "#00AF5F"},
-	Strong:   Style{Bold: true},
-	Em:       Style{Italic: true},
-	Code:     Style{Fg: "#A6E22E"},
-	Link:     Style{Underline: true, Fg: "#5c9cf5"},
-	LinkURL:  Style{Fg: "#808080"},
-	Hr:       Style{Fg: "#808080"},
-	Border:   Style{Fg: "#808080"},
+	Document:      Style{Bg: "#141414", Padding: 2},
+	H1:            Style{Bold: true, Fg: "#FFFF87"},
+	H2:            Style{Bold: true, Fg: "#00AFFF"},
+	H3:            Style{Bold: true, Fg: "#00AFFF"},
+	H4:            Style{Bold: true, Fg: "#00AFFF"},
+	H5:            Style{Bold: true, Fg: "#00AFFF"},
+	H6:            Style{Fg: "#00AF5F"},
+	Strong:        Style{Bold: true},
+	Em:            Style{Italic: true},
+	Code:          Style{Fg: "#A6E22E"},
+	Link:          Style{Underline: true, Fg: "#5c9cf5"},
+	LinkURL:       Style{Fg: "#808080"},
+	Hr:            Style{Fg: "#808080"},
+	Border:        Style{Fg: "#808080"},
+	TaskChecked:   Style{Fg: "#50fa7b"},
+	TaskUnchecked: Style{Fg: "#808080"},
 }
 
 var lightTheme = Theme{
-	Document: Style{Padding: 2},
-	H1:       Style{Bold: true, Underline: true, Fg: "#000000"},
-	H2:       Style{Bold: true, Fg: "#000080"},
-	H3:       Style{Bold: true, Fg: "#008000"},
-	H4:       Style{Bold: true, Fg: "#008080"},
-	H5:       Style{Bold: true, Fg: "#808080"},
-	H6:       Style{Fg: "#808080"},
-	Strong:   Style{Bold: true},
-	Em:       Style{Italic: true},
-	Code:     Style{Fg: "#000000", Padding: 1},
-	Link:     Style{Underline: true, Fg: "#000080"},
-	LinkURL:  Style{Fg: "#808080"},
-	Hr:       Style{Fg: "#808080"},
-	Border:   Style{Fg: "#808080"},
+	Document:      Style{Padding: 2},
+	H1:            Style{Bold: true, Underline: true, Fg: "#000000"},
+	H2:            Style{Bold: true, Fg: "#000080"},
+	H3:            Style{Bold: true, Fg: "#008000"},
+	H4:            Style{Bold: true, Fg: "#008080"},
+	H5:            Style{Bold: true, Fg: "#808080"},
+	H6:            Style{Fg: "#808080"},
+	Strong:        Style{Bold: true},
+	Em:            Style{Italic: true},
+	Code:          Style{Fg: "#000000", Padding: 1},
+	Link:          Style{Underline: true, Fg: "#000080"},
+	LinkURL:       Style{Fg: "#808080"},
+	Hr:            Style{Fg: "#808080"},
+	Border:        Style{Fg: "#808080"},
+	TaskChecked:   Style{Fg: "#008000"},
+	TaskUnchecked: Style{Fg: "#808080"},
 }
 
 func displayWidth(s string) int {
