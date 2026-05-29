@@ -29,7 +29,6 @@ func renderMarkdown(source []byte, th Theme, wordWrap int, node ast.Node) string
 func (r *nodeRenderer) renderNode(node ast.Node) {
 	switch n := node.(type) {
 	case *ast.Document:
-		r.buf.WriteByte('\n')
 		r.renderChildren(n)
 
 	case *ast.Paragraph:
@@ -48,7 +47,9 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 
 	case *ast.List:
 		r.renderChildren(n)
-		r.buf.WriteByte('\n')
+		if r.listParent(n) == nil {
+			r.buf.WriteByte('\n')
+		}
 
 	case *ast.ListItem:
 		r.renderListItem(n)
@@ -178,7 +179,29 @@ func (r *nodeRenderer) renderCodeBlock(lines *text.Segments, lang []byte) {
 	r.buf.WriteByte('\n')
 }
 
+func (r *nodeRenderer) listDepth(node ast.Node) int {
+	depth := 0
+	for p := node.Parent(); p != nil; p = p.Parent() {
+		if _, ok := p.(*ast.List); ok {
+			depth++
+		}
+	}
+	return depth
+}
+
+func (r *nodeRenderer) listParent(node ast.Node) ast.Node {
+	for p := node.Parent(); p != nil; p = p.Parent() {
+		if _, ok := p.(*ast.ListItem); ok {
+			return p
+		}
+	}
+	return nil
+}
+
 func (r *nodeRenderer) renderListItem(node ast.Node) {
+	depth := r.listDepth(node)
+	indent := strings.Repeat("  ", depth)
+
 	parent := node.Parent()
 	list, ok := parent.(*ast.List)
 	if !ok {
@@ -194,24 +217,32 @@ func (r *nodeRenderer) renderListItem(node ast.Node) {
 		index++
 	}
 
+	r.buf.WriteString(indent)
 	if list.IsOrdered() {
 		num := list.Start + index
-		r.buf.WriteString("  ")
-		r.buf.WriteString(string(r.th.Numbered.start()))
 		r.buf.WriteString(itoa(num))
 		r.buf.WriteString(". ")
-		r.buf.WriteString(string(r.th.Numbered.end(r.th.Document.Bg)))
 	} else {
-		r.buf.WriteString("  ")
-		r.buf.WriteString(string(r.th.Bullet.start()))
 		r.buf.WriteString("• ")
-		r.buf.WriteString(string(r.th.Bullet.end(r.th.Document.Bg)))
 	}
 
+	hasInline := false
+	hadNestedList := false
 	for c := node.FirstChild(); c != nil; c = c.NextSibling() {
-		r.renderNode(c)
+		if _, ok := c.(*ast.List); ok {
+			if hasInline {
+				r.buf.WriteByte('\n')
+			}
+			r.renderNode(c)
+			hadNestedList = true
+		} else {
+			r.renderNode(c)
+			hasInline = true
+		}
 	}
-	r.buf.WriteByte('\n')
+	if !hadNestedList {
+		r.buf.WriteByte('\n')
+	}
 }
 
 func (r *nodeRenderer) isInsideList(node ast.Node) bool {

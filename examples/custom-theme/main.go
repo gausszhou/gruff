@@ -18,8 +18,6 @@ func customTheme() gruff.Option {
 		o.Theme.Em = gruff.Style{Italic: true, Fg: "213"}
 		o.Theme.Code = gruff.Style{Bg: "235", Fg: "120"}
 		o.Theme.Link = gruff.Style{Underline: true, Fg: "39"}
-		o.Theme.Bullet = gruff.Style{Fg: "202"}
-		o.Theme.Numbered = gruff.Style{Fg: "202"}
 	}
 }
 

@@ -219,12 +219,22 @@ func TestRender_List(t *testing.T) {
 		{
 			name:  "unordered",
 			input: "- item 1\n- item 2\n",
-			want:  "\x1b[48;2;20;20;20m    \x1b[38;2;255;255;0m• \x1b[39mitem 1  \x1b[K\n    \x1b[38;2;255;255;0m• \x1b[39mitem 2  \x1b[K\n    \x1b[K\n  ",
+			want:  "\x1b[48;2;20;20;20m    • item 1  \x1b[K\n    • item 2  \x1b[K\n    \x1b[K\n  ",
 		},
 		{
 			name:  "ordered",
 			input: "1. first\n2. second\n",
-			want:  "\x1b[48;2;20;20;20m    \x1b[38;2;255;255;0m1. \x1b[39mfirst  \x1b[K\n    \x1b[38;2;255;255;0m2. \x1b[39msecond  \x1b[K\n    \x1b[K\n  ",
+			want:  "\x1b[48;2;20;20;20m    1. first  \x1b[K\n    2. second  \x1b[K\n    \x1b[K\n  ",
+		},
+		{
+			name:  "nested unordered",
+			input: "- Alpha\n- Beta\n  - Delta\n  - Epsilon\n",
+			want:  "\x1b[48;2;20;20;20m    • Alpha  \x1b[K\n    • Beta  \x1b[K\n      • Delta  \x1b[K\n      • Epsilon  \x1b[K\n    \x1b[K\n  ",
+		},
+		{
+			name:  "nested ordered",
+			input: "1. first\n2. second\n   1. deep\n   2. deeper\n",
+			want:  "\x1b[48;2;20;20;20m    1. first  \x1b[K\n    2. second  \x1b[K\n      1. deep  \x1b[K\n      2. deeper  \x1b[K\n    \x1b[K\n  ",
 		},
 	}
 

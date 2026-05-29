@@ -26,8 +26,6 @@ var noBgTheme = gruff.Theme{
 	Code:     gruff.Style{Fg: "#FF5F5F"},
 	Link:     gruff.Style{Underline: true, Fg: "#5c9cf5"},
 	LinkURL:  gruff.Style{Fg: "#808080"},
-	Bullet:   gruff.Style{Fg: "#ffff00"},
-	Numbered: gruff.Style{Fg: "#ffff00"},
 }
 
 type focus int

@@ -143,8 +143,6 @@ type Theme struct {
 	Code                    Style
 	Link                    Style
 	LinkURL                 Style
-	Bullet                  Style
-	Numbered                Style
 	Hr                      Style
 	Border                  Style
 }
@@ -162,8 +160,6 @@ var darkTheme = Theme{
 	Code:       Style{Fg: "#A6E22E"},
 	Link:       Style{Underline: true, Fg: "#5c9cf5"},
 	LinkURL:    Style{Fg: "#808080"},
-	Bullet:     Style{Fg: "#FFFF00"},
-	Numbered:   Style{Fg: "#FFFF00"},
 	Hr:         Style{Fg: "#808080"},
 	Border:     Style{Fg: "#808080"},
 }
@@ -181,8 +177,6 @@ var lightTheme = Theme{
 	Code:       Style{Fg: "#000000", Padding: 1},
 	Link:       Style{Underline: true, Fg: "#000080"},
 	LinkURL:    Style{Fg: "#808080"},
-	Bullet:     Style{Fg: "#800000"},
-	Numbered:   Style{Fg: "#800000"},
 	Hr:         Style{Fg: "#808080"},
 	Border:     Style{Fg: "#808080"},
 }
