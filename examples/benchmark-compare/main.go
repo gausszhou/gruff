@@ -52,15 +52,26 @@ var slotFocusColor = map[focus]lipgloss.Color{
 	focusBottom: lipgloss.Color("#0891b2"),
 }
 
+type renderTickMsg time.Time
+
+const renderInterval = 1 * time.Second
+
+func renderTick() tea.Cmd {
+	return tea.Tick(renderInterval, func(t time.Time) tea.Msg {
+		return renderTickMsg(t)
+	})
+}
+
 type model struct {
 	leftView   viewport.Model
 	topView    viewport.Model
 	bottomView viewport.Model
-	ready      bool
+	dirty      bool
 	termWidth  int
 	termHeight int
 	focus      focus
 	perm       int
+	md         string
 
 	contents  [3]string
 	durations [3]time.Duration
@@ -70,20 +81,22 @@ func (m model) slotAt(pos int) slot {
 	return slot((pos + m.perm) % 3)
 }
 
-func readInput() string {
-	b, err := os.ReadFile("testdata/benchmark.md")
-	if err != nil {
-		log.Fatal(err)
-	}
-	return strings.TrimSpace(strings.Repeat(string(b), 100))
+func NewModel(md string) model {
+	return model{md: md, dirty: true}
 }
 
 func (m model) Init() tea.Cmd {
-	return nil
+	return renderTick()
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case renderTickMsg:
+		if m.dirty {
+			m = m.renderAll()
+			m.dirty = false
+		}
+		return m, renderTick()
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "ctrl+c", "esc":
@@ -114,6 +127,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, cmd
 		}
+		return m, nil
 	case tea.MouseMsg:
 		halfW := (m.termWidth - 4) / 2
 		halfH := (m.termHeight - 4) / 2
@@ -137,67 +151,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.termWidth = msg.Width
 		m.termHeight = msg.Height
-		if !m.ready {
-			halfW := (msg.Width-2)/2 - 2
-			rightH := (msg.Height - 6) / 2
+		halfW := (msg.Width-2)/2 - 2
+		rightH := (msg.Height - 6) / 2
 
-			m.leftView = viewport.New(halfW, msg.Height-4)
-			m.topView = viewport.New(halfW, rightH)
-			m.bottomView = viewport.New(halfW, rightH)
+		m.leftView = viewport.New(halfW, msg.Height-3)
+		m.topView = viewport.New(halfW, rightH)
+		m.bottomView = viewport.New(halfW, rightH)
 
-			md := readInput()
+		m.dirty = true
 
-			t0 := time.Now()
-			r, err := glamour.NewTermRenderer(
-				glamour.WithStandardStyle("dark"),
-				glamour.WithWordWrap(halfW-2),
-			)
-			if err != nil {
-				log.Fatal(err)
-			}
-			out, err := r.Render(md)
-			if err != nil {
-				log.Fatal(err)
-			}
-			m.contents[slotStandard] = out
-			m.durations[slotStandard] = time.Since(t0)
-
-			t0 = time.Now()
-			r2, err := glamour.NewTermRenderer(
-				glamour.WithStyles(benchmark.GruffMinimalStyle()),
-				glamour.WithChromaFormatter("noop"),
-				glamour.WithWordWrap(halfW-2),
-				glamour.WithTableWrap(false),
-				glamour.WithInlineTableLinks(true),
-			)
-			if err != nil {
-				log.Fatal(err)
-			}
-			out2, err := r2.Render(md)
-			if err != nil {
-				log.Fatal(err)
-			}
-			m.contents[slotMinimal] = out2
-			m.durations[slotMinimal] = time.Since(t0)
-
-			t0 = time.Now()
-			out3, err := gruff.Render(md,
-				gruff.WithWordWrap(halfW-2),
-			)
-			if err != nil {
-				log.Fatal(err)
-			}
-			m.contents[slotGruff] = out3
-			m.durations[slotGruff] = time.Since(t0)
-
-			m.leftView.SetContent(m.contents[m.slotAt(0)])
-			m.topView.SetContent(m.contents[m.slotAt(1)])
-			m.bottomView.SetContent(m.contents[m.slotAt(2)])
-
-			m.ready = true
-		}
+		return m, nil
+		// return m, func() tea.Msg { return renderTickMsg(time.Now()) }
+	default:
+		return m, nil
 	}
-	return m, nil
 }
 
 func makeHeader(title, info string, active bool, activeBg, inactiveBg lipgloss.Color, width int) string {
@@ -228,6 +195,58 @@ func (m model) wxhInfo() string {
 	return fmt.Sprintf("%dx%d", m.termWidth, m.termHeight)
 }
 
+func (m model) renderAll() model {
+	halfW := (m.termWidth-2)/2 - 1
+
+	t0 := time.Now()
+	r, err := glamour.NewTermRenderer(
+		glamour.WithStandardStyle("dark"),
+		glamour.WithWordWrap(halfW-2),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	out, err := r.Render(m.md)
+	if err != nil {
+		log.Fatal(err)
+	}
+	m.contents[slotStandard] = out
+	m.durations[slotStandard] = time.Since(t0)
+
+	t0 = time.Now()
+	r2, err := glamour.NewTermRenderer(
+		glamour.WithStyles(benchmark.GruffMinimalStyle()),
+		glamour.WithChromaFormatter("noop"),
+		glamour.WithWordWrap(halfW-2),
+		glamour.WithTableWrap(false),
+		glamour.WithInlineTableLinks(true),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	out2, err := r2.Render(m.md)
+	if err != nil {
+		log.Fatal(err)
+	}
+	m.contents[slotMinimal] = out2
+	m.durations[slotMinimal] = time.Since(t0)
+
+	t0 = time.Now()
+	out3, err := gruff.Render(m.md,
+		gruff.WithWordWrap(halfW-2),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	m.contents[slotGruff] = out3
+	m.durations[slotGruff] = time.Since(t0)
+
+	m.leftView.SetContent(m.contents[m.slotAt(0)])
+	m.topView.SetContent(m.contents[m.slotAt(1)])
+	m.bottomView.SetContent(m.contents[m.slotAt(2)])
+	return m
+}
+
 func (m model) headerFor(pos int) string {
 	s := m.slotAt(pos)
 	colors := slotColors[s]
@@ -240,9 +259,6 @@ func (m model) headerFor(pos int) string {
 }
 
 func (m model) View() string {
-	if !m.ready {
-		return "\n  Loading..."
-	}
 	width := m.termWidth
 	if width == 0 {
 		width = 80
@@ -271,7 +287,12 @@ func (m model) View() string {
 }
 
 func main() {
-	p := tea.NewProgram(model{}, tea.WithAltScreen(), tea.WithMouseAllMotion())
+	b, err := os.ReadFile("testdata/benchmark.md")
+	if err != nil {
+		log.Fatal(err)
+	}
+	md := strings.TrimSpace(strings.Repeat(string(b), 100))
+	p := tea.NewProgram(NewModel(md), tea.WithAltScreen(), tea.WithMouseAllMotion())
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}

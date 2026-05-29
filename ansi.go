@@ -160,7 +160,7 @@ var darkTheme = Theme{
 	H6:            Style{Fg: "#00AF5F"},
 	Strong:        Style{Bold: true},
 	Em:            Style{Italic: true},
-	Code:          Style{Fg: "#A6E22E"},
+	Code:          Style{Fg: "#50fa7b"},
 	Link:          Style{Underline: true, Fg: "#5c9cf5"},
 	LinkURL:       Style{Fg: "#808080"},
 	Hr:            Style{Fg: "#808080"},
