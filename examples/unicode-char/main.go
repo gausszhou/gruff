@@ -15,7 +15,7 @@ import (
 
 var noBgTheme = gruff.Theme{
 	Document: gruff.Style{Padding: 2},
-	H1:       gruff.Style{Bold: true, Fg: "#FFFF87", Bg: "#5F5FFF"},
+	H1:       gruff.Style{Bold: true, Fg: "#FFFF87"},
 	H2:       gruff.Style{Bold: true, Fg: "#00AFFF"},
 	H3:       gruff.Style{Bold: true, Fg: "#00AFFF"},
 	H4:       gruff.Style{Bold: true, Fg: "#00AFFF"},

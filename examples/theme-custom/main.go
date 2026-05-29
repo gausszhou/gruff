@@ -16,7 +16,7 @@ func customTheme() gruff.Option {
 		o.Theme.H3 = gruff.Style{Fg: "220", Bold: true}
 		o.Theme.Strong = gruff.Style{Bold: true, Fg: "51"}
 		o.Theme.Em = gruff.Style{Italic: true, Fg: "213"}
-		o.Theme.Code = gruff.Style{Bg: "235", Fg: "120"}
+		o.Theme.Code = gruff.Style{Fg: "120"}
 		o.Theme.Link = gruff.Style{Underline: true, Fg: "39"}
 	}
 }
