@@ -10,6 +10,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/gausszhou/gruff"
+	"github.com/gausszhou/gruff/benchmark"
 )
 
 var noBgTheme = gruff.Theme{
@@ -120,8 +121,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			md := generateUnicodeMD("All printable Unicode characters from U+0020 to U+10FFFF, rendered by **glamour**.")
 
 			r, err := glamour.NewTermRenderer(
-				glamour.WithStandardStyle("dark"),
+				glamour.WithStyles(benchmark.GruffMinimalStyle()),
 				glamour.WithWordWrap(w-2),
+				glamour.WithTableWrap(false),
+				glamour.WithInlineTableLinks(true),
 			)
 			if err != nil {
 				log.Fatal(err)
