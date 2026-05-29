@@ -64,7 +64,7 @@ func benchGruff(b *testing.B, file string) {
 	}
 }
 
-func BenchmarkGruff(b *testing.B) { benchGruff(b, "testdata/_data.md") }
+func BenchmarkGruff(b *testing.B) { benchGruff(b, "testdata/benchmark.md") }
 
 func benchGlamour(b *testing.B, file string) {
 	source, err := os.ReadFile("../" + file)
@@ -90,4 +90,4 @@ func benchGlamour(b *testing.B, file string) {
 	}
 }
 
-func BenchmarkGlamour(b *testing.B) { benchGlamour(b, "testdata/_data.md") }
+func BenchmarkGlamour(b *testing.B) { benchGlamour(b, "testdata/benchmark.md") }
