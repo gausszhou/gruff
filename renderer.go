@@ -29,6 +29,7 @@ func renderMarkdown(source []byte, th Theme, wordWrap int, node ast.Node) string
 func (r *nodeRenderer) renderNode(node ast.Node) {
 	switch n := node.(type) {
 	case *ast.Document:
+		r.buf.WriteByte('\n')
 		r.renderChildren(n)
 
 	case *ast.Paragraph:
