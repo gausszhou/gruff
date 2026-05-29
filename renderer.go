@@ -11,10 +11,11 @@ import (
 )
 
 type nodeRenderer struct {
-	buf      strings.Builder
-	source   []byte
-	th       Theme
-	wordWrap int
+	buf          strings.Builder
+	source       []byte
+	th           Theme
+	wordWrap     int
+	inBlockquote bool
 }
 
 func renderMarkdown(source []byte, th Theme, wordWrap int, node ast.Node) string {
@@ -34,7 +35,9 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 
 	case *ast.Paragraph:
 		r.renderChildren(n)
-		if !r.isInsideList(n) && !r.isInsideTable(n) {
+		if r.inBlockquote {
+			r.buf.WriteByte('\n')
+		} else if !r.isInsideList(n) && !r.isInsideTable(n) {
 			r.buf.WriteString("\n\n")
 		}
 
@@ -123,6 +126,20 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 		r.buf.WriteString("────────────────────")
 		r.buf.WriteString(string(r.th.Hr.end(r.th.Document.Bg)))
 		r.buf.WriteString("\n\n")
+
+	case *ast.Blockquote:
+		st := r.th.BlockQuote
+		prefix := string(st.start()) + "│ " + string(st.end(r.th.Document.Bg))
+		r.inBlockquote = true
+		for c := n.FirstChild(); c != nil; c = c.NextSibling() {
+			r.buf.WriteString(prefix)
+			r.renderNode(c)
+			if c.NextSibling() != nil {
+				r.buf.WriteString(prefix)
+				r.buf.WriteByte('\n')
+			}
+		}
+		r.inBlockquote = false
 
 	case *extensionAst.Table:
 		r.renderTable(n)

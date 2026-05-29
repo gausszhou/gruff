@@ -145,6 +145,7 @@ type Theme struct {
 	LinkURL                Style
 	Hr                     Style
 	Border                 Style
+	BlockQuote             Style
 	TaskChecked            Style
 	TaskUnchecked          Style
 }
@@ -164,6 +165,7 @@ var darkTheme = Theme{
 	LinkURL:       Style{Fg: "#808080"},
 	Hr:            Style{Fg: "#808080"},
 	Border:        Style{Fg: "#808080"},
+	BlockQuote:    Style{Fg: "#808080"},
 	TaskChecked:   Style{Fg: "#50fa7b"},
 	TaskUnchecked: Style{Fg: "#808080"},
 }
@@ -183,6 +185,7 @@ var lightTheme = Theme{
 	LinkURL:       Style{Fg: "#808080"},
 	Hr:            Style{Fg: "#808080"},
 	Border:        Style{Fg: "#808080"},
+	BlockQuote:    Style{Fg: "#808080"},
 	TaskChecked:   Style{Fg: "#008000"},
 	TaskUnchecked: Style{Fg: "#808080"},
 }

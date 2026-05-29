@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"charm.land/glamour/v2"
@@ -19,30 +20,22 @@ type focus int
 
 const (
 	focusLeft focus = iota
-	focusRight
-)
-
-type rightMode int
-
-const (
-	rightMinimal rightMode = iota
-	rightGruff
+	focusMinimal
+	focusGruff
 )
 
 type model struct {
-	leftView   viewport.Model
-	rightView  viewport.Model
-	ready      bool
-	termWidth  int
-	termHeight int
-	focus      focus
-	rightMode  rightMode
+	leftView    viewport.Model
+	minimalView viewport.Model
+	gruffView   viewport.Model
+	ready       bool
+	termWidth   int
+	termHeight  int
+	focus       focus
 
 	leftDur    time.Duration
 	minimalDur time.Duration
 	gruffDur   time.Duration
-	minimalOut string
-	gruffOut   string
 }
 
 func readInput() string {
@@ -50,7 +43,7 @@ func readInput() string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return string(b)
+	return strings.TrimSpace(strings.Repeat(string(b), 100))
 }
 
 func (m model) Init() tea.Cmd {
@@ -63,42 +56,44 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "q", "ctrl+c", "esc":
 			return m, tea.Quit
-		case "tab":
-			if m.rightMode == rightMinimal {
-				m.rightMode = rightGruff
-				m.rightView.SetContent(m.gruffOut)
-			} else {
-				m.rightMode = rightMinimal
-				m.rightView.SetContent(m.minimalOut)
-			}
-			return m, nil
 		case "left":
 			m.focus = focusLeft
 			return m, nil
 		case "right":
-			m.focus = focusRight
+			if m.focus == focusLeft {
+				m.focus = focusMinimal
+			}
 			return m, nil
 		case "up", "down", "pgup", "pgdown":
 			var cmd tea.Cmd
-			if m.focus == focusLeft {
+			switch m.focus {
+			case focusLeft:
 				m.leftView, cmd = m.leftView.Update(msg)
-			} else {
-				m.rightView, cmd = m.rightView.Update(msg)
+			case focusMinimal:
+				m.minimalView, cmd = m.minimalView.Update(msg)
+			case focusGruff:
+				m.gruffView, cmd = m.gruffView.Update(msg)
 			}
 			return m, cmd
 		}
 	case tea.MouseMsg:
 		halfW := (m.termWidth - 4) / 2
+		halfH := (m.termHeight - 4) / 2
 		if msg.X < halfW {
 			m.focus = focusLeft
+		} else if msg.Y < halfH {
+			m.focus = focusMinimal
 		} else {
-			m.focus = focusRight
+			m.focus = focusGruff
 		}
 		var cmd tea.Cmd
-		if m.focus == focusLeft {
+		switch m.focus {
+		case focusLeft:
 			m.leftView, cmd = m.leftView.Update(msg)
-		} else {
-			m.rightView, cmd = m.rightView.Update(msg)
+		case focusMinimal:
+			m.minimalView, cmd = m.minimalView.Update(msg)
+		case focusGruff:
+			m.gruffView, cmd = m.gruffView.Update(msg)
 		}
 		return m, cmd
 	case tea.WindowSizeMsg:
@@ -106,10 +101,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.termHeight = msg.Height
 		if !m.ready {
 			halfW := (msg.Width-4)/2 - 2
-			h := msg.Height - 4
+			rightH := (msg.Height - 6) / 2
 
-			m.leftView = viewport.New(halfW, h)
-			m.rightView = viewport.New(halfW, h)
+			m.leftView = viewport.New(halfW, msg.Height-4)
+			m.minimalView = viewport.New(halfW, rightH)
+			m.gruffView = viewport.New(halfW, rightH)
 
 			md := readInput()
 
@@ -139,22 +135,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			m.minimalOut, err = r2.Render(md)
+			out2, err := r2.Render(md)
 			if err != nil {
 				log.Fatal(err)
 			}
+			m.minimalView.SetContent(out2)
 			m.minimalDur = time.Since(t0)
 
 			t0 = time.Now()
-			m.gruffOut, err = gruff.Render(md,
+			out3, err := gruff.Render(md,
 				gruff.WithWordWrap(halfW-2),
 			)
 			if err != nil {
 				log.Fatal(err)
 			}
+			m.gruffView.SetContent(out3)
 			m.gruffDur = time.Since(t0)
-
-			m.rightView.SetContent(m.minimalOut)
 
 			m.ready = true
 		}
@@ -178,23 +174,12 @@ func makeHeader(title, info string, active bool, activeBg, inactiveBg lipgloss.C
 	return left + middle + right
 }
 
-func (m model) leftBorderStyle() lipgloss.Style {
+func (m model) paneBorder(active bool, activeColor lipgloss.Color) lipgloss.Style {
 	s := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true)
-	if m.focus == focusLeft {
-		return s.BorderForeground(lipgloss.Color("#7c3aed"))
+	if active {
+		return s.BorderForeground(activeColor)
 	}
 	return s.BorderForeground(lipgloss.Color("#444444"))
-}
-
-func (m model) rightBorderStyle() lipgloss.Style {
-	s := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true)
-	if m.focus != focusRight {
-		return s.BorderForeground(lipgloss.Color("#444444"))
-	}
-	if m.rightMode == rightGruff {
-		return s.BorderForeground(lipgloss.Color("#0891b2"))
-	}
-	return s.BorderForeground(lipgloss.Color("#059669"))
 }
 
 func (m model) wxhInfo() string {
@@ -205,13 +190,12 @@ func (m model) leftInfo() string {
 	return m.wxhInfo() + "  " + m.leftDur.Round(time.Microsecond).String()
 }
 
-func (m model) rightInfo() (title, info string, activeBg, inactiveBg lipgloss.Color) {
-	if m.rightMode == rightGruff {
-		return " gruff ", m.wxhInfo() + "  " + m.gruffDur.Round(time.Microsecond).String(),
-			lipgloss.Color("#0891b2"), lipgloss.Color("#056982")
-	}
-	return " glamour minimal ", m.wxhInfo() + "  " + m.minimalDur.Round(time.Microsecond).String(),
-		lipgloss.Color("#059669"), lipgloss.Color("#056f4d")
+func (m model) minimalInfo() string {
+	return m.wxhInfo() + "  " + m.minimalDur.Round(time.Microsecond).String()
+}
+
+func (m model) gruffInfo() string {
+	return m.wxhInfo() + "  " + m.gruffDur.Round(time.Microsecond).String()
 }
 
 func (m model) View() string {
@@ -224,17 +208,24 @@ func (m model) View() string {
 	}
 	halfW := (width-4)/2 - 2
 
-	leftPane := m.leftBorderStyle().Render(
+	leftPane := m.paneBorder(m.focus == focusLeft, lipgloss.Color("#7c3aed")).Render(
 		makeHeader(" glamour standard ", m.leftInfo(), m.focus == focusLeft,
 			lipgloss.Color("#7c3aed"), lipgloss.Color("#3a1a6e"), halfW) + "\n" + m.leftView.View(),
 	)
 
-	rightTitle, rightInfo, rightBg, rightBgInactive := m.rightInfo()
-	rightPane := m.rightBorderStyle().Render(
-		makeHeader(rightTitle, rightInfo, m.focus == focusRight, rightBg, rightBgInactive, halfW) + "\n" + m.rightView.View(),
+	minimalPane := m.paneBorder(m.focus == focusMinimal, lipgloss.Color("#059669")).Render(
+		makeHeader(" glamour minimal ", m.minimalInfo(), m.focus == focusMinimal,
+			lipgloss.Color("#059669"), lipgloss.Color("#056f4d"), halfW) + "\n" + m.minimalView.View(),
 	)
 
-	joined := lipgloss.JoinHorizontal(lipgloss.Top, leftPane, rightPane)
+	gruffPane := m.paneBorder(m.focus == focusGruff, lipgloss.Color("#0891b2")).Render(
+		makeHeader(" gruff ", m.gruffInfo(), m.focus == focusGruff,
+			lipgloss.Color("#0891b2"), lipgloss.Color("#056982"), halfW) + "\n" + m.gruffView.View(),
+	)
+
+	rightSide := lipgloss.JoinVertical(lipgloss.Top, minimalPane, gruffPane)
+
+	joined := lipgloss.JoinHorizontal(lipgloss.Top, leftPane, rightSide)
 
 	return lipgloss.NewStyle().
 		Background(lipgloss.Color("#141414")).

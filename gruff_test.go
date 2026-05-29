@@ -261,6 +261,42 @@ func TestRender_List(t *testing.T) {
 	}
 }
 
+func TestRender_Blockquote(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "simple",
+			input: "> A quote\n",
+			want:  "\x1b[48;2;20;20;20m    \x1b[K\n  \x1b[38;2;128;128;128m│ \x1b[39mA quote  \x1b[K\n  ",
+		},
+		{
+			name:  "multi paragraph",
+			input: "> First\n>\n> Second\n",
+			want:  "\x1b[48;2;20;20;20m    \x1b[K\n  \x1b[38;2;128;128;128m│ \x1b[39mFirst  \x1b[K\n  \x1b[38;2;128;128;128m│ \x1b[39m  \x1b[K\n  \x1b[38;2;128;128;128m│ \x1b[39mSecond  \x1b[K\n  ",
+		},
+		{
+			name:  "with inline",
+			input: "> **bold** and *italic*\n",
+			want:  "\x1b[48;2;20;20;20m    \x1b[K\n  \x1b[38;2;128;128;128m│ \x1b[39m\x1b[1mbold\x1b[22m and \x1b[3mitalic\x1b[23m  \x1b[K\n  ",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Render(tt.input)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got != tt.want {
+				t.Errorf("Render() =\n%q\nwant:\n%q", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestRender_Table(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -300,7 +336,7 @@ func TestRender_Table(t *testing.T) {
 }
 
 func TestRender_Mixed(t *testing.T) {
-	input := "# Title\n\nThis is **bold** and *italic* and `code`.\n\nA [link](https://example.com) here.\n\n- list with **bold**\n- list with `code`\n\n1. first\n2. second\n\n| A | B |\n|---|---|\n| 1 | 2 |\n"
+	input := "# Title\n\nThis is **bold** and *italic* and `code`.\n\nA [link](https://example.com) here.\n\n- list with **bold**\n- list with `code`\n\n1. first\n2. second\n\n> A quote\n\n| A | B |\n|---|---|\n| 1 | 2 |\n"
 
 	got, err := Render(input)
 	if err != nil {
@@ -320,6 +356,7 @@ func TestRender_Mixed(t *testing.T) {
 		{"contains bullet", func(s string) bool { return strings.Contains(s, "•") }},
 		{"contains ordered num", func(s string) bool { return strings.Contains(s, "1.") }},
 		{"contains table separator", func(s string) bool { return strings.Contains(s, "\u2502") }},
+		{"contains blockquote pipe", func(s string) bool { return strings.Contains(s, "│ ") }},
 	}
 
 	for _, c := range checks {
