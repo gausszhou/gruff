@@ -12,6 +12,10 @@ import (
 
 var sampleMD = "# Gruff\n\n" +
 	"A **lightweight** markdown renderer for the terminal.\n\n" +
+	"## Text Formatting\n\n" +
+	"Markdown supports **bold** and *italic* text, as well as ***bold italic***.\n" +
+	"You can also use `inline code` for short snippets, or ~~strikethrough~~ for crossed-out text.\n" +
+	"Standard paragraphs are the most common element in any document.\n" +
 	"## Text\n\n" +
 	"- *Italic* and **bold**\n" +
 	"- `inline code`\n" +

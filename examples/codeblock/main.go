@@ -58,7 +58,7 @@ var sampleMD = "" +
 
 func main() {
 	light := flag.Bool("light", false, "use light theme")
-	wrap := flag.Int("wrap", 60, "word wrap width")
+	wrap := flag.Int("wrap", 120, "word wrap width")
 	flag.Parse()
 
 	var opts []gruff.Option

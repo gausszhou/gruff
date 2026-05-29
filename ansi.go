@@ -210,8 +210,9 @@ var lightTheme = Theme{
 
 func displayWidth(s string) int {
 	return runewidth.StringWidth(s)
-}
+	}
 
+// stripANSI 移除字符串中所有 ANSI 转义序列，返回纯文本
 func stripANSI(s string) string {
 	var out []byte
 	for i := 0; i < len(s); i++ {
@@ -227,8 +228,9 @@ func stripANSI(s string) string {
 		out = append(out, s[i])
 	}
 	return string(out)
-}
+	}
 
+// ansiDisplayWidth 计算包含 ANSI 码的字节切片的显示宽度（忽略 ANSI 码后的视觉宽度）
 func ansiDisplayWidth(b []byte) int {
 	w := 0
 	for i := 0; i < len(b); {
