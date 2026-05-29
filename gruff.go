@@ -66,9 +66,6 @@ func Render(source string, opts ...Option) (string, error) {
 	if o.WordWrap > 0 {
 		out = wrapText(out, o.WordWrap, o.Theme.Document.Padding)
 	}
-	if o.Theme.Document.Bg != "" {
-		out = string(ansiBg(o.Theme.Document.Bg)) + out
-	}
 
 	return out, nil
 }

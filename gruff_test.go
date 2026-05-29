@@ -105,12 +105,12 @@ func TestRender_InlineCode(t *testing.T) {
 		{
 			name:  "inline code",
 			input: "Use `code` here\n",
-			check: []string{"\x1b[38;2;166;226;46mcode\x1b[39m"},
+			check: []string{"\x1b[38;2;80;250;123mcode\x1b[39m"},
 		},
 		{
 			name:  "code with bold",
 			input: "**bold and `code`**\n",
-			check: []string{"\x1b[1mbold and \x1b[38;2;166;226;46mcode\x1b[39m"},
+			check: []string{"\x1b[1mbold and \x1b[38;2;80;250;123mcode\x1b[39m"},
 		},
 	}
 
@@ -176,22 +176,22 @@ func TestRender_CodeBlock(t *testing.T) {
 		{
 			name:  "fenced code block",
 			input: "```\ncode\n```\n",
-			check: []string{"\x1b[38;2;166;226;46m  code\x1b[K", "\x1b[39m"},
+			check: []string{"\x1b[38;2;80;250;123m  code\x1b[K", "\x1b[39m"},
 		},
 		{
 			name:  "fenced code with language",
 			input: "```go\nvar x = 1\n```\n",
-			check: []string{"\x1b[38;2;128;128;128m  go\x1b[K", "\x1b[38;2;166;226;46m  var x = 1\x1b[K"},
+			check: []string{"\x1b[38;2;128;128;128m  go\x1b[K", "\x1b[38;2;80;250;123m  var x = 1\x1b[K"},
 		},
 		{
 			name:  "indented code block",
 			input: "    indented\n",
-			check: []string{"\x1b[38;2;166;226;46m  indented\x1b[K"},
+			check: []string{"\x1b[38;2;80;250;123m  indented\x1b[K"},
 		},
 		{
 			name:  "multi-line fenced code",
 			input: "```\nline1\nline2\n```\n",
-			check: []string{"\x1b[38;2;166;226;46m  line1\x1b[K", "\x1b[38;2;166;226;46m  line2\x1b[K"},
+			check: []string{"\x1b[38;2;80;250;123m  line1\x1b[K", "\x1b[38;2;80;250;123m  line2\x1b[K"},
 		},
 	}
 
@@ -219,32 +219,32 @@ func TestRender_List(t *testing.T) {
 		{
 			name:  "unordered",
 			input: "- item 1\n- item 2\n",
-			want:  "\x1b[48;2;20;20;20m    \x1b[K\n    • item 1  \x1b[K\n    • item 2  \x1b[K\n    \x1b[K\n  ",
+			want:  "    \x1b[K\n    • item 1  \x1b[K\n    • item 2  \x1b[K\n    \x1b[K\n  ",
 		},
 		{
 			name:  "ordered",
 			input: "1. first\n2. second\n",
-			want:  "\x1b[48;2;20;20;20m    \x1b[K\n    1. first  \x1b[K\n    2. second  \x1b[K\n    \x1b[K\n  ",
+			want:  "    \x1b[K\n    1. first  \x1b[K\n    2. second  \x1b[K\n    \x1b[K\n  ",
 		},
 		{
 			name:  "nested unordered",
 			input: "- Alpha\n- Beta\n  - Delta\n  - Epsilon\n",
-			want:  "\x1b[48;2;20;20;20m    \x1b[K\n    • Alpha  \x1b[K\n    • Beta  \x1b[K\n      • Delta  \x1b[K\n      • Epsilon  \x1b[K\n    \x1b[K\n  ",
+			want:  "    \x1b[K\n    • Alpha  \x1b[K\n    • Beta  \x1b[K\n      • Delta  \x1b[K\n      • Epsilon  \x1b[K\n    \x1b[K\n  ",
 		},
 		{
 			name:  "nested ordered",
 			input: "1. first\n2. second\n   1. deep\n   2. deeper\n",
-			want:  "\x1b[48;2;20;20;20m    \x1b[K\n    1. first  \x1b[K\n    2. second  \x1b[K\n      1. deep  \x1b[K\n      2. deeper  \x1b[K\n    \x1b[K\n  ",
+			want:  "    \x1b[K\n    1. first  \x1b[K\n    2. second  \x1b[K\n      1. deep  \x1b[K\n      2. deeper  \x1b[K\n    \x1b[K\n  ",
 		},
 		{
 			name:  "task list",
 			input: "- [x] done\n- [ ] todo\n",
-			want:  "\x1b[48;2;20;20;20m    \x1b[K\n  \x1b[38;2;80;250;123m[✓]\x1b[39m done  \x1b[K\n  \x1b[38;2;128;128;128m[ ]\x1b[39m todo  \x1b[K\n    \x1b[K\n  ",
+			want:  "    \x1b[K\n  \x1b[38;2;80;250;123m[✓]\x1b[39m done  \x1b[K\n  \x1b[38;2;128;128;128m[ ]\x1b[39m todo  \x1b[K\n    \x1b[K\n  ",
 		},
 		{
 			name:  "nested task list",
 			input: "- [x] checked\n- [ ] unchecked\n  - [x] nested checked\n  - [ ] nested unchecked\n",
-			want:  "\x1b[48;2;20;20;20m    \x1b[K\n  \x1b[38;2;80;250;123m[✓]\x1b[39m checked  \x1b[K\n  \x1b[38;2;128;128;128m[ ]\x1b[39m unchecked  \x1b[K\n  \x1b[38;2;80;250;123m[✓]\x1b[39m nested checked  \x1b[K\n  \x1b[38;2;128;128;128m[ ]\x1b[39m nested unchecked  \x1b[K\n    \x1b[K\n  ",
+			want:  "    \x1b[K\n  \x1b[38;2;80;250;123m[✓]\x1b[39m checked  \x1b[K\n  \x1b[38;2;128;128;128m[ ]\x1b[39m unchecked  \x1b[K\n  \x1b[38;2;80;250;123m[✓]\x1b[39m nested checked  \x1b[K\n  \x1b[38;2;128;128;128m[ ]\x1b[39m nested unchecked  \x1b[K\n    \x1b[K\n  ",
 		},
 	}
 
@@ -270,17 +270,17 @@ func TestRender_Blockquote(t *testing.T) {
 		{
 			name:  "simple",
 			input: "> A quote\n",
-			want:  "\x1b[48;2;20;20;20m    \x1b[K\n  \x1b[38;2;128;128;128m│ \x1b[39mA quote  \x1b[K\n  ",
+			want:  "    \x1b[K\n  \x1b[38;2;128;128;128m│ \x1b[39mA quote  \x1b[K\n  ",
 		},
 		{
 			name:  "multi paragraph",
 			input: "> First\n>\n> Second\n",
-			want:  "\x1b[48;2;20;20;20m    \x1b[K\n  \x1b[38;2;128;128;128m│ \x1b[39mFirst  \x1b[K\n  \x1b[38;2;128;128;128m│ \x1b[39m  \x1b[K\n  \x1b[38;2;128;128;128m│ \x1b[39mSecond  \x1b[K\n  ",
+			want:  "    \x1b[K\n  \x1b[38;2;128;128;128m│ \x1b[39mFirst  \x1b[K\n  \x1b[38;2;128;128;128m│ \x1b[39m  \x1b[K\n  \x1b[38;2;128;128;128m│ \x1b[39mSecond  \x1b[K\n  ",
 		},
 		{
 			name:  "with inline",
 			input: "> **bold** and *italic*\n",
-			want:  "\x1b[48;2;20;20;20m    \x1b[K\n  \x1b[38;2;128;128;128m│ \x1b[39m\x1b[1mbold\x1b[22m and \x1b[3mitalic\x1b[23m  \x1b[K\n  ",
+			want:  "    \x1b[K\n  \x1b[38;2;128;128;128m│ \x1b[39m\x1b[1mbold\x1b[22m and \x1b[3mitalic\x1b[23m  \x1b[K\n  ",
 		},
 	}
 
@@ -316,7 +316,7 @@ func TestRender_Table(t *testing.T) {
 		{
 			name:  "table with inline",
 			input: "| Col1 | Col2 |\n|------|------|\n| `code` | **bold** |\n",
-			want:  []string{"\x1b[38;2;166;226;46m", "\x1b[1m", "code", "bold"},
+			want:  []string{"\x1b[38;2;80;250;123m", "\x1b[1m", "code", "bold"},
 		},
 	}
 
@@ -350,7 +350,7 @@ func TestRender_Mixed(t *testing.T) {
 		{"contains Title", func(s string) bool { return strings.Contains(s, "Title") }},
 		{"contains bold ANSI", func(s string) bool { return strings.Contains(s, "\x1b[1m") }},
 		{"contains italic ANSI", func(s string) bool { return strings.Contains(s, "\x1b[3m") }},
-		{"contains code ANSI", func(s string) bool { return strings.Contains(s, "\x1b[38;2;166;226;46m") }},
+		{"contains code ANSI", func(s string) bool { return strings.Contains(s, "\x1b[38;2;80;250;123m") }},
 		{"contains link underline", func(s string) bool { return strings.Contains(s, "\x1b[4m") }},
 		{"contains link URL", func(s string) bool { return strings.Contains(s, "example.com") }},
 		{"contains bullet", func(s string) bool { return strings.Contains(s, "•") }},
@@ -371,7 +371,7 @@ func TestRender_Empty(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got != "\x1b[48;2;20;20;20m    \x1b[K\n  " {
+	if got != "    \x1b[K\n  " {
 		t.Errorf("Render() = %q, want bg + padding", got)
 	}
 }

@@ -77,7 +77,6 @@ func ansiBg(c string) ansiCode {
 
 type Style struct {
 	Fg        string
-	Bg        string
 	Bold      bool
 	Italic    bool
 	Underline bool
@@ -95,20 +94,13 @@ func (s Style) start() ansiCode {
 	if s.Underline {
 		out += string(ansiUnderline)
 	}
-	if s.Fg != "" || s.Bg != "" {
-		if s.Fg != "" {
-			out += string(ansiFg(s.Fg))
-		}
-		if s.Bg != "" {
-			out += string(ansiBg(s.Bg))
-		}
+	if s.Fg != "" {
+		out += string(ansiFg(s.Fg))
 	}
 	return ansiCode(out)
 }
 
-var ansiResetStr = string(ansiReset)
-
-func (s Style) end(bg string) ansiCode {
+func (s Style) end() ansiCode {
 	var out string
 	if s.Italic {
 		out += string(ansiNoItalic)
@@ -122,20 +114,14 @@ func (s Style) end(bg string) ansiCode {
 	if s.Fg != "" {
 		out += "\x1b[39m"
 	}
-	if s.Bg != "" {
-		if bg != "" {
-			out += string(ansiBg(bg))
-		} else {
-			out += "\x1b[49m"
-		}
-	}
 	if out == "" {
-		out = "\x1b[39m\x1b[49m"
+		out = "\x1b[39m"
 	}
 	return ansiCode(out)
 }
 
 type Theme struct {
+	Bg                     string
 	Document               Style
 	H1, H2, H3, H4, H5, H6 Style
 	Strong                 Style
@@ -173,15 +159,15 @@ var darkTheme = Theme{
 var lightTheme = Theme{
 	Document:      Style{Padding: 2},
 	H1:            Style{Bold: true, Underline: true, Fg: "#000000"},
-	H2:            Style{Bold: true, Fg: "#000080"},
-	H3:            Style{Bold: true, Fg: "#008000"},
-	H4:            Style{Bold: true, Fg: "#008080"},
-	H5:            Style{Bold: true, Fg: "#808080"},
+	H2:            Style{Bold: true, Fg: "#00AFFF"},
+	H3:            Style{Bold: true, Fg: "#00AFFF"},
+	H4:            Style{Bold: true, Fg: "#00AFFF"},
+	H5:            Style{Bold: true, Fg: "#00AFFF"},
 	H6:            Style{Fg: "#808080"},
 	Strong:        Style{Bold: true},
 	Em:            Style{Italic: true},
-	Code:          Style{Fg: "#000000", Padding: 1},
-	Link:          Style{Underline: true, Fg: "#000080"},
+	Code:          Style{Fg: "#008000", Padding: 1},
+	Link:          Style{Underline: true, Fg: "#5c9cf5"},
 	LinkURL:       Style{Fg: "#808080"},
 	Hr:            Style{Fg: "#808080"},
 	Border:        Style{Fg: "#808080"},

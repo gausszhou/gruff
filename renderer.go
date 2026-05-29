@@ -4,6 +4,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/mattn/go-runewidth"
 	"github.com/yuin/goldmark/ast"
 	extensionAst "github.com/yuin/goldmark/extension/ast"
@@ -24,7 +25,11 @@ func renderMarkdown(source []byte, th Theme, wordWrap int, node ast.Node) string
 	r.th = th
 	r.wordWrap = wordWrap
 	r.renderNode(node)
-	return r.buf.String()
+	out := r.buf.String()
+	if th.Bg != "" {
+		out = lipgloss.NewStyle().Background(lipgloss.Color(th.Bg)).Render(out)
+	}
+	return out
 }
 
 func (r *nodeRenderer) renderNode(node ast.Node) {
@@ -46,7 +51,7 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 		r.buf.WriteString(string(st.start()))
 		r.renderChildren(n)
 		r.buf.WriteString("\x1b[K")
-		r.buf.WriteString(string(st.end(r.th.Document.Bg)))
+		r.buf.WriteString(string(st.end()))
 		r.buf.WriteString("\n\n")
 
 	case *ast.List:
@@ -75,7 +80,7 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 		}
 		r.buf.WriteString(string(st.start()))
 		r.renderChildren(n)
-		r.buf.WriteString(string(st.end(r.th.Document.Bg)))
+		r.buf.WriteString(string(st.end()))
 
 	case *ast.CodeSpan:
 		r.buf.WriteString(string(r.th.Code.start()))
@@ -90,13 +95,13 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 		for range r.th.Code.Padding {
 			r.buf.WriteByte(' ')
 		}
-		r.buf.WriteString(string(r.th.Code.end(r.th.Document.Bg)))
+		r.buf.WriteString(string(r.th.Code.end()))
 
 	case *ast.Link:
 		st := r.th.Link
 		r.buf.WriteString(string(st.start()))
 		r.renderChildren(n)
-		r.buf.WriteString(string(st.end(r.th.Document.Bg)))
+		r.buf.WriteString(string(st.end()))
 		if len(n.Destination) > 0 {
 			url := string(n.Destination)
 			uSt := r.th.LinkURL
@@ -105,7 +110,7 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 			r.buf.WriteByte('(')
 			r.buf.WriteString(url)
 			r.buf.WriteByte(')')
-			r.buf.WriteString(string(uSt.end(r.th.Document.Bg)))
+			r.buf.WriteString(string(uSt.end()))
 		}
 
 	case *ast.Image:
@@ -124,12 +129,12 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 	case *ast.ThematicBreak:
 		r.buf.WriteString(string(r.th.Hr.start()))
 		r.buf.WriteString("────────────────────")
-		r.buf.WriteString(string(r.th.Hr.end(r.th.Document.Bg)))
+		r.buf.WriteString(string(r.th.Hr.end()))
 		r.buf.WriteString("\n\n")
 
 	case *ast.Blockquote:
 		st := r.th.BlockQuote
-		prefix := string(st.start()) + "│ " + string(st.end(r.th.Document.Bg))
+		prefix := string(st.start()) + "│ " + string(st.end())
 		r.inBlockquote = true
 		for c := n.FirstChild(); c != nil; c = c.NextSibling() {
 			r.buf.WriteString(prefix)
@@ -148,12 +153,12 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 		if n.IsChecked {
 			r.buf.WriteString(string(r.th.TaskChecked.start()))
 			r.buf.WriteString("[\u2713]")
-			r.buf.WriteString(string(r.th.TaskChecked.end(r.th.Document.Bg)))
+			r.buf.WriteString(string(r.th.TaskChecked.end()))
 			r.buf.WriteByte(' ')
 		} else {
 			r.buf.WriteString(string(r.th.TaskUnchecked.start()))
 			r.buf.WriteString("[ ]")
-			r.buf.WriteString(string(r.th.TaskUnchecked.end(r.th.Document.Bg)))
+			r.buf.WriteString(string(r.th.TaskUnchecked.end()))
 			r.buf.WriteByte(' ')
 		}
 
@@ -178,7 +183,6 @@ func (r *nodeRenderer) renderSubtree(node ast.Node) string {
 
 func (r *nodeRenderer) renderCodeBlock(lines *text.Segments, lang []byte) {
 	st := r.th.Code
-	bg := r.th.Document.Bg
 	codeStyleStart := string(st.start())
 	const padding = 2
 
@@ -190,7 +194,7 @@ func (r *nodeRenderer) renderCodeBlock(lines *text.Segments, lang []byte) {
 		}
 		r.buf.Write(lang)
 		r.buf.WriteString("\x1b[K")
-		r.buf.WriteString(string(ls.end(bg)))
+		r.buf.WriteString(string(ls.end()))
 		r.buf.WriteByte('\n')
 	}
 
@@ -204,7 +208,7 @@ func (r *nodeRenderer) renderCodeBlock(lines *text.Segments, lang []byte) {
 		}
 		r.buf.WriteString(content)
 		r.buf.WriteString("\x1b[K")
-		r.buf.WriteString(string(st.end(bg)))
+		r.buf.WriteString(string(st.end()))
 		r.buf.WriteByte('\n')
 	}
 	r.buf.WriteByte('\n')
@@ -524,7 +528,7 @@ func (r *nodeRenderer) renderTable(table *extensionAst.Table) {
 	}
 
 	border := string(r.th.Border.start())
-	reset := string(r.th.Border.end(r.th.Document.Bg))
+	reset := string(r.th.Border.end())
 
 	seg := func(w int) string {
 		s := ""
@@ -567,11 +571,6 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 		}
 	}
 
-	bgReset := "\x1b[49m"
-	if r.th.Document.Bg != "" {
-		bgReset = string(ansiBg(r.th.Document.Bg))
-	}
-
 	for lineIdx := 0; lineIdx < maxLines; lineIdx++ {
 		for i, cell := range cells {
 			if i >= len(widths) {
@@ -581,7 +580,7 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 			if i > 0 {
 				r.buf.WriteString(string(r.th.Border.start()))
 				r.buf.WriteString("\u2502")
-				r.buf.WriteString(string(r.th.Border.end(r.th.Document.Bg)))
+				r.buf.WriteString(string(r.th.Border.end()))
 			}
 
 			var content string
@@ -603,7 +602,6 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 				}
 				r.buf.WriteString(content)
 				r.buf.WriteString("\x1b[39m")
-				r.buf.WriteString(bgReset)
 			case extensionAst.AlignCenter:
 				leftPad := padding / 2
 				rightPad := padding - leftPad
@@ -612,14 +610,12 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 				}
 				r.buf.WriteString(content)
 				r.buf.WriteString("\x1b[39m")
-				r.buf.WriteString(bgReset)
 				for j := 0; j < rightPad; j++ {
 					r.buf.WriteByte(' ')
 				}
 			default:
 				r.buf.WriteString(content)
 				r.buf.WriteString("\x1b[39m")
-				r.buf.WriteString(bgReset)
 				for j := 0; j < padding; j++ {
 					r.buf.WriteByte(' ')
 				}
