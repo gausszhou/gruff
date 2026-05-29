@@ -155,8 +155,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		rightH := (msg.Height - 6) / 2
 
 		m.leftView = viewport.New(halfW, msg.Height-3)
+		m.leftView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414"))
 		m.topView = viewport.New(halfW, rightH)
+		m.topView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414"))
 		m.bottomView = viewport.New(halfW, rightH)
+		m.bottomView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414"))
 
 		m.dirty = true
 

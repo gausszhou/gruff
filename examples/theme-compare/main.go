@@ -102,7 +102,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			w := (msg.Width-4)/2 - 2
 			h := msg.Height - 4
 			m.darkView = viewport.New(w, h)
+			m.darkView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414")).Foreground(lipgloss.Color("#ffffff"))
 			m.lightView = viewport.New(w, h)
+			m.lightView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#ffffff")).Foreground(lipgloss.Color("#000000"))
 
 			t0 := time.Now()
 			dark, err := gruff.Render(sampleMD,

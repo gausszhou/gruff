@@ -92,6 +92,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			h := (msg.Height - 6) / 2
 			m.glamourView = viewport.New(w, h)
 			m.gruffView = viewport.New(w, h)
+			m.gruffView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414"))
 
 			md := readTestdata()
 

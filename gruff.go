@@ -45,6 +45,7 @@ func Render(source string, opts ...Option) (string, error) {
 	for _, opt := range opts {
 		opt(&o)
 	}
+	o.Theme.inheritFg()
 
 	md := goldmark.New(
 		goldmark.WithExtensions(

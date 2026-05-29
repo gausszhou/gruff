@@ -4,7 +4,6 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/mattn/go-runewidth"
 	"github.com/yuin/goldmark/ast"
 	extensionAst "github.com/yuin/goldmark/extension/ast"
@@ -25,11 +24,7 @@ func renderMarkdown(source []byte, th Theme, wordWrap int, node ast.Node) string
 	r.th = th
 	r.wordWrap = wordWrap
 	r.renderNode(node)
-	out := r.buf.String()
-	if th.Bg != "" {
-		out = lipgloss.NewStyle().Background(lipgloss.Color(th.Bg)).Render(out)
-	}
-	return out
+	return r.buf.String()
 }
 
 func (r *nodeRenderer) renderNode(node ast.Node) {
@@ -64,14 +59,32 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 		r.renderListItem(n)
 
 	case *ast.Text:
+		_, isPara := n.Parent().(*ast.Paragraph)
+		_, isTB := n.Parent().(*ast.TextBlock)
+		_, isTC := n.Parent().(*extensionAst.TableCell)
+		if isPara || isTB || isTC {
+			r.buf.WriteString(string(r.th.Paragraph.start()))
+		}
 		v := n.Value(r.source)
 		r.buf.Write(v)
 		if n.SoftLineBreak() {
 			r.buf.WriteByte(' ')
 		}
+		if isPara || isTB || isTC {
+			r.buf.WriteString(string(r.th.Paragraph.end()))
+		}
 
 	case *ast.String:
+		_, isPara := n.Parent().(*ast.Paragraph)
+		_, isTB := n.Parent().(*ast.TextBlock)
+		_, isTC := n.Parent().(*extensionAst.TableCell)
+		if isPara || isTB || isTC {
+			r.buf.WriteString(string(r.th.Paragraph.start()))
+		}
 		r.buf.Write(n.Value)
+		if isPara || isTB || isTC {
+			r.buf.WriteString(string(r.th.Paragraph.end()))
+		}
 
 	case *ast.Emphasis:
 		st := r.th.Em

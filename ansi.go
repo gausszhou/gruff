@@ -9,12 +9,14 @@ import (
 type ansiCode string
 
 const (
-	ansiReset     ansiCode = "\x1b[0m"
-	ansiBold      ansiCode = "\x1b[1m"
-	ansiItalic    ansiCode = "\x1b[3m"
-	ansiUnderline ansiCode = "\x1b[4m"
-	ansiNoBold    ansiCode = "\x1b[22m"
-	ansiNoItalic  ansiCode = "\x1b[23m"
+	ansiReset       ansiCode = "\x1b[0m"
+	ansiBold        ansiCode = "\x1b[1m"
+	ansiItalic      ansiCode = "\x1b[3m"
+	ansiUnderline   ansiCode = "\x1b[4m"
+	ansiNoBold      ansiCode = "\x1b[22m"
+	ansiNoItalic    ansiCode = "\x1b[23m"
+	ansiNoUnderline ansiCode = "\x1b[24m"
+	ansiDefaultFg   ansiCode = "\x1b[39m"
 )
 
 func is4bit(c string) bool {
@@ -83,6 +85,7 @@ type Style struct {
 	Padding   int
 }
 
+// start 输出样式起始 ANSI 码：加粗/斜体/下划线/前景色
 func (s Style) start() ansiCode {
 	var out string
 	if s.Bold {
@@ -100,6 +103,7 @@ func (s Style) start() ansiCode {
 	return ansiCode(out)
 }
 
+// end 关闭样式，前景重置
 func (s Style) end() ansiCode {
 	var out string
 	if s.Italic {
@@ -109,13 +113,10 @@ func (s Style) end() ansiCode {
 		out += string(ansiNoBold)
 	}
 	if s.Underline {
-		out += "\x1b[24m"
+		out += string(ansiNoUnderline)
 	}
 	if s.Fg != "" {
-		out += "\x1b[39m"
-	}
-	if out == "" {
-		out = "\x1b[39m"
+		out += string(ansiDefaultFg)
 	}
 	return ansiCode(out)
 }
@@ -123,6 +124,7 @@ func (s Style) end() ansiCode {
 type Theme struct {
 	Bg                     string
 	Document               Style
+	Paragraph              Style
 	H1, H2, H3, H4, H5, H6 Style
 	Strong                 Style
 	Em                     Style
@@ -136,19 +138,47 @@ type Theme struct {
 	TaskUnchecked          Style
 }
 
+func (th *Theme) inheritFg() {
+	fg := th.Document.Fg
+	inherit := func(s *Style) {
+		if s.Fg == "" {
+			s.Fg = fg
+		}
+	}
+	inherit(&th.Paragraph)
+	inherit(&th.H1)
+	inherit(&th.H2)
+	inherit(&th.H3)
+	inherit(&th.H4)
+	inherit(&th.H5)
+	inherit(&th.H6)
+	inherit(&th.Strong)
+	inherit(&th.Em)
+	inherit(&th.Code)
+	inherit(&th.Link)
+	inherit(&th.LinkURL)
+	inherit(&th.Hr)
+	inherit(&th.Border)
+	inherit(&th.BlockQuote)
+	inherit(&th.TaskChecked)
+	inherit(&th.TaskUnchecked)
+}
+
 var darkTheme = Theme{
-	Document:      Style{Padding: 2},
+	Bg:            "#141414",
+	Document:      Style{Padding: 2, Fg: "#e0e0e0"},
+	Paragraph:     Style{Fg: "#e0e0e0"},
 	H1:            Style{Bold: true, Fg: "#FFFF87"},
 	H2:            Style{Bold: true, Fg: "#00AFFF"},
 	H3:            Style{Bold: true, Fg: "#00AFFF"},
 	H4:            Style{Bold: true, Fg: "#00AFFF"},
 	H5:            Style{Bold: true, Fg: "#00AFFF"},
-	H6:            Style{Fg: "#00AF5F"},
+	H6:            Style{Fg: "#00AFFF"},
 	Strong:        Style{Bold: true},
 	Em:            Style{Italic: true},
 	Code:          Style{Fg: "#50fa7b"},
 	Link:          Style{Underline: true, Fg: "#5c9cf5"},
-	LinkURL:       Style{Fg: "#808080"},
+	LinkURL:       Style{Fg: "#5c9cf5"},
 	Hr:            Style{Fg: "#808080"},
 	Border:        Style{Fg: "#808080"},
 	BlockQuote:    Style{Fg: "#808080"},
@@ -157,23 +187,25 @@ var darkTheme = Theme{
 }
 
 var lightTheme = Theme{
-	Document:      Style{Padding: 2},
+	Bg:            "#f0f0f0",
+	Document:      Style{Padding: 2, Fg: "#333333"},
+	Paragraph:     Style{Fg: "#333333"},
 	H1:            Style{Bold: true, Underline: true, Fg: "#000000"},
 	H2:            Style{Bold: true, Fg: "#00AFFF"},
 	H3:            Style{Bold: true, Fg: "#00AFFF"},
 	H4:            Style{Bold: true, Fg: "#00AFFF"},
 	H5:            Style{Bold: true, Fg: "#00AFFF"},
-	H6:            Style{Fg: "#808080"},
+	H6:            Style{Fg: "#00AFFF"},
 	Strong:        Style{Bold: true},
 	Em:            Style{Italic: true},
 	Code:          Style{Fg: "#008000", Padding: 1},
 	Link:          Style{Underline: true, Fg: "#5c9cf5"},
-	LinkURL:       Style{Fg: "#808080"},
-	Hr:            Style{Fg: "#808080"},
-	Border:        Style{Fg: "#808080"},
-	BlockQuote:    Style{Fg: "#808080"},
+	LinkURL:       Style{Fg: "#5c9cf5"},
+	Hr:            Style{Fg: "#333333"},
+	Border:        Style{Fg: "#333333"},
+	BlockQuote:    Style{Fg: "#333333"},
 	TaskChecked:   Style{Fg: "#008000"},
-	TaskUnchecked: Style{Fg: "#808080"},
+	TaskUnchecked: Style{Fg: "#333333"},
 }
 
 func displayWidth(s string) int {

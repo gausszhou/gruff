@@ -11,6 +11,7 @@ import (
 
 func customTheme() gruff.Option {
 	return func(o *gruff.Options) {
+		o.Theme.Bg = "#272822"
 		o.Theme.H1 = gruff.Style{Fg: "196", Bold: true}
 		o.Theme.H2 = gruff.Style{Fg: "208", Bold: true}
 		o.Theme.H3 = gruff.Style{Fg: "220", Bold: true}
