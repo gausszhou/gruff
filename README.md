@@ -67,18 +67,24 @@ out, err := gruff.Render(source, gruff.WithLight(), gruff.WithWordWrap(80))
 
 ## Performance
 
-Benchmarked against `glamour` using a large Markdown file with multiple tables, inline formatting, and lists:
+Benchmarked against `glamour` using `testdata/benchmark.md`, a balanced mix of headings,
+paragraphs, lists, code blocks, tables, links, and formatting. Glamour is configured in
+minimal mode (chroma disabled, word wrap off, table wrap off, inline table links on) to
+match gruff's feature set for a fair comparison.
 
-| Metric         | gruff            | glamour            | Improvement |
-|----------------|------------------|--------------------|-------------|
-| Time/op        | ~7.0 ms          | ~3,188 ms          | **~455×**   |
-| Memory/op      | ~5.9 MB          | ~99.0 MB           | **~17×**    |
-| Allocations/op | ~67,467          | ~6,053,610         | **~90×**    |
+| Metric         | gruff       | glamour (minimal) | Improvement |
+|----------------|-------------|-------------------|-------------|
+| Time/op        | ~0.59 ms    | ~6.67 ms          | **~11×**    |
+| Memory/op      | ~132 KB     | ~511 KB           | **~4×**     |
+| Allocations/op | ~983        | ~43,657           | **~44×**    |
+
+See [`docs/why-gruff-faster.md`](docs/why-gruff-faster.md) for a detailed analysis of the
+performance gap.
 
 Run benchmarks locally:
 
 ```bash
-go test -bench=. -benchmem ./...
+go test -bench=. -benchmem ./benchmark/
 ```
 
 ## Examples
