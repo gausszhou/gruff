@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"os"
 	"strings"
-	"unicode"
+	"time"
 
 	"charm.land/glamour/v2"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -11,23 +13,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/gausszhou/gruff"
 )
-
-var noBgTheme = gruff.Theme{
-	Document: gruff.Style{Padding: 2},
-	H1:       gruff.Style{Bold: true, Fg: "#FFFF87", Bg: "#5F5FFF"},
-	H2:       gruff.Style{Bold: true, Fg: "#00AFFF"},
-	H3:       gruff.Style{Bold: true, Fg: "#00AFFF"},
-	H4:       gruff.Style{Bold: true, Fg: "#00AFFF"},
-	H5:       gruff.Style{Bold: true, Fg: "#00AFFF"},
-	H6:       gruff.Style{Fg: "#00AF5F"},
-	Strong:   gruff.Style{Bold: true},
-	Em:       gruff.Style{Italic: true},
-	Code:     gruff.Style{Fg: "#FF5F5F"},
-	Link:     gruff.Style{Underline: true, Fg: "#5c9cf5"},
-	LinkURL:  gruff.Style{Fg: "#808080"},
-	Bullet:   gruff.Style{Fg: "#ffff00"},
-	Numbered: gruff.Style{Fg: "#ffff00"},
-}
 
 type focus int
 
@@ -43,27 +28,17 @@ type model struct {
 	termWidth   int
 	termHeight  int
 	focus       focus
+
+	glamourDur time.Duration
+	gruffDur   time.Duration
 }
 
-func generateUnicodeMD(title string) string {
-	var md strings.Builder
-	md.WriteString("# Unicode Character Table\n\n")
-	md.WriteString(title)
-	md.WriteString("\n\n---\n\n")
-	for r := rune(0x20); r <= 0x10FFFF; r++ {
-		if r >= 0x7F && r <= 0x9F {
-			continue
-		}
-		if r >= 0xD800 && r <= 0xDFFF {
-			continue
-		}
-		if !unicode.IsPrint(r) {
-			continue
-		}
-		md.WriteRune(r)
-		md.WriteRune(' ')
+func readTestdata() string {
+	b, err := os.ReadFile("testdata/_data.md")
+	if err != nil {
+		log.Fatal(err)
 	}
-	return md.String()
+	return string(b)
 }
 
 func (m model) Init() tea.Cmd {
@@ -113,12 +88,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.termHeight = msg.Height
 		if !m.ready {
 			w := msg.Width - 2
-			h := (msg.Height - 5) / 2
+			h := (msg.Height - 6) / 2
 			m.glamourView = viewport.New(w, h)
 			m.gruffView = viewport.New(w, h)
 
-			md := generateUnicodeMD("All printable Unicode characters from U+0020 to U+10FFFF, rendered by **glamour**.")
+			md := readTestdata()
 
+			t0 := time.Now()
 			r, err := glamour.NewTermRenderer(
 				glamour.WithStandardStyle("dark"),
 				glamour.WithWordWrap(w-2),
@@ -133,12 +109,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.glamourView.SetContent(
 				lipgloss.NewStyle().Width(w).Render(out),
 			)
+			m.glamourDur = time.Since(t0)
 
-			md2 := generateUnicodeMD("All printable Unicode characters from U+0020 to U+10FFFF, rendered by **gruff**.")
-
-			out2, err := gruff.Render(md2,
+			t0 = time.Now()
+			out2, err := gruff.Render(md,
 				gruff.WithWordWrap(w-2),
-				func(o *gruff.Options) { o.Theme = noBgTheme },
 			)
 			if err != nil {
 				log.Fatal(err)
@@ -146,6 +121,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.gruffView.SetContent(
 				lipgloss.NewStyle().Width(w).Render(out2),
 			)
+			m.gruffDur = time.Since(t0)
 
 			m.ready = true
 		}
@@ -153,17 +129,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func makeLabel(text string, active bool, activeBg, inactiveBg lipgloss.Color, width int) string {
+func makeHeader(title, info string, active bool, activeBg, inactiveBg lipgloss.Color, width int) string {
 	bg := inactiveBg
 	if active {
 		bg = activeBg
 	}
-	return lipgloss.NewStyle().
-		Background(bg).
-		Foreground(lipgloss.Color("#ffffff")).
-		Width(width).
-		Align(lipgloss.Center).
-		Render(text)
+	base := lipgloss.NewStyle().Background(bg)
+	left := base.Foreground(lipgloss.Color("#ffffff")).Render(title)
+	gap := width - lipgloss.Width(left) - lipgloss.Width(info)
+	if gap < 0 {
+		gap = 0
+	}
+	middle := base.Width(gap).Render(strings.Repeat(" ", gap))
+	right := base.Foreground(lipgloss.Color("#888888")).Render(info)
+	return left + middle + right
 }
 
 func (m model) View() string {
@@ -193,10 +172,15 @@ func (m model) View() string {
 		gruffBorder = gruffBorder.BorderForeground(lipgloss.Color("#0891b2"))
 	}
 
-	glamourHeader := makeLabel(" glamour ", m.focus == focusGlamour,
+	wxh := fmt.Sprintf("%dx%d", m.termWidth, m.termHeight)
+
+	glamourInfo := wxh + "  " + m.glamourDur.Round(time.Microsecond).String()
+	gruffInfo := wxh + "  " + m.gruffDur.Round(time.Microsecond).String()
+
+	glamourHeader := makeHeader(" glamour ", glamourInfo, m.focus == focusGlamour,
 		lipgloss.Color("#7c3aed"), lipgloss.Color("#3a1a6e"), w)
 
-	gruffHeader := makeLabel(" gruff ", m.focus == focusGruff,
+	gruffHeader := makeHeader(" gruff ", gruffInfo, m.focus == focusGruff,
 		lipgloss.Color("#0891b2"), lipgloss.Color("#045a6e"), w)
 
 	glamourContent := glamourBorder.Render(

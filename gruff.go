@@ -2,6 +2,7 @@ package gruff
 
 import (
 	"strings"
+	"unicode/utf8"
 
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
@@ -63,7 +64,10 @@ func Render(source string, opts ...Option) (string, error) {
 	out := renderMarkdown(sourceBytes, o.Theme, o.WordWrap, doc)
 
 	if o.WordWrap > 0 {
-		out = wrapText(out, o.WordWrap)
+		out = wrapText(out, o.WordWrap, o.Theme.Document.Padding)
+	}
+	if o.Theme.Document.Bg != "" {
+		out = string(ansiBg(o.Theme.Document.Bg)) + out
 	}
 
 	return out, nil
@@ -77,34 +81,54 @@ func RenderBytes(source []byte, opts ...Option) ([]byte, error) {
 	return []byte(s), nil
 }
 
-func wrapText(s string, width int) string {
+func wrapText(s string, width int, padding int) string {
 	if width <= 0 {
 		return s
 	}
 
 	var out strings.Builder
-	var word strings.Builder
-	lineLen := 0
+	out.Grow(len(s) + len(s)/(width+1) + 32)
+
+	for range padding {
+		out.WriteByte(' ')
+	}
+	lineLen := padding
+
+	word := make([]byte, 0, 64)
+	spaces := 0
 	inAnsi := false
 
 	flushWord := func() {
-		w := word.String()
-		word.Reset()
-		if w == "" {
+		if len(word) == 0 {
 			return
 		}
-		wLen := displayWidth(stripANSI(w))
-		if lineLen > 0 && lineLen+wLen > width {
+		wLen := ansiDisplayWidth(word)
+		if lineLen > 0 && lineLen+wLen+(b2i(spaces > 0)) > width-padding {
+			for range padding {
+				out.WriteByte(' ')
+			}
+			out.WriteString("\x1b[K")
 			out.WriteByte('\n')
-			lineLen = 0
+			for range padding {
+				out.WriteByte(' ')
+			}
+			lineLen = padding
+			spaces = 0
+		} else if spaces > 0 {
+			for i := 0; i < spaces; i++ {
+				out.WriteByte(' ')
+			}
+			lineLen += spaces
 		}
-		out.WriteString(w)
+		out.Write(word)
 		lineLen += wLen
+		spaces = 0
+		word = word[:0]
 	}
 
 	for _, r := range s {
 		if inAnsi {
-			word.WriteRune(r)
+			word = utf8.AppendRune(word, r)
 			if r == 'm' {
 				inAnsi = false
 			}
@@ -112,30 +136,44 @@ func wrapText(s string, width int) string {
 		}
 		if r == '\x1b' {
 			inAnsi = true
-			word.WriteRune(r)
+			word = utf8.AppendRune(word, r)
 			continue
 		}
 		if r == '\n' {
 			flushWord()
+			for range padding {
+				out.WriteByte(' ')
+			}
+			out.WriteString("\x1b[K")
 			out.WriteByte('\n')
-			lineLen = 0
+			for range padding {
+				out.WriteByte(' ')
+			}
+			lineLen = padding
+			spaces = 0
 			continue
 		}
 		if r == ' ' {
 			flushWord()
-			out.WriteByte(' ')
-			lineLen++
+			spaces++
 			continue
 		}
-		word.WriteRune(r)
+		word = utf8.AppendRune(word, r)
 	}
 	flushWord()
 
-	// Trim trailing spaces from each line (leftover from space-before-word-break)
-	raw := out.String()
-	lines := strings.Split(raw, "\n")
-	for i, line := range lines {
-		lines[i] = strings.TrimRight(line, " ")
+	if spaces > 0 {
+		for i := 0; i < spaces; i++ {
+			out.WriteByte(' ')
+		}
 	}
-	return strings.Join(lines, "\n")
+
+	return out.String()
+}
+
+func b2i(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
 }

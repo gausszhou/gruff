@@ -1,48 +1,47 @@
-# Table Rendering
+# 表格渲染
 
-Tables are rendered via a two-pass algorithm over the goldmark GFM table AST.
+表格通过两遍算法在 goldmark GFM 表格 AST 上进行渲染。
 
-## AST Structure
+## AST 结构
 
 ```
 Table
 ├── TableHeader
-│   ├── TableCell (alignment: cell.Alignment)
+│   ├── TableCell (对齐方式: cell.Alignment)
 │   ├── TableCell
 │   └── ...
 ├── TableRow
 │   ├── TableCell
 │   ├── TableCell
-│   └── ...
-└── ...
+│   └── └── ...
 ```
 
-**Note:** `TableHeader.Alignments` is unset at runtime in goldmark. Alignment is per-cell via `TableCell.Alignment`.
+**注意：** `TableHeader.Alignments` 在 goldmark 运行时未设置。对齐方式通过 `TableCell.Alignment` 按单元格设置。
 
-## Pass 1 — Measure
+## 第一遍 — 测量
 
 ```go
-// pseudocode
+// 伪代码
 for each row:
   for each cell:
-    render cell content to ANSI string (via renderSubtree)
-    store content + alignment
-    track maxWidth per column (displayWidth of stripped content)
+    将单元格内容渲染为 ANSI 字符串（通过 renderSubtree）
+    存储内容 + 对齐方式
+    跟踪每列的最大宽度（剥离 ANSI 后的 displayWidth）
 
-// Cap columns
-overhead = 3 * (numCols - 1)  // " │ " separators
+// 限制列宽
+overhead = 3 * (numCols - 1)  // " │ " 分隔符
 maxPerCol = (wordWrap - overhead) / numCols
 if maxPerCol < 20 { maxPerCol = 20 }
 ```
 
-## Pass 2 — Render
+## 第二遍 — 渲染
 
 ```go
-// Wrap each cell's content to its column width
+// 将每个单元格的内容换行到其列宽
 for each cell:
     cell.lines = wrapCellLines(content, colWidth)
 
-// Render rows
+// 渲染行
 render header
 hline()  // ────────┼──────────┼────────
 
@@ -52,7 +51,7 @@ for each body row:
         hline()
 ```
 
-## Visual Structure (no outer borders)
+## 视觉结构（无外边框）
 
 ```
  H1       │ H2       │ H3
@@ -62,17 +61,17 @@ for each body row:
  D        │ E        │ F
 ```
 
-- **No outer borders** — no `┌─┬─┐` or `└─┴─┘`, no leading/trailing `│`
-- Separator row uses `───┼───┼───` without tee connectors
-- Cleaner look, easier to nest inside lipgloss frames
+- **无外边框** — 没有 `┌─┬─┐` 或 `└─┴─┘`，没有开头/结尾的 `│`
+- 分隔行使用 `───┼───┼───`，无 T 形连接符
+- 更简洁的外观，更易于嵌套在 lipgloss 框架内
 
-## Cell Rendering Details
+## 单元格渲染细节
 
-- Leading/trailing padding: `" "` at start and end of each cell
-- Column separator: `\x1b[38;5;8m│\x1b[39m` (gray `│`)
-- After cell content, emit `\x1b[39m` (reset fg) + doc background (`\x1b[48;2;R;G;Bm`) before padding to prevent inline-style background bleed
-- Alignment: `v` left (default), `^` center, `>` right
+- 首尾填充：每个单元格开头和结尾的 `" "`
+- 列分隔符：`\x1b[38;5;8m│\x1b[39m`（灰色 `│`）
+- 单元格内容后，先输出 `\x1b[39m`（重置前景色）+ 文档背景色（`\x1b[48;2;R;G;Bm`），然后再填充，防止内联样式背景色扩散
+- 对齐方式：`v` 左对齐（默认）、`^` 居中、`>` 右对齐
 
-## Word Wrap in Cells
+## 单元格中的自动换行
 
-See `feature-word-wrap.md` for the full word wrap algorithm, which handles CJK/emoji character-level wrapping inside table cells.
+参见 `feature-word-wrap.md` 了解完整的自动换行算法，该算法处理表格单元格内的 CJK/表情符号字符级换行。
