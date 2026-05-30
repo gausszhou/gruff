@@ -64,10 +64,12 @@ func Render(source string, opts ...Option) (string, error) {
 
 	out := renderMarkdown(sourceBytes, o.Theme, o.WordWrap, doc)
 
+	bgCode := string(ansiBg(o.Theme.Bg))
 	if o.WordWrap > 0 {
-		out = wrapText(out, o.WordWrap, o.Theme.Document.Padding)
+		out = wrapText(out, o.WordWrap, o.Theme.Document.Padding, bgCode)
 	}
 
+	out += string(ansiDefaultBg)
 	return out, nil
 }
 
@@ -79,7 +81,7 @@ func RenderBytes(source []byte, opts ...Option) ([]byte, error) {
 	return []byte(s), nil
 }
 
-func wrapText(s string, width int, padding int) string {
+func wrapText(s string, width int, padding int, bgCode string) string {
 	if width <= 0 {
 		return s
 	}
@@ -87,6 +89,7 @@ func wrapText(s string, width int, padding int) string {
 	var out strings.Builder
 	out.Grow(len(s) + len(s)/(width+1) + 32)
 
+	out.WriteString(bgCode)
 	for range padding {
 		out.WriteByte(' ')
 	}
@@ -96,17 +99,21 @@ func wrapText(s string, width int, padding int) string {
 	spaces := 0
 	inAnsi := false
 
+	fillWidth := width + padding
+
 	flushWord := func() {
 		if len(word) == 0 {
 			return
 		}
 		wLen := ansiDisplayWidth(word)
 		if lineLen > 0 && lineLen+wLen+(b2i(spaces > 0)) > width-padding {
-			for range padding {
+			out.WriteString(bgCode)
+			for i := lineLen; i < fillWidth; i++ {
 				out.WriteByte(' ')
 			}
-			out.WriteString("\x1b[K")
+			out.WriteString(string(ansiEraseLine))
 			out.WriteByte('\n')
+			out.WriteString(bgCode)
 			for range padding {
 				out.WriteByte(' ')
 			}
@@ -139,11 +146,13 @@ func wrapText(s string, width int, padding int) string {
 		}
 		if r == '\n' {
 			flushWord()
-			for range padding {
+			out.WriteString(bgCode)
+			for i := lineLen; i < fillWidth; i++ {
 				out.WriteByte(' ')
 			}
-			out.WriteString("\x1b[K")
+			out.WriteString(string(ansiEraseLine))
 			out.WriteByte('\n')
+			out.WriteString(bgCode)
 			for range padding {
 				out.WriteByte(' ')
 			}
@@ -160,11 +169,11 @@ func wrapText(s string, width int, padding int) string {
 	}
 	flushWord()
 
-	if spaces > 0 {
-		for i := 0; i < spaces; i++ {
-			out.WriteByte(' ')
-		}
+	out.WriteString(bgCode)
+	for i := lineLen; i < fillWidth; i++ {
+		out.WriteByte(' ')
 	}
+	out.WriteString(string(ansiEraseLine))
 
 	return out.String()
 }

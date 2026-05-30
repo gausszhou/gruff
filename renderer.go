@@ -30,6 +30,7 @@ func renderMarkdown(source []byte, th Theme, wordWrap int, node ast.Node) string
 func (r *nodeRenderer) renderNode(node ast.Node) {
 	switch n := node.(type) {
 	case *ast.Document:
+		r.buf.WriteString(string(ansiBg(r.th.Bg)))
 		r.buf.WriteByte('\n')
 		r.renderChildren(n)
 
@@ -45,7 +46,7 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 		st := r.headingStyle(n.Level)
 		r.buf.WriteString(string(st.start()))
 		r.renderChildren(n)
-		r.buf.WriteString("\x1b[K")
+		r.buf.WriteString(string(ansiEraseLine))
 		r.buf.WriteString(string(st.end()))
 		r.buf.WriteString("\n\n")
 
@@ -208,7 +209,7 @@ func (r *nodeRenderer) renderCodeBlock(lines *text.Segments, lang []byte) {
 	if len(lang) > 0 {
 		r.buf.Write(lang)
 	}
-	r.buf.WriteString("\x1b[K")
+	r.buf.WriteString(string(ansiEraseLine))
 	r.buf.WriteString(string(ls.end()))
 	r.buf.WriteByte('\n')
 
@@ -221,7 +222,7 @@ func (r *nodeRenderer) renderCodeBlock(lines *text.Segments, lang []byte) {
 			r.buf.WriteByte(' ')
 		}
 		r.buf.WriteString(content)
-		r.buf.WriteString("\x1b[K")
+		r.buf.WriteString(string(ansiEraseLine))
 		r.buf.WriteString(string(st.end()))
 		r.buf.WriteByte('\n')
 	}

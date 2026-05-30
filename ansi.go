@@ -17,6 +17,8 @@ const (
 	ansiNoItalic    ansiCode = "\x1b[23m"
 	ansiNoUnderline ansiCode = "\x1b[24m"
 	ansiDefaultFg   ansiCode = "\x1b[39m"
+	ansiDefaultBg   ansiCode = "\x1b[49m"
+	ansiEraseLine   ansiCode = "\x1b[K"
 )
 
 func is4bit(c string) bool {
@@ -210,7 +212,7 @@ var lightTheme = Theme{
 
 func displayWidth(s string) int {
 	return runewidth.StringWidth(s)
-	}
+}
 
 // stripANSI 移除字符串中所有 ANSI 转义序列，返回纯文本
 func stripANSI(s string) string {
@@ -228,7 +230,7 @@ func stripANSI(s string) string {
 		out = append(out, s[i])
 	}
 	return string(out)
-	}
+}
 
 // ansiDisplayWidth 计算包含 ANSI 码的字节切片的显示宽度（忽略 ANSI 码后的视觉宽度）
 func ansiDisplayWidth(b []byte) int {
