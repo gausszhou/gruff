@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"image/color"
 	"log"
 	"os"
 	"strings"
@@ -9,10 +10,10 @@ import (
 
 	"charm.land/glamour/v2"
 
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/gausszhou/bubbleflex"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	flex "github.com/gausszhou/bubbleflex"
 	"github.com/gausszhou/gruff/benchmark"
 	"github.com/gausszhou/gruff/gruff"
 )
@@ -95,7 +96,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case tea.MouseMsg:
 		halfW := m.termWidth / 2
-		if msg.X < halfW {
+		if msg.Mouse().X < halfW {
 			m.focus = focusLeft
 		} else {
 			m.focus = focusRight
@@ -111,11 +112,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.termWidth = msg.Width
 		m.termHeight = msg.Height
-		m.viewWidth = (msg.Width / 2) - 2
-		m.viewHeight = msg.Height - 4
+		m.viewWidth = (msg.Width - 4) / 2
+		m.viewHeight = msg.Height - 3
 
-		m.leftView = viewport.New(m.viewWidth, m.viewHeight)
-		m.rightView = viewport.New(m.viewWidth, m.viewHeight)
+		m.leftView = viewport.New(viewport.WithWidth(m.viewWidth), viewport.WithHeight(m.viewHeight))
+		m.rightView = viewport.New(viewport.WithWidth(m.viewWidth), viewport.WithHeight(m.viewHeight))
 		m.dirty = true
 		return m, nil
 	default:
@@ -127,7 +128,7 @@ func makeHeader(width int, left, right string) string {
 	return flex.New(flex.Row).JustifyContent(flex.SpaceBetween).Width(width).Join(left, right)
 }
 
-func (m model) paneBorder(active bool, activeColor lipgloss.Color) lipgloss.Style {
+func (m model) paneBorder(active bool, activeColor color.Color) lipgloss.Style {
 	s := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true)
 	if active {
 		return s.BorderForeground(activeColor)
@@ -140,32 +141,30 @@ func (m model) wxhInfo() string {
 }
 
 func (m model) renderAll() model {
-	halfW := (m.termWidth - 4) / 2
-
-	t0 := time.Now()
-	r, err := glamour.NewTermRenderer(
+	t1 := time.Now()
+	r1, err := glamour.NewTermRenderer(
 		glamour.WithStyles(benchmark.GlamourStandardStyle()),
-		glamour.WithWordWrap(halfW),
+		glamour.WithWordWrap(m.viewWidth),
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
-	out, err := r.Render(m.md)
+	out, err := r1.Render(m.md)
 	if err != nil {
 		log.Fatal(err)
 	}
 	m.glamourContent = out
-	m.glamourDur = time.Since(t0)
+	m.glamourDur = time.Since(t1)
 
-	t0 = time.Now()
+	t2 := time.Now()
 	out2, err := gruff.Render(m.md,
-		gruff.WithWordWrap(halfW),
+		gruff.WithWordWrap(m.viewWidth),
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
 	m.gruffContent = out2
-	m.gruffDur = time.Since(t0)
+	m.gruffDur = time.Since(t2)
 
 	m.leftView.SetContent("\n" + m.gruffContent + "\n")
 	m.rightView.SetContent(m.glamourContent)
@@ -175,7 +174,7 @@ func (m model) renderAll() model {
 func (m model) headerFor(left bool) string {
 	halfW := (m.termWidth - 4) / 2
 	var title, info string
-	var activeBg, inactiveBg lipgloss.Color
+	var activeBg, inactiveBg color.Color
 	if left {
 		title = "gruff"
 		info = m.wxhInfo() + "  " + m.gruffDur.Round(time.Microsecond).String()
@@ -197,26 +196,31 @@ func (m model) headerFor(left bool) string {
 	)
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	width := m.termWidth
 	if width == 0 {
 		width = 80
 	}
 
-	leftPane := m.paneBorder(m.focus == focusLeft, lipgloss.Color("#7c3aed")).Render(
+	leftPane := m.paneBorder(m.focus == focusLeft, lipgloss.Color("#0891b2")).Render(
 		m.headerFor(true) + "\n" + m.leftView.View(),
 	)
 
-	rightPane := m.paneBorder(m.focus == focusRight, lipgloss.Color("#0891b2")).Render(
+	rightPane := m.paneBorder(m.focus == focusRight, lipgloss.Color("#7c3aed")).Render(
 		m.headerFor(false) + "\n" + m.rightView.View(),
 	)
 
 	joined := lipgloss.JoinHorizontal(lipgloss.Top, leftPane, rightPane)
 
-	return lipgloss.NewStyle().
+	rendered := lipgloss.NewStyle().
 		Width(width).
 		Height(m.termHeight).
 		Render(joined)
+
+	v := tea.NewView(rendered)
+	v.AltScreen = true
+	v.MouseMode = tea.MouseModeAllMotion
+	return v
 }
 
 func main() {
@@ -225,7 +229,7 @@ func main() {
 		log.Fatal(err)
 	}
 	md := strings.TrimSpace(strings.Repeat(string(b), 100))
-	p := tea.NewProgram(NewModel(md), tea.WithAltScreen(), tea.WithMouseAllMotion())
+	p := tea.NewProgram(NewModel(md))
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
