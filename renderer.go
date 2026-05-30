@@ -579,6 +579,7 @@ func (r *nodeRenderer) renderTable(table *extensionAst.Table) {
 			hline()
 		}
 	}
+	r.buf.WriteByte('\n')
 }
 
 func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []extensionAst.Alignment) {
