@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/gausszhou/gruff"
+	"github.com/gausszhou/gruff/gruff"
 	"golang.org/x/term"
 )
 

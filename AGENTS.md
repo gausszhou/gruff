@@ -5,17 +5,18 @@
 - Test all: `go test ./...`
 - Single test: `go test -run TestRender_Heading/h1 ./...`
 - Lint: `go vet ./...`
-- Build CLI: `make build` (outputs to `dist/gruff`) or `go build -o bin/gruff ./cmd/gruff/`
+- Build CLI: `make build` (outputs to `dist/gruff`) or `go build -o bin/gruff .`
 - Release (multi-platform): `make release`
 - Benchmark: `go test -bench=. -benchmem ./benchmark/`
 - **NEVER commit** unless explicitly asked. Do NOT stage or commit any changes without user instruction.
 
 ## Architecture
 
-- `gruff.go` — public API (`Render`, `RenderBytes`, `WithDark`, `WithLight`, `WithWordWrap`)
-- `renderer.go` — goldmark AST walker → ANSI output; `renderListItem` uses `renderChildren` (no manual child loop, no trailing `\n`)
-- `ansi.go` — SGR codes, `Style`, `Color`, `Theme` types, helpers (`displayWidth`, `stripANSI`)
-- `cmd/gruff/main.go` — CLI binary (reads file path arg, auto-detects terminal width)
+- `gruff/` — library package (`gruff.go`, `gruff_renderer.go`, `gruff_ansi.go`) — public API (`Render`, `RenderBytes`, `WithDark`, `WithLight`, `WithWordWrap`)
+- `main.go` — CLI entry point via `cmd.Execute()` (cobra)
+- `cmd/root.go` — root cobra command (positional arg `<file>` or subcommands)
+- `cmd/render.go` — `gruff render <file>` subcommand, shared `renderFile` logic
+- `cmd/gruff/main.go` — alternative CLI entry point (also cobra, same `cmd` package)
 - `Makefile` — `build` / `release` / `clean` targets (`dist/` output)
 - `.github/workflows/release.yml` — tag `v*` triggers `make release` + uploads archives
 - Benchmark input: `testdata/benchmark.md`

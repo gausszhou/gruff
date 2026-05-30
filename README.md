@@ -19,7 +19,17 @@ A lightweight, high-performance [Go](https://go.dev) library for rendering Markd
 ## Installation
 
 ```bash
-go get github.com/gausszhou/gruff
+go get github.com/gausszhou/gruff/gruff
+```
+
+### CLI
+
+```bash
+go install github.com/gausszhou/gruff@latest
+gruff README.md              # render a file
+gruff render README.md       # explicit subcommand
+gruff render -w 40 README.md # custom wrap width
+gruff render -l README.md    # light theme
 ```
 
 ## Usage
@@ -31,7 +41,7 @@ import (
     "fmt"
     "log"
 
-    "github.com/gausszhou/gruff"
+    "github.com/gausszhou/gruff/gruff"
 )
 
 func main() {
