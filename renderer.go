@@ -44,6 +44,10 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 		r.renderChildren(n)
 		r.buf.WriteByte('\n')
 
+	case *ast.TextBlock:
+		r.renderChildren(n)
+		r.buf.WriteByte('\n')
+
 	case *ast.Heading:
 		st := r.headingStyle(n.Level)
 		r.buf.WriteString(string(st.start()))
@@ -271,14 +275,7 @@ func (r *nodeRenderer) renderListItem(node ast.Node) {
 		r.buf.WriteString("• ")
 	}
 
-	for c := node.FirstChild(); c != nil; c = c.NextSibling() {
-		if _, ok := c.(*ast.List); ok {
-			r.renderNode(c)
-		} else {
-			r.renderNode(c)
-		}
-	}
-	r.buf.WriteByte('\n')
+	r.renderChildren(node)
 }
 
 func (r *nodeRenderer) isTaskItem(node ast.Node) bool {
