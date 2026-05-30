@@ -11,10 +11,11 @@ import (
 )
 
 type nodeRenderer struct {
-	buf      strings.Builder
-	source   []byte
-	th       Theme
-	wordWrap int
+	buf          strings.Builder
+	source       []byte
+	th           Theme
+	wordWrap     int
+	inBlockquote bool
 }
 
 func renderMarkdown(source []byte, th Theme, wordWrap int, node ast.Node) string {
@@ -29,11 +30,15 @@ func renderMarkdown(source []byte, th Theme, wordWrap int, node ast.Node) string
 func (r *nodeRenderer) renderNode(node ast.Node) {
 	switch n := node.(type) {
 	case *ast.Document:
+		r.buf.WriteString(string(ansiBg(r.th.Bg)))
+		r.buf.WriteByte('\n')
 		r.renderChildren(n)
 
 	case *ast.Paragraph:
 		r.renderChildren(n)
-		if !r.isInsideList(n) && !r.isInsideTable(n) {
+		if r.inBlockquote {
+			r.buf.WriteByte('\n')
+		} else if !r.isInsideList(n) && !r.isInsideTable(n) {
 			r.buf.WriteString("\n\n")
 		}
 
@@ -41,26 +46,45 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 		st := r.headingStyle(n.Level)
 		r.buf.WriteString(string(st.start()))
 		r.renderChildren(n)
-		r.buf.WriteString("\x1b[K")
-		r.buf.WriteString(string(st.end(r.th.Document.Bg)))
+		r.buf.WriteString(string(st.end()))
 		r.buf.WriteString("\n\n")
 
 	case *ast.List:
 		r.renderChildren(n)
-		r.buf.WriteByte('\n')
+		if r.listParent(n) == nil {
+			r.buf.WriteByte('\n')
+		}
 
 	case *ast.ListItem:
 		r.renderListItem(n)
 
 	case *ast.Text:
+		_, isPara := n.Parent().(*ast.Paragraph)
+		_, isTB := n.Parent().(*ast.TextBlock)
+		_, isTC := n.Parent().(*extensionAst.TableCell)
+		if isPara || isTB || isTC {
+			r.buf.WriteString(string(r.th.Paragraph.start()))
+		}
 		v := n.Value(r.source)
 		r.buf.Write(v)
 		if n.SoftLineBreak() {
 			r.buf.WriteByte(' ')
 		}
+		if isPara || isTB || isTC {
+			r.buf.WriteString(string(r.th.Paragraph.end()))
+		}
 
 	case *ast.String:
+		_, isPara := n.Parent().(*ast.Paragraph)
+		_, isTB := n.Parent().(*ast.TextBlock)
+		_, isTC := n.Parent().(*extensionAst.TableCell)
+		if isPara || isTB || isTC {
+			r.buf.WriteString(string(r.th.Paragraph.start()))
+		}
 		r.buf.Write(n.Value)
+		if isPara || isTB || isTC {
+			r.buf.WriteString(string(r.th.Paragraph.end()))
+		}
 
 	case *ast.Emphasis:
 		st := r.th.Em
@@ -69,7 +93,7 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 		}
 		r.buf.WriteString(string(st.start()))
 		r.renderChildren(n)
-		r.buf.WriteString(string(st.end(r.th.Document.Bg)))
+		r.buf.WriteString(string(st.end()))
 
 	case *ast.CodeSpan:
 		r.buf.WriteString(string(r.th.Code.start()))
@@ -84,13 +108,13 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 		for range r.th.Code.Padding {
 			r.buf.WriteByte(' ')
 		}
-		r.buf.WriteString(string(r.th.Code.end(r.th.Document.Bg)))
+		r.buf.WriteString(string(r.th.Code.end()))
 
 	case *ast.Link:
 		st := r.th.Link
 		r.buf.WriteString(string(st.start()))
 		r.renderChildren(n)
-		r.buf.WriteString(string(st.end(r.th.Document.Bg)))
+		r.buf.WriteString(string(st.end()))
 		if len(n.Destination) > 0 {
 			url := string(n.Destination)
 			uSt := r.th.LinkURL
@@ -99,7 +123,7 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 			r.buf.WriteByte('(')
 			r.buf.WriteString(url)
 			r.buf.WriteByte(')')
-			r.buf.WriteString(string(uSt.end(r.th.Document.Bg)))
+			r.buf.WriteString(string(uSt.end()))
 		}
 
 	case *ast.Image:
@@ -118,11 +142,38 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 	case *ast.ThematicBreak:
 		r.buf.WriteString(string(r.th.Hr.start()))
 		r.buf.WriteString("────────────────────")
-		r.buf.WriteString(string(r.th.Hr.end(r.th.Document.Bg)))
+		r.buf.WriteString(string(r.th.Hr.end()))
 		r.buf.WriteString("\n\n")
+
+	case *ast.Blockquote:
+		st := r.th.BlockQuote
+		prefix := string(st.start()) + "│ " + string(st.end())
+		r.inBlockquote = true
+		for c := n.FirstChild(); c != nil; c = c.NextSibling() {
+			r.buf.WriteString(prefix)
+			r.renderNode(c)
+			if c.NextSibling() != nil {
+				r.buf.WriteString(prefix)
+				r.buf.WriteByte('\n')
+			}
+		}
+		r.inBlockquote = false
 
 	case *extensionAst.Table:
 		r.renderTable(n)
+
+	case *extensionAst.TaskCheckBox:
+		if n.IsChecked {
+			r.buf.WriteString(string(r.th.TaskChecked.start()))
+			r.buf.WriteString("[\u2713]")
+			r.buf.WriteString(string(r.th.TaskChecked.end()))
+			r.buf.WriteByte(' ')
+		} else {
+			r.buf.WriteString(string(r.th.TaskUnchecked.start()))
+			r.buf.WriteString("[ ]")
+			r.buf.WriteString(string(r.th.TaskUnchecked.end()))
+			r.buf.WriteByte(' ')
+		}
 
 	default:
 		r.renderChildren(n)
@@ -145,21 +196,20 @@ func (r *nodeRenderer) renderSubtree(node ast.Node) string {
 
 func (r *nodeRenderer) renderCodeBlock(lines *text.Segments, lang []byte) {
 	st := r.th.Code
-	bg := r.th.Document.Bg
 	codeStyleStart := string(st.start())
 	const padding = 2
 
-	if len(lang) > 0 {
-		ls := r.th.LinkURL
-		r.buf.WriteString(string(ls.start()))
-		for j := 0; j < padding; j++ {
-			r.buf.WriteByte(' ')
-		}
-		r.buf.Write(lang)
-		r.buf.WriteString("\x1b[K")
-		r.buf.WriteString(string(ls.end(bg)))
-		r.buf.WriteByte('\n')
+	for j := 0; j < padding; j++ {
+		r.buf.WriteByte(' ')
 	}
+	r.buf.WriteString("```")
+	ls := r.th.LinkURL
+	r.buf.WriteString(string(ls.start()))
+	if len(lang) > 0 {
+		r.buf.Write(lang)
+	}
+	r.buf.WriteString(string(ls.end()))
+	r.buf.WriteByte('\n')
 
 	for i := 0; i < lines.Len(); i++ {
 		seg := lines.At(i)
@@ -170,14 +220,39 @@ func (r *nodeRenderer) renderCodeBlock(lines *text.Segments, lang []byte) {
 			r.buf.WriteByte(' ')
 		}
 		r.buf.WriteString(content)
-		r.buf.WriteString("\x1b[K")
-		r.buf.WriteString(string(st.end(bg)))
+		r.buf.WriteString(string(st.end()))
 		r.buf.WriteByte('\n')
 	}
+	for j := 0; j < padding; j++ {
+		r.buf.WriteByte(' ')
+	}
+	r.buf.WriteString("```")
 	r.buf.WriteByte('\n')
 }
 
+func (r *nodeRenderer) listDepth(node ast.Node) int {
+	depth := 0
+	for p := node.Parent(); p != nil; p = p.Parent() {
+		if _, ok := p.(*ast.List); ok {
+			depth++
+		}
+	}
+	return depth
+}
+
+func (r *nodeRenderer) listParent(node ast.Node) ast.Node {
+	for p := node.Parent(); p != nil; p = p.Parent() {
+		if _, ok := p.(*ast.ListItem); ok {
+			return p
+		}
+	}
+	return nil
+}
+
 func (r *nodeRenderer) renderListItem(node ast.Node) {
+	depth := r.listDepth(node)
+	indent := strings.Repeat("  ", depth)
+
 	parent := node.Parent()
 	list, ok := parent.(*ast.List)
 	if !ok {
@@ -193,24 +268,52 @@ func (r *nodeRenderer) renderListItem(node ast.Node) {
 		index++
 	}
 
-	if list.IsOrdered() {
+	isTask := r.isTaskItem(node)
+	if isTask {
+		// no thing
+	} else if list.IsOrdered() {
 		num := list.Start + index
-		r.buf.WriteString("  ")
-		r.buf.WriteString(string(r.th.Numbered.start()))
+		r.buf.WriteString(indent)
 		r.buf.WriteString(itoa(num))
 		r.buf.WriteString(". ")
-		r.buf.WriteString(string(r.th.Numbered.end(r.th.Document.Bg)))
 	} else {
-		r.buf.WriteString("  ")
-		r.buf.WriteString(string(r.th.Bullet.start()))
+		r.buf.WriteString(indent)
 		r.buf.WriteString("• ")
-		r.buf.WriteString(string(r.th.Bullet.end(r.th.Document.Bg)))
 	}
 
+	hasInline := false
+	hadNestedList := false
 	for c := node.FirstChild(); c != nil; c = c.NextSibling() {
-		r.renderNode(c)
+		if _, ok := c.(*ast.List); ok {
+			if hasInline {
+				r.buf.WriteByte('\n')
+			}
+			r.renderNode(c)
+			hadNestedList = true
+		} else {
+			r.renderNode(c)
+			hasInline = true
+		}
 	}
-	r.buf.WriteByte('\n')
+	if !hadNestedList {
+		r.buf.WriteByte('\n')
+	}
+}
+
+func (r *nodeRenderer) isTaskItem(node ast.Node) bool {
+	for c := node.FirstChild(); c != nil; c = c.NextSibling() {
+		if _, ok := c.(*extensionAst.TaskCheckBox); ok {
+			return true
+		}
+		if tb, ok := c.(*ast.TextBlock); ok {
+			for t := tb.FirstChild(); t != nil; t = t.NextSibling() {
+				if _, ok := t.(*extensionAst.TaskCheckBox); ok {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 func (r *nodeRenderer) isInsideList(node ast.Node) bool {
@@ -441,7 +544,7 @@ func (r *nodeRenderer) renderTable(table *extensionAst.Table) {
 	}
 
 	border := string(r.th.Border.start())
-	reset := string(r.th.Border.end(r.th.Document.Bg))
+	reset := string(r.th.Border.end())
 
 	seg := func(w int) string {
 		s := ""
@@ -474,6 +577,7 @@ func (r *nodeRenderer) renderTable(table *extensionAst.Table) {
 			hline()
 		}
 	}
+	r.buf.WriteByte('\n')
 }
 
 func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []extensionAst.Alignment) {
@@ -482,11 +586,6 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 		if len(cell.lines) > maxLines {
 			maxLines = len(cell.lines)
 		}
-	}
-
-	bgReset := "\x1b[49m"
-	if r.th.Document.Bg != "" {
-		bgReset = string(ansiBg(r.th.Document.Bg))
 	}
 
 	for lineIdx := 0; lineIdx < maxLines; lineIdx++ {
@@ -498,7 +597,7 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 			if i > 0 {
 				r.buf.WriteString(string(r.th.Border.start()))
 				r.buf.WriteString("\u2502")
-				r.buf.WriteString(string(r.th.Border.end(r.th.Document.Bg)))
+				r.buf.WriteString(string(r.th.Border.end()))
 			}
 
 			var content string
@@ -520,7 +619,6 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 				}
 				r.buf.WriteString(content)
 				r.buf.WriteString("\x1b[39m")
-				r.buf.WriteString(bgReset)
 			case extensionAst.AlignCenter:
 				leftPad := padding / 2
 				rightPad := padding - leftPad
@@ -529,14 +627,12 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 				}
 				r.buf.WriteString(content)
 				r.buf.WriteString("\x1b[39m")
-				r.buf.WriteString(bgReset)
 				for j := 0; j < rightPad; j++ {
 					r.buf.WriteByte(' ')
 				}
 			default:
 				r.buf.WriteString(content)
 				r.buf.WriteString("\x1b[39m")
-				r.buf.WriteString(bgReset)
 				for j := 0; j < padding; j++ {
 					r.buf.WriteByte(' ')
 				}

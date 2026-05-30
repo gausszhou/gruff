@@ -12,6 +12,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/gausszhou/gruff"
+	"github.com/gausszhou/gruff/benchmark"
 )
 
 type focus int
@@ -91,13 +92,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			h := (msg.Height - 6) / 2
 			m.glamourView = viewport.New(w, h)
 			m.gruffView = viewport.New(w, h)
+			m.gruffView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414"))
 
 			md := readTestdata()
 
 			t0 := time.Now()
 			r, err := glamour.NewTermRenderer(
-				glamour.WithStandardStyle("dark"),
+				glamour.WithStyles(benchmark.GruffMinimalStyle()),
 				glamour.WithWordWrap(w-2),
+				glamour.WithTableWrap(false),
+				glamour.WithInlineTableLinks(true),
 			)
 			if err != nil {
 				log.Fatal(err)

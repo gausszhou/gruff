@@ -24,12 +24,12 @@ func TestRender_Heading(t *testing.T) {
 		{
 			name:  "h6",
 			input: "###### Heading 6\n",
-			check: []string{"\x1b[38;2;0;175;95mHeading 6", "\x1b[39m"},
+			check: []string{"\x1b[38;2;0;175;255mHeading 6", "\x1b[39m"},
 		},
 		{
 			name:  "heading with inline",
 			input: "# **Bold** heading\n",
-			check: []string{"\x1b[1m\x1b[38;2;255;255;135m", "Bold\x1b[22m heading\x1b[K", "\x1b[22m\x1b[39m"},
+			check: []string{"\x1b[1m\x1b[38;2;255;255;135m", "Bold\x1b[22m\x1b[39m heading\x1b[K", "\x1b[22m\x1b[39m"},
 		},
 	}
 
@@ -57,27 +57,27 @@ func TestRender_BoldItalic(t *testing.T) {
 		{
 			name:  "bold",
 			input: "**bold**\n",
-			check: []string{"\x1b[1mbold\x1b[22m"},
+			check: []string{"\x1b[1m\x1b[38;2;224;224;224mbold\x1b[22m\x1b[39m"},
 		},
 		{
 			name:  "italic",
 			input: "*italic*\n",
-			check: []string{"\x1b[3mitalic\x1b[23m"},
+			check: []string{"\x1b[3m\x1b[38;2;224;224;224mitalic\x1b[23m\x1b[39m"},
 		},
 		{
 			name:  "bold italic",
 			input: "***both***\n",
-			check: []string{"\x1b[3m\x1b[1mboth\x1b[22m\x1b[23m"},
+			check: []string{"\x1b[3m\x1b[38;2;224;224;224m\x1b[1m\x1b[38;2;224;224;224mboth\x1b[22m\x1b[39m\x1b[23m\x1b[39m"},
 		},
 		{
 			name:  "nested bold in italic",
 			input: "*italic and **bold** inside*\n",
-			check: []string{"\x1b[3mitalic and \x1b[1mbold\x1b[22m inside\x1b[23m"},
+			check: []string{"\x1b[3m\x1b[38;2;224;224;224mitalic and \x1b[1m\x1b[38;2;224;224;224mbold\x1b[22m\x1b[39m inside\x1b[23m\x1b[39m"},
 		},
 		{
 			name:  "mixed inline paragraph",
 			input: "plain **bold** and *italic*.\n",
-			check: []string{"plain \x1b[1mbold\x1b[22m and \x1b[3mitalic\x1b[23m."},
+			check: []string{"\x1b[38;2;224;224;224mplain \x1b[39m\x1b[1m\x1b[38;2;224;224;224mbold\x1b[22m\x1b[39m\x1b[38;2;224;224;224m and \x1b[39m\x1b[3m\x1b[38;2;224;224;224mitalic\x1b[23m\x1b[39m\x1b[38;2;224;224;224m.\x1b[39m"},
 		},
 	}
 
@@ -105,12 +105,12 @@ func TestRender_InlineCode(t *testing.T) {
 		{
 			name:  "inline code",
 			input: "Use `code` here\n",
-			check: []string{"\x1b[38;2;166;226;46mcode\x1b[39m"},
+			check: []string{"\x1b[38;2;80;250;123mcode\x1b[39m"},
 		},
 		{
 			name:  "code with bold",
 			input: "**bold and `code`**\n",
-			check: []string{"\x1b[1mbold and \x1b[38;2;166;226;46mcode\x1b[39m"},
+			check: []string{"\x1b[1m\x1b[38;2;224;224;224mbold and \x1b[38;2;80;250;123mcode\x1b[39m\x1b[22m\x1b[39m"},
 		},
 	}
 
@@ -138,17 +138,17 @@ func TestRender_Link(t *testing.T) {
 		{
 			name:  "basic link",
 			input: "[Gruff](https://example.com)\n",
-			check: []string{"\x1b[4m\x1b[38;2;92;156;245mGruff\x1b[24m\x1b[39m \x1b[38;2;128;128;128m(https://example.com)\x1b[39m"},
+			check: []string{"\x1b[4m\x1b[38;2;92;156;245mGruff\x1b[24m\x1b[39m \x1b[38;2;92;156;245m(https://example.com)\x1b[39m"},
 		},
 		{
 			name:  "link with bold text",
 			input: "[**bold**](https://example.com)\n",
-			check: []string{"\x1b[4m\x1b[38;2;92;156;245m\x1b[1mbold\x1b[22m\x1b[24m\x1b[39m \x1b[38;2;128;128;128m(https://example.com)\x1b[39m"},
+			check: []string{"\x1b[4m\x1b[38;2;92;156;245m\x1b[1m\x1b[38;2;224;224;224mbold\x1b[22m\x1b[39m\x1b[24m\x1b[39m \x1b[38;2;92;156;245m(https://example.com)\x1b[39m"},
 		},
 		{
 			name:  "link in paragraph",
 			input: "click [here](https://example.com) now\n",
-			check: []string{"\x1b[4m\x1b[38;2;92;156;245mhere\x1b[24m\x1b[39m \x1b[38;2;128;128;128m(https://example.com)\x1b[39m now"},
+			check: []string{"\x1b[38;2;224;224;224mclick \x1b[39m\x1b[4m\x1b[38;2;92;156;245mhere\x1b[24m\x1b[39m \x1b[38;2;92;156;245m(https://example.com)\x1b[39m\x1b[38;2;224;224;224m now\x1b[39m"},
 		},
 	}
 
@@ -176,22 +176,22 @@ func TestRender_CodeBlock(t *testing.T) {
 		{
 			name:  "fenced code block",
 			input: "```\ncode\n```\n",
-			check: []string{"\x1b[38;2;166;226;46m  code\x1b[K", "\x1b[39m"},
+			check: []string{"\x1b[38;2;80;250;123m  code\x1b[K\x1b[39m", "```"},
 		},
 		{
 			name:  "fenced code with language",
 			input: "```go\nvar x = 1\n```\n",
-			check: []string{"\x1b[38;2;128;128;128m  go\x1b[K", "\x1b[38;2;166;226;46m  var x = 1\x1b[K"},
+			check: []string{"\x1b[38;2;92;156;245mgo\x1b[K\x1b[39m", "\x1b[38;2;80;250;123m  var x = 1\x1b[K\x1b[39m"},
 		},
 		{
 			name:  "indented code block",
 			input: "    indented\n",
-			check: []string{"\x1b[38;2;166;226;46m  indented\x1b[K"},
+			check: []string{"\x1b[38;2;80;250;123m  indented\x1b[K"},
 		},
 		{
 			name:  "multi-line fenced code",
 			input: "```\nline1\nline2\n```\n",
-			check: []string{"\x1b[38;2;166;226;46m  line1\x1b[K", "\x1b[38;2;166;226;46m  line2\x1b[K"},
+			check: []string{"\x1b[38;2;80;250;123m  line1\x1b[K", "\x1b[38;2;80;250;123m  line2\x1b[K"},
 		},
 	}
 
@@ -219,12 +219,68 @@ func TestRender_List(t *testing.T) {
 		{
 			name:  "unordered",
 			input: "- item 1\n- item 2\n",
-			want:  "\x1b[48;2;20;20;20m    \x1b[38;2;255;255;0m• \x1b[39mitem 1  \x1b[K\n    \x1b[38;2;255;255;0m• \x1b[39mitem 2  \x1b[K\n    \x1b[K\n  ",
+			want:  "\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\n\x1b[48;2;20;20;20m  • \x1b[38;2;224;224;224mitem 1\x1b[39m\x1b[48;2;20;20;20m                                                                      \x1b[K\n\x1b[48;2;20;20;20m  • \x1b[38;2;224;224;224mitem 2\x1b[39m\x1b[48;2;20;20;20m                                                                      \x1b[K\n\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\n\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\x1b[49m",
 		},
 		{
 			name:  "ordered",
 			input: "1. first\n2. second\n",
-			want:  "\x1b[48;2;20;20;20m    \x1b[38;2;255;255;0m1. \x1b[39mfirst  \x1b[K\n    \x1b[38;2;255;255;0m2. \x1b[39msecond  \x1b[K\n    \x1b[K\n  ",
+			want:  "\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\n\x1b[48;2;20;20;20m  1. \x1b[38;2;224;224;224mfirst\x1b[39m\x1b[48;2;20;20;20m                                                                      \x1b[K\n\x1b[48;2;20;20;20m  2. \x1b[38;2;224;224;224msecond\x1b[39m\x1b[48;2;20;20;20m                                                                     \x1b[K\n\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\n\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\x1b[49m",
+		},
+		{
+			name:  "nested unordered",
+			input: "- Alpha\n- Beta\n  - Delta\n  - Epsilon\n",
+			want:  "\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\n\x1b[48;2;20;20;20m  • \x1b[38;2;224;224;224mAlpha\x1b[39m\x1b[48;2;20;20;20m                                                                       \x1b[K\n\x1b[48;2;20;20;20m  • \x1b[38;2;224;224;224mBeta\x1b[39m\x1b[48;2;20;20;20m                                                                        \x1b[K\n\x1b[48;2;20;20;20m    • \x1b[38;2;224;224;224mDelta\x1b[39m\x1b[48;2;20;20;20m                                                                     \x1b[K\n\x1b[48;2;20;20;20m    • \x1b[38;2;224;224;224mEpsilon\x1b[39m\x1b[48;2;20;20;20m                                                                   \x1b[K\n\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\n\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\x1b[49m",
+		},
+		{
+			name:  "nested ordered",
+			input: "1. first\n2. second\n   1. deep\n   2. deeper\n",
+			want:  "\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\n\x1b[48;2;20;20;20m  1. \x1b[38;2;224;224;224mfirst\x1b[39m\x1b[48;2;20;20;20m                                                                      \x1b[K\n\x1b[48;2;20;20;20m  2. \x1b[38;2;224;224;224msecond\x1b[39m\x1b[48;2;20;20;20m                                                                     \x1b[K\n\x1b[48;2;20;20;20m    1. \x1b[38;2;224;224;224mdeep\x1b[39m\x1b[48;2;20;20;20m                                                                     \x1b[K\n\x1b[48;2;20;20;20m    2. \x1b[38;2;224;224;224mdeeper\x1b[39m\x1b[48;2;20;20;20m                                                                   \x1b[K\n\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\n\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\x1b[49m",
+		},
+		{
+			name:  "task list",
+			input: "- [x] done\n- [ ] todo\n",
+			want:  "\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\n\x1b[48;2;20;20;20m\x1b[38;2;80;250;123m[✓]\x1b[39m \x1b[38;2;224;224;224mdone\x1b[39m\x1b[48;2;20;20;20m                                                                        \x1b[K\n\x1b[48;2;20;20;20m\x1b[38;2;128;128;128m[ ]\x1b[39m \x1b[38;2;224;224;224mtodo\x1b[39m\x1b[48;2;20;20;20m                                                                        \x1b[K\n\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\n\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\x1b[49m",
+		},
+		{
+			name:  "nested task list",
+			input: "- [x] checked\n- [ ] unchecked\n  - [x] nested checked\n  - [ ] nested unchecked\n",
+			want:  "\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\n\x1b[48;2;20;20;20m\x1b[38;2;80;250;123m[✓]\x1b[39m \x1b[38;2;224;224;224mchecked\x1b[39m\x1b[48;2;20;20;20m                                                                     \x1b[K\n\x1b[48;2;20;20;20m\x1b[38;2;128;128;128m[ ]\x1b[39m \x1b[38;2;224;224;224munchecked\x1b[39m\x1b[48;2;20;20;20m                                                                   \x1b[K\n\x1b[48;2;20;20;20m\x1b[38;2;80;250;123m[✓]\x1b[39m \x1b[38;2;224;224;224mnested checked\x1b[39m\x1b[48;2;20;20;20m                                                              \x1b[K\n\x1b[48;2;20;20;20m\x1b[38;2;128;128;128m[ ]\x1b[39m \x1b[38;2;224;224;224mnested unchecked\x1b[39m\x1b[48;2;20;20;20m                                                            \x1b[K\n\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\n\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\x1b[49m",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Render(tt.input)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got != tt.want {
+				t.Errorf("Render() =\n%q\nwant:\n%q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRender_Blockquote(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "simple",
+			input: "> A quote\n",
+			want:  "\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\n\x1b[48;2;20;20;20m\x1b[38;2;128;128;128m│ \x1b[39m\x1b[38;2;224;224;224mA quote\x1b[39m\x1b[48;2;20;20;20m                                                                       \x1b[K\n\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\x1b[49m",
+		},
+		{
+			name:  "multi paragraph",
+			input: "> First\n>\n> Second\n",
+			want:  "\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\n\x1b[48;2;20;20;20m\x1b[38;2;128;128;128m│ \x1b[39m\x1b[38;2;224;224;224mFirst\x1b[39m\x1b[48;2;20;20;20m                                                                         \x1b[K\n\x1b[48;2;20;20;20m\x1b[38;2;128;128;128m│ \x1b[39m\x1b[48;2;20;20;20m                                                                              \x1b[K\n\x1b[48;2;20;20;20m\x1b[38;2;128;128;128m│ \x1b[39m\x1b[38;2;224;224;224mSecond\x1b[39m\x1b[48;2;20;20;20m                                                                        \x1b[K\n\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\x1b[49m",
+		},
+		{
+			name:  "with inline",
+			input: "> **bold** and *italic*\n",
+			want:  "\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\n\x1b[48;2;20;20;20m\x1b[38;2;128;128;128m│ \x1b[39m\x1b[1m\x1b[38;2;224;224;224mbold\x1b[22m\x1b[39m\x1b[38;2;224;224;224m and \x1b[39m\x1b[3m\x1b[38;2;224;224;224mitalic\x1b[23m\x1b[39m\x1b[48;2;20;20;20m                                                               \x1b[K\n\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\x1b[49m",
 		},
 	}
 
@@ -260,7 +316,7 @@ func TestRender_Table(t *testing.T) {
 		{
 			name:  "table with inline",
 			input: "| Col1 | Col2 |\n|------|------|\n| `code` | **bold** |\n",
-			want:  []string{"\x1b[38;2;166;226;46m", "\x1b[1m", "code", "bold"},
+			want:  []string{"\x1b[38;2;80;250;123m", "\x1b[1m", "code", "bold"},
 		},
 	}
 
@@ -280,7 +336,7 @@ func TestRender_Table(t *testing.T) {
 }
 
 func TestRender_Mixed(t *testing.T) {
-	input := "# Title\n\nThis is **bold** and *italic* and `code`.\n\nA [link](https://example.com) here.\n\n- list with **bold**\n- list with `code`\n\n1. first\n2. second\n\n| A | B |\n|---|---|\n| 1 | 2 |\n"
+	input := "# Title\n\nThis is **bold** and *italic* and `code`.\n\nA [link](https://example.com) here.\n\n- list with **bold**\n- list with `code`\n\n1. first\n2. second\n\n> A quote\n\n| A | B |\n|---|---|\n| 1 | 2 |\n"
 
 	got, err := Render(input)
 	if err != nil {
@@ -294,12 +350,13 @@ func TestRender_Mixed(t *testing.T) {
 		{"contains Title", func(s string) bool { return strings.Contains(s, "Title") }},
 		{"contains bold ANSI", func(s string) bool { return strings.Contains(s, "\x1b[1m") }},
 		{"contains italic ANSI", func(s string) bool { return strings.Contains(s, "\x1b[3m") }},
-		{"contains code ANSI", func(s string) bool { return strings.Contains(s, "\x1b[38;2;166;226;46m") }},
+		{"contains code ANSI", func(s string) bool { return strings.Contains(s, "\x1b[38;2;80;250;123m") }},
 		{"contains link underline", func(s string) bool { return strings.Contains(s, "\x1b[4m") }},
 		{"contains link URL", func(s string) bool { return strings.Contains(s, "example.com") }},
 		{"contains bullet", func(s string) bool { return strings.Contains(s, "•") }},
 		{"contains ordered num", func(s string) bool { return strings.Contains(s, "1.") }},
 		{"contains table separator", func(s string) bool { return strings.Contains(s, "\u2502") }},
+		{"contains blockquote pipe", func(s string) bool { return strings.Contains(s, "│ ") }},
 	}
 
 	for _, c := range checks {
@@ -314,7 +371,7 @@ func TestRender_Empty(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got != "\x1b[48;2;20;20;20m  " {
+	if got != "\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\n\x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                                \x1b[K\x1b[49m" {
 		t.Errorf("Render() = %q, want bg + padding", got)
 	}
 }
@@ -324,7 +381,7 @@ func TestRender_PlainText(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(got, "Hello, world!") {
+	if !strings.Contains(got, "Hello, world") {
 		t.Errorf("Render() missing 'Hello, world!', got %q", got)
 	}
 }
@@ -366,43 +423,3 @@ func TestRenderBytes(t *testing.T) {
 	}
 }
 
-func BenchmarkRender(b *testing.B) {
-	input := `# Gruff Markdown Renderer
-
-A lightweight, high-performance **markdown** renderer for the terminal.
-
-## Features
-
-- *Italic* and **bold** text
-- ` + "`" + `Inline code` + "`" + ` support
-- Unordered lists:
-  - Item 1
-  - Item 2
-- Ordered lists:
-  1. First
-  2. Second
-
-## Code Example
-
-` + "```" + `
-func hello() {
-    fmt.Println("Hello, World!")
-}
-` + "```" + `
-
-## Mixed Content
-
-This paragraph has **bold**, *italic*, ` + "`" + `code` + "`" + `, and ***bold italic*** all in one line.
-
-And another paragraph to make it interesting.
-
----
-
-The end.
-`
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		Render(input)
-	}
-}

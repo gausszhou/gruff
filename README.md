@@ -67,16 +67,15 @@ out, err := gruff.Render(source, gruff.WithLight(), gruff.WithWordWrap(80))
 
 ## Performance
 
-Benchmarked against `glamour` using `testdata/benchmark.md`, a balanced mix of headings,
-paragraphs, lists, code blocks, tables, links, and formatting. Glamour is configured in
-minimal mode (chroma disabled, word wrap off, table wrap off, inline table links on) to
-match gruff's feature set for a fair comparison.
+Benchmarked against `testdata/benchmark.md` (2.4 KB) repeated 100× (~240 KB input).
+Glamour is tested in both minimal mode (chroma disabled, word wrap off, table wrap off,
+inline table links on) and standard mode.
 
-| Metric         | gruff       | glamour (minimal) | Improvement |
-|----------------|-------------|-------------------|-------------|
-| Time/op        | ~0.59 ms    | ~6.67 ms          | **~11×**    |
-| Memory/op      | ~132 KB     | ~511 KB           | **~4×**     |
-| Allocations/op | ~983        | ~43,657           | **~44×**    |
+| Metric         | gruff      | glamour (minimal) | glamour (standard) | Improvement (vs minimal) |
+|----------------|------------|-------------------|--------------------|--------------------------|
+| Time/op        | ~25.7 ms   | ~265 ms           | ~1.19 s            | **~10× / ~46×**          |
+| Memory/op      | ~14.0 MB   | ~52.9 MB          | ~222 MB            | **~3.8× / ~16×**         |
+| Allocations/op | ~209,556   | ~4,505,093        | ~20,348,392        | **~21× / ~97×**          |
 
 See [`docs/why-gruff-faster.md`](docs/why-gruff-faster.md) for a detailed analysis of the
 performance gap.
@@ -101,6 +100,7 @@ Ready-to-run examples are in the [`examples/`](examples/) directory:
 | [`api`](examples/api/) | `Render`, `RenderBytes`, and `WithWordWrap` usage |
 | [`lipgloss`](examples/lipgloss/) | Wrap gruff output with [lipgloss](https://github.com/charmbracelet/lipgloss) borders and styles |
 | [`glamour`](examples/glamour/) | Render same markdown with [glamour](https://github.com/charmbracelet/glamour) for comparison |
+| [`benchmark-compare`](examples/benchmark-compare/) | Side-by-side rendering of the benchmark markdown with gruff vs glamour |
 
 ```bash
 go run examples/basic/main.go
@@ -111,6 +111,7 @@ go run examples/custom-theme/main.go
 go run examples/api/main.go
 go run examples/lipgloss/main.go
 go run examples/glamour/main.go
+go run examples/benchmark-compare/main.go
 ```
 
 ## Theme Customization

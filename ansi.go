@@ -9,12 +9,15 @@ import (
 type ansiCode string
 
 const (
-	ansiReset     ansiCode = "\x1b[0m"
-	ansiBold      ansiCode = "\x1b[1m"
-	ansiItalic    ansiCode = "\x1b[3m"
-	ansiUnderline ansiCode = "\x1b[4m"
-	ansiNoBold    ansiCode = "\x1b[22m"
-	ansiNoItalic  ansiCode = "\x1b[23m"
+	ansiReset       ansiCode = "\x1b[0m"
+	ansiBold        ansiCode = "\x1b[1m"
+	ansiItalic      ansiCode = "\x1b[3m"
+	ansiUnderline   ansiCode = "\x1b[4m"
+	ansiNoBold      ansiCode = "\x1b[22m"
+	ansiNoItalic    ansiCode = "\x1b[23m"
+	ansiNoUnderline ansiCode = "\x1b[24m"
+	ansiDefaultFg   ansiCode = "\x1b[39m"
+	ansiDefaultBg    ansiCode = "\x1b[49m"
 )
 
 func is4bit(c string) bool {
@@ -77,13 +80,13 @@ func ansiBg(c string) ansiCode {
 
 type Style struct {
 	Fg        string
-	Bg        string
 	Bold      bool
 	Italic    bool
 	Underline bool
 	Padding   int
 }
 
+// start 输出样式起始 ANSI 码：加粗/斜体/下划线/前景色
 func (s Style) start() ansiCode {
 	var out string
 	if s.Bold {
@@ -95,20 +98,14 @@ func (s Style) start() ansiCode {
 	if s.Underline {
 		out += string(ansiUnderline)
 	}
-	if s.Fg != "" || s.Bg != "" {
-		if s.Fg != "" {
-			out += string(ansiFg(s.Fg))
-		}
-		if s.Bg != "" {
-			out += string(ansiBg(s.Bg))
-		}
+	if s.Fg != "" {
+		out += string(ansiFg(s.Fg))
 	}
 	return ansiCode(out)
 }
 
-var ansiResetStr = string(ansiReset)
-
-func (s Style) end(bg string) ansiCode {
+// end 关闭样式，前景重置
+func (s Style) end() ansiCode {
 	var out string
 	if s.Italic {
 		out += string(ansiNoItalic)
@@ -117,80 +114,106 @@ func (s Style) end(bg string) ansiCode {
 		out += string(ansiNoBold)
 	}
 	if s.Underline {
-		out += "\x1b[24m"
+		out += string(ansiNoUnderline)
 	}
 	if s.Fg != "" {
-		out += "\x1b[39m"
-	}
-	if s.Bg != "" {
-		if bg != "" {
-			out += string(ansiBg(bg))
-		} else {
-			out += "\x1b[49m"
-		}
-	}
-	if out == "" {
-		out = "\x1b[39m\x1b[49m"
+		out += string(ansiDefaultFg)
 	}
 	return ansiCode(out)
 }
 
 type Theme struct {
-	Document                Style
+	Bg                     string
+	Document               Style
+	Paragraph              Style
 	H1, H2, H3, H4, H5, H6 Style
-	Strong                  Style
-	Em                      Style
-	Code                    Style
-	Link                    Style
-	LinkURL                 Style
-	Bullet                  Style
-	Numbered                Style
-	Hr                      Style
-	Border                  Style
+	Strong                 Style
+	Em                     Style
+	Code                   Style
+	Link                   Style
+	LinkURL                Style
+	Hr                     Style
+	Border                 Style
+	BlockQuote             Style
+	TaskChecked            Style
+	TaskUnchecked          Style
+}
+
+func (th *Theme) inheritFg() {
+	fg := th.Document.Fg
+	inherit := func(s *Style) {
+		if s.Fg == "" {
+			s.Fg = fg
+		}
+	}
+	inherit(&th.Paragraph)
+	inherit(&th.H1)
+	inherit(&th.H2)
+	inherit(&th.H3)
+	inherit(&th.H4)
+	inherit(&th.H5)
+	inherit(&th.H6)
+	inherit(&th.Strong)
+	inherit(&th.Em)
+	inherit(&th.Code)
+	inherit(&th.Link)
+	inherit(&th.LinkURL)
+	inherit(&th.Hr)
+	inherit(&th.Border)
+	inherit(&th.BlockQuote)
+	inherit(&th.TaskChecked)
+	inherit(&th.TaskUnchecked)
 }
 
 var darkTheme = Theme{
-	Document:    Style{Bg: "#141414", Padding: 2},
-	H1:          Style{Bold: true, Fg: "#FFFF87"},
-	H2:         Style{Bold: true, Fg: "#00AFFF"},
-	H3:         Style{Bold: true, Fg: "#00AFFF"},
-	H4:         Style{Bold: true, Fg: "#00AFFF"},
-	H5:         Style{Bold: true, Fg: "#00AFFF"},
-	H6:         Style{Fg: "#00AF5F"},
-	Strong:     Style{Bold: true},
-	Em:         Style{Italic: true},
-	Code:       Style{Fg: "#A6E22E"},
-	Link:       Style{Underline: true, Fg: "#5c9cf5"},
-	LinkURL:    Style{Fg: "#808080"},
-	Bullet:     Style{Fg: "#FFFF00"},
-	Numbered:   Style{Fg: "#FFFF00"},
-	Hr:         Style{Fg: "#808080"},
-	Border:     Style{Fg: "#808080"},
+	Bg:            "#141414",
+	Document:      Style{Padding: 2, Fg: "#e0e0e0"},
+	Paragraph:     Style{Fg: "#e0e0e0"},
+	H1:            Style{Bold: true, Fg: "#FFFF87"},
+	H2:            Style{Bold: true, Fg: "#00AFFF"},
+	H3:            Style{Bold: true, Fg: "#00AFFF"},
+	H4:            Style{Bold: true, Fg: "#00AFFF"},
+	H5:            Style{Bold: true, Fg: "#00AFFF"},
+	H6:            Style{Fg: "#00AFFF"},
+	Strong:        Style{Bold: true},
+	Em:            Style{Italic: true},
+	Code:          Style{Fg: "#50fa7b"},
+	Link:          Style{Underline: true, Fg: "#5c9cf5"},
+	LinkURL:       Style{Fg: "#5c9cf5"},
+	Hr:            Style{Fg: "#808080"},
+	Border:        Style{Fg: "#808080"},
+	BlockQuote:    Style{Fg: "#808080"},
+	TaskChecked:   Style{Fg: "#50fa7b"},
+	TaskUnchecked: Style{Fg: "#808080"},
 }
 
 var lightTheme = Theme{
-	Document:    Style{Padding: 2},
-	H1:          Style{Bold: true, Underline: true, Fg: "#000000"},
-	H2:         Style{Bold: true, Fg: "#000080"},
-	H3:         Style{Bold: true, Fg: "#008000"},
-	H4:         Style{Bold: true, Fg: "#008080"},
-	H5:         Style{Bold: true, Fg: "#808080"},
-	H6:         Style{Fg: "#808080"},
-	Strong:     Style{Bold: true},
-	Em:         Style{Italic: true},
-	Code:       Style{Fg: "#000000", Padding: 1},
-	Link:       Style{Underline: true, Fg: "#000080"},
-	LinkURL:    Style{Fg: "#808080"},
-	Bullet:     Style{Fg: "#800000"},
-	Numbered:   Style{Fg: "#800000"},
-	Hr:         Style{Fg: "#808080"},
-	Border:     Style{Fg: "#808080"},
+	Bg:            "#f0f0f0",
+	Document:      Style{Padding: 2, Fg: "#333333"},
+	Paragraph:     Style{Fg: "#333333"},
+	H1:            Style{Bold: true, Underline: true, Fg: "#000000"},
+	H2:            Style{Bold: true, Fg: "#00AFFF"},
+	H3:            Style{Bold: true, Fg: "#00AFFF"},
+	H4:            Style{Bold: true, Fg: "#00AFFF"},
+	H5:            Style{Bold: true, Fg: "#00AFFF"},
+	H6:            Style{Fg: "#00AFFF"},
+	Strong:        Style{Bold: true},
+	Em:            Style{Italic: true},
+	Code:          Style{Fg: "#008000", Padding: 1},
+	Link:          Style{Underline: true, Fg: "#5c9cf5"},
+	LinkURL:       Style{Fg: "#5c9cf5"},
+	Hr:            Style{Fg: "#333333"},
+	Border:        Style{Fg: "#333333"},
+	BlockQuote:    Style{Fg: "#333333"},
+	TaskChecked:   Style{Fg: "#008000"},
+	TaskUnchecked: Style{Fg: "#333333"},
 }
 
 func displayWidth(s string) int {
 	return runewidth.StringWidth(s)
 }
 
+// stripANSI 移除字符串中所有 ANSI 转义序列，返回纯文本
 func stripANSI(s string) string {
 	var out []byte
 	for i := 0; i < len(s); i++ {
@@ -208,6 +231,7 @@ func stripANSI(s string) string {
 	return string(out)
 }
 
+// ansiDisplayWidth 计算包含 ANSI 码的字节切片的显示宽度（忽略 ANSI 码后的视觉宽度）
 func ansiDisplayWidth(b []byte) int {
 	w := 0
 	for i := 0; i < len(b); {
@@ -240,5 +264,3 @@ func itoa(n int) string {
 	}
 	return string(buf[i:])
 }
-
-

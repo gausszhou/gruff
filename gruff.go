@@ -45,6 +45,7 @@ func Render(source string, opts ...Option) (string, error) {
 	for _, opt := range opts {
 		opt(&o)
 	}
+	o.Theme.inheritFg()
 
 	md := goldmark.New(
 		goldmark.WithExtensions(
@@ -63,13 +64,12 @@ func Render(source string, opts ...Option) (string, error) {
 
 	out := renderMarkdown(sourceBytes, o.Theme, o.WordWrap, doc)
 
+	bgCode := string(ansiBg(o.Theme.Bg))
 	if o.WordWrap > 0 {
-		out = wrapText(out, o.WordWrap, o.Theme.Document.Padding)
-	}
-	if o.Theme.Document.Bg != "" {
-		out = string(ansiBg(o.Theme.Document.Bg)) + out
+		out = wrapText(out, o.WordWrap, o.Theme.Document.Padding, bgCode)
 	}
 
+	out += string(ansiDefaultBg)
 	return out, nil
 }
 
@@ -81,7 +81,7 @@ func RenderBytes(source []byte, opts ...Option) ([]byte, error) {
 	return []byte(s), nil
 }
 
-func wrapText(s string, width int, padding int) string {
+func wrapText(s string, width int, padding int, bgCode string) string {
 	if width <= 0 {
 		return s
 	}
@@ -89,6 +89,9 @@ func wrapText(s string, width int, padding int) string {
 	var out strings.Builder
 	out.Grow(len(s) + len(s)/(width+1) + 32)
 
+	// ① 首行前：激活主题背景色，后续填充空格才有背景色
+	out.WriteString(bgCode)
+	// 首行左内边距（<padding> 个空格）
 	for range padding {
 		out.WriteByte(' ')
 	}
@@ -98,17 +101,25 @@ func wrapText(s string, width int, padding int) string {
 	spaces := 0
 	inAnsi := false
 
+	// 整行宽度 = 内容区 + 左内边距
+	// 填充到 fillWidth 使右侧区域也有背景色，\x1b[K 已在 fillWidth 之外无效
+	fillWidth := width + padding
+
 	flushWord := func() {
 		if len(word) == 0 {
 			return
 		}
 		wLen := ansiDisplayWidth(word)
 		if lineLen > 0 && lineLen+wLen+(b2i(spaces > 0)) > width-padding {
-			for range padding {
+			// ② 换行前：填充本行剩余位置（含右内边距）的背景色
+			out.WriteString(bgCode)
+			for i := lineLen; i < fillWidth; i++ {
 				out.WriteByte(' ')
 			}
-			out.WriteString("\x1b[K")
 			out.WriteByte('\n')
+			// ③ 换行后：下一行开头重新激活背景色
+			out.WriteString(bgCode)
+			// 下一行左内边距
 			for range padding {
 				out.WriteByte(' ')
 			}
@@ -141,11 +152,15 @@ func wrapText(s string, width int, padding int) string {
 		}
 		if r == '\n' {
 			flushWord()
-			for range padding {
+			// ④ 硬换行前：填充本行剩余位置（含右内边距）的背景色
+			out.WriteString(bgCode)
+			for i := lineLen; i < fillWidth; i++ {
 				out.WriteByte(' ')
 			}
-			out.WriteString("\x1b[K")
 			out.WriteByte('\n')
+			// ⑤ 硬换行后：下一行开头重新激活背景色
+			out.WriteString(bgCode)
+			// 下一行左内边距
 			for range padding {
 				out.WriteByte(' ')
 			}
@@ -162,10 +177,10 @@ func wrapText(s string, width int, padding int) string {
 	}
 	flushWord()
 
-	if spaces > 0 {
-		for i := 0; i < spaces; i++ {
-			out.WriteByte(' ')
-		}
+	// ⑥ 文档末尾：填充最后一行剩余位置（含右内边距）的背景色
+	out.WriteString(bgCode)
+	for i := lineLen; i < fillWidth; i++ {
+		out.WriteByte(' ')
 	}
 
 	return out.String()

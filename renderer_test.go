@@ -373,7 +373,7 @@ func TestWrapText_CJK(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			wrapped := wrapText(tt.input, tt.width, 0)
+			wrapped := wrapText(tt.input, tt.width, 0, "")
 			for _, line := range strings.Split(wrapped, "\n") {
 				w := ansiDisplayWidth([]byte(line))
 				if w > tt.width {
@@ -527,7 +527,7 @@ func TestRender_CJKTableWidthExpansion(t *testing.T) {
 		t.Fatal(err)
 	}
 	lines := strings.Split(strings.TrimRight(got, "\n"), "\n")
-	sepLine := stripANSI(lines[1])
+	sepLine := stripANSI(lines[2])
 	dashCount := strings.Count(sepLine, "─")
 	if dashCount != 14 { // seg(6)+seg(4) = 8+6 dashes
 		t.Errorf("separator has %d dashes, want 14 (col widths [6,4])", dashCount)

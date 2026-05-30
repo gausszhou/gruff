@@ -10,11 +10,12 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/gausszhou/gruff"
+	"github.com/gausszhou/gruff/benchmark"
 )
 
 var noBgTheme = gruff.Theme{
 	Document: gruff.Style{Padding: 2},
-	H1:       gruff.Style{Bold: true, Fg: "#FFFF87", Bg: "#5F5FFF"},
+	H1:       gruff.Style{Bold: true, Fg: "#FFFF87"},
 	H2:       gruff.Style{Bold: true, Fg: "#00AFFF"},
 	H3:       gruff.Style{Bold: true, Fg: "#00AFFF"},
 	H4:       gruff.Style{Bold: true, Fg: "#00AFFF"},
@@ -25,8 +26,6 @@ var noBgTheme = gruff.Theme{
 	Code:     gruff.Style{Fg: "#FF5F5F"},
 	Link:     gruff.Style{Underline: true, Fg: "#5c9cf5"},
 	LinkURL:  gruff.Style{Fg: "#808080"},
-	Bullet:   gruff.Style{Fg: "#ffff00"},
-	Numbered: gruff.Style{Fg: "#ffff00"},
 }
 
 type focus int
@@ -120,8 +119,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			md := generateUnicodeMD("All printable Unicode characters from U+0020 to U+10FFFF, rendered by **glamour**.")
 
 			r, err := glamour.NewTermRenderer(
-				glamour.WithStandardStyle("dark"),
+				glamour.WithStyles(benchmark.GruffMinimalStyle()),
 				glamour.WithWordWrap(w-2),
+				glamour.WithTableWrap(false),
+				glamour.WithInlineTableLinks(true),
 			)
 			if err != nil {
 				log.Fatal(err)
