@@ -109,7 +109,7 @@ func wrapText(s string, width int, padding int, bgCode string) string {
 			return
 		}
 		wLen := ansiDisplayWidth(word)
-		if lineLen > 0 && lineLen+wLen+(b2i(spaces > 0)) > width-padding {
+		if lineLen > padding && lineLen+wLen+(b2i(spaces > 0)) > width-padding {
 			// ② 换行前：填充本行剩余位置（含右内边距）的背景色
 			out.WriteString(bgCode)
 			for i := lineLen; i < fillWidth; i++ {
