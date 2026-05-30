@@ -31,7 +31,6 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 	switch n := node.(type) {
 	case *ast.Document:
 		r.buf.WriteString(string(ansiBg(r.th.Bg)))
-		r.buf.WriteByte('\n')
 		r.renderChildren(n)
 
 	case *ast.Paragraph:

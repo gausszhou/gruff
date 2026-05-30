@@ -17,7 +17,7 @@ const (
 	ansiNoItalic    ansiCode = "\x1b[23m"
 	ansiNoUnderline ansiCode = "\x1b[24m"
 	ansiDefaultFg   ansiCode = "\x1b[39m"
-	ansiDefaultBg    ansiCode = "\x1b[49m"
+	ansiDefaultBg   ansiCode = "\x1b[49m"
 )
 
 func is4bit(c string) bool {
@@ -167,7 +167,7 @@ func (th *Theme) inheritFg() {
 
 var darkTheme = Theme{
 	Bg:            "#141414",
-	Document:      Style{Padding: 2, Fg: "#e0e0e0"},
+	Document:      Style{Padding: 0, Fg: "#e0e0e0"},
 	Paragraph:     Style{Fg: "#e0e0e0"},
 	H1:            Style{Bold: true, Fg: "#FFFF87"},
 	H2:            Style{Bold: true, Fg: "#00AFFF"},
@@ -189,7 +189,7 @@ var darkTheme = Theme{
 
 var lightTheme = Theme{
 	Bg:            "#f0f0f0",
-	Document:      Style{Padding: 2, Fg: "#333333"},
+	Document:      Style{Padding: 0, Fg: "#333333"},
 	Paragraph:     Style{Fg: "#333333"},
 	H1:            Style{Bold: true, Underline: true, Fg: "#000000"},
 	H2:            Style{Bold: true, Fg: "#00AFFF"},
