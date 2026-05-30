@@ -33,28 +33,26 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 	switch n := node.(type) {
 	case *ast.Document:
 		r.buf.WriteString(string(ansiBg(r.th.Bg)))
-		r.renderChildren(n)
+		for c := n.FirstChild(); c != nil; c = c.NextSibling() {
+			if c != n.FirstChild() && isBlockLevel(c) {
+				r.buf.WriteByte('\n')
+			}
+			r.renderNode(c)
+		}
 
 	case *ast.Paragraph:
 		r.renderChildren(n)
-		if r.inBlockquote {
-			r.buf.WriteByte('\n')
-		} else if !r.isInsideList(n) && !r.isInsideTable(n) {
-			r.buf.WriteString("\n\n")
-		}
+		r.buf.WriteByte('\n')
 
 	case *ast.Heading:
 		st := r.headingStyle(n.Level)
 		r.buf.WriteString(string(st.start()))
 		r.renderChildren(n)
 		r.buf.WriteString(string(st.end()))
-		r.buf.WriteString("\n\n")
+		r.buf.WriteByte('\n')
 
 	case *ast.List:
 		r.renderChildren(n)
-		if r.listParent(n) == nil {
-			r.buf.WriteByte('\n')
-		}
 
 	case *ast.ListItem:
 		r.renderListItem(n)
@@ -144,7 +142,7 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 		r.buf.WriteString(string(r.th.Hr.start()))
 		r.buf.WriteString("────────────────────")
 		r.buf.WriteString(string(r.th.Hr.end()))
-		r.buf.WriteString("\n\n")
+		r.buf.WriteByte('\n')
 
 	case *ast.Blockquote:
 		st := r.th.BlockQuote
@@ -241,15 +239,6 @@ func (r *nodeRenderer) listDepth(node ast.Node) int {
 	return depth
 }
 
-func (r *nodeRenderer) listParent(node ast.Node) ast.Node {
-	for p := node.Parent(); p != nil; p = p.Parent() {
-		if _, ok := p.(*ast.ListItem); ok {
-			return p
-		}
-	}
-	return nil
-}
-
 func (r *nodeRenderer) renderListItem(node ast.Node) {
 	depth := r.listDepth(node)
 	indent := strings.Repeat("  ", depth)
@@ -282,23 +271,14 @@ func (r *nodeRenderer) renderListItem(node ast.Node) {
 		r.buf.WriteString("• ")
 	}
 
-	hasInline := false
-	hadNestedList := false
 	for c := node.FirstChild(); c != nil; c = c.NextSibling() {
 		if _, ok := c.(*ast.List); ok {
-			if hasInline {
-				r.buf.WriteByte('\n')
-			}
 			r.renderNode(c)
-			hadNestedList = true
 		} else {
 			r.renderNode(c)
-			hasInline = true
 		}
 	}
-	if !hadNestedList {
-		r.buf.WriteByte('\n')
-	}
+	r.buf.WriteByte('\n')
 }
 
 func (r *nodeRenderer) isTaskItem(node ast.Node) bool {
@@ -317,20 +297,12 @@ func (r *nodeRenderer) isTaskItem(node ast.Node) bool {
 	return false
 }
 
-func (r *nodeRenderer) isInsideList(node ast.Node) bool {
-	for p := node.Parent(); p != nil; p = p.Parent() {
-		if _, ok := p.(*ast.ListItem); ok {
-			return true
-		}
-	}
-	return false
-}
-
-func (r *nodeRenderer) isInsideTable(node ast.Node) bool {
-	for p := node.Parent(); p != nil; p = p.Parent() {
-		if _, ok := p.(*extensionAst.Table); ok {
-			return true
-		}
+func isBlockLevel(n ast.Node) bool {
+	switch n.(type) {
+	case *ast.Paragraph, *ast.Heading, *ast.List, *ast.Blockquote,
+		*ast.FencedCodeBlock, *ast.CodeBlock, *ast.ThematicBreak,
+		*extensionAst.Table:
+		return true
 	}
 	return false
 }
@@ -579,7 +551,6 @@ func (r *nodeRenderer) renderTable(table *extensionAst.Table) {
 			hline()
 		}
 	}
-	r.buf.WriteByte('\n')
 }
 
 func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []extensionAst.Alignment) {
