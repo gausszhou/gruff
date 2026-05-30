@@ -78,20 +78,16 @@ out, err := gruff.Render(source, gruff.WithLight(), gruff.WithWordWrap(80))
 ## Performance
 
 Benchmarked against `testdata/benchmark.md` (2.4 KB) repeated 100× (~240 KB input).
-Glamour minimal mode uses:
-- `CodeBlock.Chroma = nil` — skips chroma syntax highlighting, falling back to
-  plain-text rendering (no tokenizer, no formatter)
-- `CleanInput` — removes `\r` before rendering to prevent terminal corruption
-  (chroma normally strips `\r` internally; the fallback path does not)
-- Word wrap off, table wrap off, inline table links on
 
-Glamour standard mode: default `"dark"` style.
+| Metric         | gruff ¹     | glamour (minimal) ² | glamour (standard) ³ | Improvement (vs minimal) |
+|----------------|-------------|---------------------|----------------------|--------------------------|
+| Time/op        | **~33 ms**  | ~209 ms             | ~1.38 s              | **~6.3× / ~42×**         |
+| Memory/op      | **~26 MB**  | ~58.7 MB            | ~354 MB              | **~2.3× / ~14×**         |
+| Allocations/op | **~270,000**| ~5,267,000          | ~31,200,000          | **~20× / ~116×**         |
 
-| Metric         | gruff      | glamour (minimal) | glamour (standard) | Improvement (vs minimal) |
-|----------------|------------|-------------------|--------------------|--------------------------|
-| Time/op        | ~33 ms     | ~211 ms           | ~1.08 s            | **~6.4× / ~33×**         |
-| Memory/op      | ~23.2 MB   | ~58.8 MB          | ~234 MB            | **~2.5× / ~10×**         |
-| Allocations/op | ~270,000   | ~5,267,000        | ~21,280,000        | **~20× / ~79×**          |
+¹ gruff: `WithDark()`, `WithWordWrap(120)`.
+² glamour minimal: `Chroma = nil`, `CleanInput`, word wrap off, table wrap off, inline table links on.
+³ glamour standard: `WithStandardStyle("dark")`, word wrap at 120 cols.
 
 See [`docs/why-gruff-faster.md`](docs/why-gruff-faster.md) for a detailed analysis of the
 performance gap.

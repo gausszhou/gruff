@@ -19,7 +19,7 @@ func benchGruff(b *testing.B, file string) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		gruff.Render(input)
+		gruff.Render(input, gruff.WithDark(), gruff.WithWordWrap(120))
 	}
 }
 
@@ -56,6 +56,7 @@ func benchGlamourStandard(b *testing.B, file string) {
 
 	r, err := glamour.NewTermRenderer(
 		glamour.WithStandardStyle("dark"),
+		glamour.WithWordWrap(120),
 	)
 	if err != nil {
 		b.Fatal(err)
