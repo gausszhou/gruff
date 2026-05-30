@@ -13,8 +13,8 @@
 ## Architecture
 
 - `gruff.go` — public API (`Render`, `RenderBytes`, `WithDark`, `WithLight`, `WithWordWrap`)
-- `renderer.go` — goldmark AST walker → ANSI output; `renderListItem` uses `renderChildren` (no manual child loop, no trailing `\n`)
-- `ansi.go` — SGR codes, `Style`, `Color`, `Theme` types, helpers (`displayWidth`, `stripANSI`)
+- `gruff_renderer.go` — goldmark AST walker → ANSI output; `renderListItem` uses `renderChildren` (no manual child loop, no trailing `\n`)
+- `gruff_ansi.go` — SGR codes, `Style`, `Color`, `Theme` types, helpers (`displayWidth`, `stripANSI`)
 - `cmd/gruff/main.go` — CLI binary (reads file path arg, auto-detects terminal width)
 - `Makefile` — `build` / `release` / `clean` targets (`dist/` output)
 - `.github/workflows/release.yml` — tag `v*` triggers `make release` + uploads archives
