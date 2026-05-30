@@ -209,8 +209,32 @@ var lightTheme = Theme{
 	TaskUnchecked: Style{Fg: "#333333"},
 }
 
+// displayWidth 返回字符串在终端中占用的显示宽度。
+// 对 go-runewidth 的补充：
+//   - U+FE0F（Variation Selector-16）单独不占宽度
+//   - 后跟 U+FE0F 的码位强制为 emoji 宽度 2（弥补 runewidth 不处理 ambiguous + VS16 的不足）
 func displayWidth(s string) int {
-	return runewidth.StringWidth(s)
+	w := 0
+	for i := 0; i < len(s); {
+		r, size := utf8.DecodeRuneInString(s[i:])
+		// U+FE0F（Variation Selector-16）单独出现时宽度为 0
+		if r == 0xFE0F {
+			i += size
+			continue
+		}
+		// 若后跟 U+FE0F，则该码位为 emoji 呈现 → 宽度 2
+		if i+size < len(s) {
+			next, nextSize := utf8.DecodeRuneInString(s[i+size:])
+			if next == 0xFE0F {
+				w += 2
+				i += size + nextSize
+				continue
+			}
+		}
+		w += runewidth.RuneWidth(r)
+		i += size
+	}
+	return w
 }
 
 // stripANSI 移除字符串中所有 ANSI 转义序列，返回纯文本

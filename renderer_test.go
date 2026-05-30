@@ -98,19 +98,15 @@ func TestDisplayWidth_Emoji(t *testing.T) {
 // Run with `RUNEWIDTH_EASTASIAN=1` to treat ambiguous chars as wide.
 func TestDisplayWidth_VS16(t *testing.T) {
 	// ❤ (U+2764) is East Asian Ambiguous → width 1 with default settings
-	// Adding VS16 (U+FE0F, zero-width) should force emoji presentation (width 2)
-	// but go-runewidth doesn't handle this at the grapheme cluster level.
+	// Adding VS16 (U+FE0F) forces emoji presentation → width 2
+	// displayWidth handles this: any char followed by U+FE0F counts as width 2
 	base := "❤"       // U+2764
 	withVS16 := "❤️"   // U+2764 + U+FE0F
-	want := 1          // known limitation: go-runewidth doesn't promote to width 2
-	gotBase := displayWidth(base)
-	gotVS16 := displayWidth(withVS16)
-	if gotBase != want {
-		t.Errorf("displayWidth(❤) = %d, want %d", gotBase, want)
+	if got := displayWidth(base); got != 1 {
+		t.Errorf("displayWidth(❤) = %d, want 1", got)
 	}
-	// VS16 itself is zero-width, so total should be same as base
-	if gotVS16 != gotBase {
-		t.Errorf("displayWidth(❤️) = %d, want %d (VS16 should be zero-width in go-runewidth)", gotVS16, gotBase)
+	if got := displayWidth(withVS16); got != 2 {
+		t.Errorf("displayWidth(❤️) = %d, want 2 (VS16 promotes ambiguous char to emoji width)", got)
 	}
 }
 
