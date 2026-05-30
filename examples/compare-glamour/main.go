@@ -12,45 +12,15 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/gausszhou/gruff"
 	"github.com/gausszhou/gruff/benchmark"
 )
 
 type focus int
 
 const (
-	focusLeft focus = iota
-	focusTop
-	focusBottom
+	focusLeft  focus = iota
+	focusRight
 )
-
-type slot int
-
-const (
-	slotStandard slot = iota
-	slotMinimal
-	slotGruff
-)
-
-var slotNames = map[slot]string{
-	slotStandard: " glamour standard ",
-	slotMinimal:  " glamour minimal ",
-	slotGruff:    " gruff ",
-}
-
-var slotColors = map[slot]struct {
-	activeBg, inactiveBg lipgloss.Color
-}{
-	slotStandard: {lipgloss.Color("#7c3aed"), lipgloss.Color("#3a1a6e")},
-	slotMinimal:  {lipgloss.Color("#059669"), lipgloss.Color("#056f4d")},
-	slotGruff:    {lipgloss.Color("#0891b2"), lipgloss.Color("#056982")},
-}
-
-var slotFocusColor = map[focus]lipgloss.Color{
-	focusLeft:   lipgloss.Color("#7c3aed"),
-	focusTop:    lipgloss.Color("#059669"),
-	focusBottom: lipgloss.Color("#0891b2"),
-}
 
 type renderTickMsg time.Time
 
@@ -63,22 +33,18 @@ func renderTick() tea.Cmd {
 }
 
 type model struct {
-	leftView   viewport.Model
-	topView    viewport.Model
-	bottomView viewport.Model
-	dirty      bool
-	termWidth  int
+	leftView  viewport.Model
+	rightView viewport.Model
+	dirty     bool
+	termWidth int
 	termHeight int
-	focus      focus
-	perm       int
-	md         string
+	focus     focus
+	md        string
 
-	contents  [3]string
-	durations [3]time.Duration
-}
-
-func (m model) slotAt(pos int) slot {
-	return slot((pos + m.perm) % 3)
+	leftContent  string
+	rightContent string
+	leftDur      time.Duration
+	rightDur     time.Duration
 }
 
 func NewModel(md string) model {
@@ -101,18 +67,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "q", "ctrl+c", "esc":
 			return m, tea.Quit
-		case "tab":
-			m.perm = (m.perm + 1) % 3
-			m.leftView.SetContent(m.contents[m.slotAt(0)])
-			m.topView.SetContent(m.contents[m.slotAt(1)])
-			m.bottomView.SetContent(m.contents[m.slotAt(2)])
-			return m, nil
-		case "left":
-			m.focus = focusLeft
-			return m, nil
-		case "right":
+		case "left", "right":
 			if m.focus == focusLeft {
-				m.focus = focusTop
+				m.focus = focusRight
+			} else {
+				m.focus = focusLeft
 			}
 			return m, nil
 		case "up", "down", "pgup", "pgdown":
@@ -120,51 +79,39 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch m.focus {
 			case focusLeft:
 				m.leftView, cmd = m.leftView.Update(msg)
-			case focusTop:
-				m.topView, cmd = m.topView.Update(msg)
-			case focusBottom:
-				m.bottomView, cmd = m.bottomView.Update(msg)
+			case focusRight:
+				m.rightView, cmd = m.rightView.Update(msg)
 			}
 			return m, cmd
 		}
 		return m, nil
 	case tea.MouseMsg:
 		halfW := (m.termWidth - 4) / 2
-		halfH := (m.termHeight - 4) / 2
 		if msg.X < halfW {
 			m.focus = focusLeft
-		} else if msg.Y < halfH {
-			m.focus = focusTop
 		} else {
-			m.focus = focusBottom
+			m.focus = focusRight
 		}
 		var cmd tea.Cmd
 		switch m.focus {
 		case focusLeft:
 			m.leftView, cmd = m.leftView.Update(msg)
-		case focusTop:
-			m.topView, cmd = m.topView.Update(msg)
-		case focusBottom:
-			m.bottomView, cmd = m.bottomView.Update(msg)
+		case focusRight:
+			m.rightView, cmd = m.rightView.Update(msg)
 		}
 		return m, cmd
 	case tea.WindowSizeMsg:
 		m.termWidth = msg.Width
 		m.termHeight = msg.Height
 		halfW := (msg.Width - 4) / 2
-		rightH := (msg.Height - 4) / 2
 
-		m.leftView = viewport.New(halfW, msg.Height-3)
+		m.leftView = viewport.New(halfW, msg.Height-4)
 		m.leftView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414"))
-		m.topView = viewport.New(halfW, rightH)
-		m.topView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414"))
-		m.bottomView = viewport.New(halfW, rightH)
-		m.bottomView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414"))
+		m.rightView = viewport.New(halfW, msg.Height-4)
+		m.rightView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414"))
 
 		m.dirty = true
-
 		return m, nil
-		// return m, func() tea.Msg { return renderTickMsg(time.Now()) }
 	default:
 		return m, nil
 	}
@@ -203,7 +150,7 @@ func (m model) renderAll() model {
 
 	t0 := time.Now()
 	r, err := glamour.NewTermRenderer(
-		glamour.WithStandardStyle("dark"),
+		glamour.WithStyles(benchmark.GruffStandradStyle()),
 		glamour.WithWordWrap(halfW),
 	)
 	if err != nil {
@@ -213,8 +160,8 @@ func (m model) renderAll() model {
 	if err != nil {
 		log.Fatal(err)
 	}
-	m.contents[slotStandard] = out
-	m.durations[slotStandard] = time.Since(t0)
+	m.leftContent = out
+	m.leftDur = time.Since(t0)
 
 	t0 = time.Now()
 	r2, err := glamour.NewTermRenderer(
@@ -231,34 +178,24 @@ func (m model) renderAll() model {
 	if err != nil {
 		log.Fatal(err)
 	}
-	m.contents[slotMinimal] = out2
-	m.durations[slotMinimal] = time.Since(t0)
+	m.rightContent = out2
+	m.rightDur = time.Since(t0)
 
-	t0 = time.Now()
-	out3, err := gruff.Render(m.md,
-		gruff.WithWordWrap(halfW),
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-	m.contents[slotGruff] = out3
-	m.durations[slotGruff] = time.Since(t0)
-
-	m.leftView.SetContent(m.contents[m.slotAt(0)])
-	m.topView.SetContent(m.contents[m.slotAt(1)])
-	m.bottomView.SetContent(m.contents[m.slotAt(2)])
+	m.leftView.SetContent(m.leftContent)
+	m.rightView.SetContent(m.rightContent)
 	return m
 }
 
-func (m model) headerFor(pos int) string {
-	s := m.slotAt(pos)
-	colors := slotColors[s]
-	active := (pos == 0 && m.focus == focusLeft) ||
-		(pos == 1 && m.focus == focusTop) ||
-		(pos == 2 && m.focus == focusBottom)
-	halfW := ((m.termWidth - 4) / 2)
-	return makeHeader(slotNames[s], m.wxhInfo()+"  "+m.durations[s].Round(time.Microsecond).String(),
-		active, colors.activeBg, colors.inactiveBg, halfW)
+func (m model) headerFor(left bool) string {
+	halfW := (m.termWidth - 4) / 2
+	if left {
+		active := m.focus == focusLeft
+		return makeHeader(" glamour standard ", m.wxhInfo()+"  "+m.leftDur.Round(time.Microsecond).String(),
+			active, lipgloss.Color("#7c3aed"), lipgloss.Color("#3a1a6e"), halfW)
+	}
+	active := m.focus == focusRight
+	return makeHeader(" glamour minimal ", m.wxhInfo()+"  "+m.rightDur.Round(time.Microsecond).String(),
+		active, lipgloss.Color("#059669"), lipgloss.Color("#056f4d"), halfW)
 }
 
 func (m model) View() string {
@@ -267,20 +204,15 @@ func (m model) View() string {
 		width = 80
 	}
 
-	leftPane := m.paneBorder(m.focus == focusLeft, slotFocusColor[focusLeft]).Render(
-		m.headerFor(0) + "\n" + m.leftView.View(),
+	leftPane := m.paneBorder(m.focus == focusLeft, lipgloss.Color("#7c3aed")).Render(
+		m.headerFor(true) + "\n" + m.leftView.View(),
 	)
 
-	topPane := m.paneBorder(m.focus == focusTop, slotFocusColor[focusTop]).Render(
-		m.headerFor(1) + "\n" + m.topView.View(),
+	rightPane := m.paneBorder(m.focus == focusRight, lipgloss.Color("#059669")).Render(
+		m.headerFor(false) + "\n" + m.rightView.View(),
 	)
 
-	bottomPane := m.paneBorder(m.focus == focusBottom, slotFocusColor[focusBottom]).Render(
-		m.headerFor(2) + "\n" + m.bottomView.View(),
-	)
-
-	rightSide := lipgloss.JoinVertical(lipgloss.Top, topPane, bottomPane)
-	joined := lipgloss.JoinHorizontal(lipgloss.Top, leftPane, rightSide)
+	joined := lipgloss.JoinHorizontal(lipgloss.Top, leftPane, rightPane)
 
 	return lipgloss.NewStyle().
 		Background(lipgloss.Color("#141414")).

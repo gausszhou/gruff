@@ -93,25 +93,23 @@ Ready-to-run examples are in the [`examples/`](examples/) directory:
 | Example | Description |
 |---------|-------------|
 | [`basic`](examples/basic/) | Render markdown with CLI flags (`--light`, `--wrap`) |
-| [`headings`](examples/headings/) | All H1–H6 levels with inline formatting and Unicode |
 | [`table`](examples/table/) | Table-specific demo showing alignment and word wrap |
 | [`codeblock`](examples/codeblock/) | Code block rendering with language tags |
 | [`custom-theme`](examples/custom-theme/) | Custom ANSI color and style customization |
 | [`api`](examples/api/) | `Render`, `RenderBytes`, and `WithWordWrap` usage |
-| [`lipgloss`](examples/lipgloss/) | Wrap gruff output with [lipgloss](https://github.com/charmbracelet/lipgloss) borders and styles |
-| [`glamour`](examples/glamour/) | Render same markdown with [glamour](https://github.com/charmbracelet/glamour) for comparison |
-| [`benchmark-compare`](examples/benchmark-compare/) | Side-by-side rendering of the benchmark markdown with gruff vs glamour |
+| [`compare-benchmark`](examples/compare-benchmark/) | Side-by-side benchmark markdown rendered with gruff vs glamour |
+| [`compare-glamour`](examples/compare-glamour/) | Side-by-side glamour standard vs minimal |
+| [`compare-theme`](examples/compare-theme/) | Side-by-side gruff dark vs light theme |
 
 ```bash
 go run examples/basic/main.go
-go run examples/headings/main.go
 go run examples/table/main.go
 go run examples/codeblock/main.go
 go run examples/custom-theme/main.go
 go run examples/api/main.go
-go run examples/lipgloss/main.go
-go run examples/glamour/main.go
-go run examples/benchmark-compare/main.go
+go run examples/compare-benchmark/main.go
+go run examples/compare-glamour/main.go
+go run examples/compare-theme/main.go
 ```
 
 ## Theme Customization

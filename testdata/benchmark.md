@@ -2,11 +2,26 @@
 
 This document contains a balanced mix of markdown elements for performance testing.
 
+## 2-Level Title
+
+### 3-Level Title
+
+#### 4-Level Title
+
+##### 5-Level Title
+
+###### 6-Level Title
+
 ## Text Formatting
 
 Markdown supports **bold** and *italic* text, as well as ***bold italic***.
 You can also use `inline code` for short snippets, or ~~strikethrough~~ for crossed-out text.
 Standard paragraphs are the most common element in any document.
+
+## Mixed Content
+
+This paragraph has **bold**, *italic*, `code`, and a [link](https://example.com) all in one sentence.
+Here is another one with ***all three*** styles combined and some `inline code` sprinkled throughout.
 
 ## Lists
 
@@ -24,43 +39,31 @@ And ordered lists:
 2. Second
 3. Third
 
-## Links and Images
+### Nested Lists
+
+1. Item one
+   - Sub-item A
+   - Sub-item B
+     1. Deep item 1
+     2. Deep item 2
+2. Item two
+   - Sub-item C
+
+## Links
 
 Visit [GitHub](https://github.com) for more information.
+
 Check out [Gruff](https://github.com/gausszhou/gruff) the markdown renderer.
+
 You can also reference [Go](https://go.dev) documentation.
-
-## Code Blocks
-
-Here is a Go example:
-
-```go
-package main
-
-import "fmt"
-
-func main() {
-	fmt.Println("Hello, World!")
-}
-```
-
-And a JavaScript example:
-
-```javascript
-function greet(name) {
-	return `Hello, ${name}!`;
-}
-
-console.log(greet("World"));
-```
 
 ## Tables
 
-| Name | Type | Default | Description |
-|------|------|---------|-------------|
-| Theme | string | "dark" | Color theme |
-| Width | int | 120 | Word wrap width |
-| Debug | bool | false | Enable debug mode |
+| Name  | Type   | Default | Description       |
+| ----- | ------ | ------- | ----------------- |
+| Theme | string | "dark"  | Color theme       |
+| Width | int    | 120     | Word wrap width   |
+| Debug | bool   | false   | Enable debug mode |
 
 ## Blockquotes
 
@@ -80,22 +83,28 @@ console.log(greet("World"));
 - [ ] Run performance tests
 - [ ] Analyze results
 
-## Mixed Content
+## Code Blocks
 
-This paragraph has **bold**, *italic*, `code`, and a [link](https://example.com) all in one sentence.
-Here is another one with ***all three*** styles combined and some `inline code` sprinkled throughout.
+Here is a Go example:
 
-### Nested Lists
+```go
+package main
 
-1. Item one
-   - Sub-item A
-   - Sub-item B
-     1. Deep item 1
-     2. Deep item 2
-2. Item two
-   - Sub-item C
+import "fmt"
 
-### Code with Syntax
+func main() {
+  fmt.Println("Hello, World!")
+}
+```
+
+And a JavaScript example:
+
+```javascript
+function greet(name) {
+  return `Hello, ${name}!`;
+}
+console.log(greet("World"));
+```
 
 ```python
 def fibonacci(n):
