@@ -12,8 +12,8 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/gausszhou/gruff/gruff"
 	"github.com/gausszhou/gruff/benchmark"
+	"github.com/gausszhou/gruff/gruff"
 )
 
 type focus int
@@ -34,13 +34,19 @@ func renderTick() tea.Cmd {
 }
 
 type model struct {
-	leftView   viewport.Model
-	rightView  viewport.Model
-	dirty      bool
+	leftView  viewport.Model
+	rightView viewport.Model
+
 	termWidth  int
 	termHeight int
-	focus      focus
-	md         string
+
+	viewWidth  int
+	viewHeight int
+
+	focus focus
+	dirty bool
+
+	md string
 
 	glamourContent string
 	gruffContent   string
@@ -87,7 +93,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	case tea.MouseMsg:
-		halfW := (m.termWidth - 4) / 2
+		halfW := m.termWidth / 2
 		if msg.X < halfW {
 			m.focus = focusLeft
 		} else {
@@ -104,11 +110,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.termWidth = msg.Width
 		m.termHeight = msg.Height
-		halfW := (msg.Width - 4) / 2
+		m.viewWidth = (msg.Width / 2) - 2
+		m.viewHeight = msg.Height - 4
 
-		m.leftView = viewport.New(halfW, msg.Height-4)
+		m.leftView = viewport.New(m.viewWidth, m.viewHeight)
 		m.leftView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414"))
-		m.rightView = viewport.New(halfW, msg.Height-4)
+		m.rightView = viewport.New(m.viewWidth, m.viewHeight)
 		m.rightView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414"))
 
 		m.dirty = true
@@ -151,7 +158,7 @@ func (m model) renderAll() model {
 
 	t0 := time.Now()
 	r, err := glamour.NewTermRenderer(
-		glamour.WithStyles(benchmark.GruffStandradStyle()),
+		glamour.WithStyles(benchmark.GlamourStandardStyle()),
 		glamour.WithWordWrap(halfW),
 	)
 	if err != nil {
@@ -174,8 +181,8 @@ func (m model) renderAll() model {
 	m.gruffContent = out2
 	m.gruffDur = time.Since(t0)
 
-	m.leftView.SetContent(m.glamourContent)
-	m.rightView.SetContent("\n" + m.gruffContent + "\n")
+	m.leftView.SetContent("\n" + m.gruffContent + "\n")
+	m.rightView.SetContent(m.glamourContent)
 	return m
 }
 
@@ -183,12 +190,12 @@ func (m model) headerFor(left bool) string {
 	halfW := (m.termWidth - 4) / 2
 	if left {
 		active := m.focus == focusLeft
-		return makeHeader(" glamour standard ", m.wxhInfo()+"  "+m.glamourDur.Round(time.Microsecond).String(),
-			active, lipgloss.Color("#7c3aed"), lipgloss.Color("#3a1a6e"), halfW)
+		return makeHeader(" gruff ", m.wxhInfo()+"  "+m.gruffDur.Round(time.Microsecond).String(),
+			active, lipgloss.Color("#0891b2"), lipgloss.Color("#056982"), halfW)
 	}
 	active := m.focus == focusRight
-	return makeHeader(" gruff ", m.wxhInfo()+"  "+m.gruffDur.Round(time.Microsecond).String(),
-		active, lipgloss.Color("#0891b2"), lipgloss.Color("#056982"), halfW)
+	return makeHeader(" glamour standard ", m.wxhInfo()+"  "+m.glamourDur.Round(time.Microsecond).String(),
+		active, lipgloss.Color("#7c3aed"), lipgloss.Color("#3a1a6e"), halfW)
 }
 
 func (m model) View() string {
@@ -208,7 +215,6 @@ func (m model) View() string {
 	joined := lipgloss.JoinHorizontal(lipgloss.Top, leftPane, rightPane)
 
 	return lipgloss.NewStyle().
-		Background(lipgloss.Color("#141414")).
 		Width(width).
 		Height(m.termHeight).
 		Render(joined)

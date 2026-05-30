@@ -31,10 +31,11 @@ func benchGlamourMinimal(b *testing.B, file string) {
 	input := strings.Repeat(string(source), 100)
 
 	r, err := glamour.NewTermRenderer(
-		glamour.WithStyles(GruffMinimalStyle()),
+		glamour.WithStyles(GlamourMinimalStyle()),
 		glamour.WithWordWrap(0),
 		glamour.WithTableWrap(false),
 		glamour.WithInlineTableLinks(true),
+		glamour.WithChromaFormatter("noop"),
 	)
 	if err != nil {
 		b.Fatal(err)
