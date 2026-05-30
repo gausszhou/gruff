@@ -2,6 +2,16 @@
 
 This document contains a balanced mix of markdown elements for performance testing.
 
+## 2-Level Title
+
+### 3-Level Title
+
+#### 4-Level Title
+
+##### 5-Level Title
+
+###### 6-Level Title
+
 ## Text Formatting
 
 Markdown supports **bold** and *italic* text, as well as ***bold italic***.

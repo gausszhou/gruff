@@ -19,7 +19,7 @@ import (
 type focus int
 
 const (
-	focusLeft  focus = iota
+	focusLeft focus = iota
 	focusRight
 )
 
@@ -34,13 +34,13 @@ func renderTick() tea.Cmd {
 }
 
 type model struct {
-	leftView  viewport.Model
-	rightView viewport.Model
-	dirty     bool
-	termWidth int
+	leftView   viewport.Model
+	rightView  viewport.Model
+	dirty      bool
+	termWidth  int
 	termHeight int
-	focus     focus
-	md        string
+	focus      focus
+	md         string
 
 	glamourContent string
 	gruffContent   string
@@ -175,7 +175,7 @@ func (m model) renderAll() model {
 	m.gruffDur = time.Since(t0)
 
 	m.leftView.SetContent(m.glamourContent)
-	m.rightView.SetContent(m.gruffContent)
+	m.rightView.SetContent("\n" + m.gruffContent + "\n")
 	return m
 }
 
