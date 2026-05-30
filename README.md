@@ -78,14 +78,20 @@ out, err := gruff.Render(source, gruff.WithLight(), gruff.WithWordWrap(80))
 ## Performance
 
 Benchmarked against `testdata/benchmark.md` (2.4 KB) repeated 100× (~240 KB input).
-Glamour is tested in both minimal mode (chroma disabled, word wrap off, table wrap off,
-inline table links on) and standard mode.
+Glamour minimal mode uses:
+- `CodeBlock.Chroma = nil` — skips chroma syntax highlighting, falling back to
+  plain-text rendering (no tokenizer, no formatter)
+- `CleanInput` — removes `\r` before rendering to prevent terminal corruption
+  (chroma normally strips `\r` internally; the fallback path does not)
+- Word wrap off, table wrap off, inline table links on
+
+Glamour standard mode: default `"dark"` style.
 
 | Metric         | gruff      | glamour (minimal) | glamour (standard) | Improvement (vs minimal) |
 |----------------|------------|-------------------|--------------------|--------------------------|
-| Time/op        | ~25.7 ms   | ~265 ms           | ~1.19 s            | **~10× / ~46×**          |
-| Memory/op      | ~14.0 MB   | ~52.9 MB          | ~222 MB            | **~3.8× / ~16×**         |
-| Allocations/op | ~209,556   | ~4,505,093        | ~20,348,392        | **~21× / ~97×**          |
+| Time/op        | ~33 ms     | ~211 ms           | ~1.08 s            | **~6.4× / ~33×**         |
+| Memory/op      | ~23.2 MB   | ~58.8 MB          | ~234 MB            | **~2.5× / ~10×**         |
+| Allocations/op | ~270,000   | ~5,267,000        | ~21,280,000        | **~20× / ~79×**          |
 
 See [`docs/why-gruff-faster.md`](docs/why-gruff-faster.md) for a detailed analysis of the
 performance gap.
@@ -110,6 +116,7 @@ Ready-to-run examples are in the [`examples/`](examples/) directory:
 | [`compare-benchmark`](examples/compare-benchmark/) | Side-by-side benchmark markdown rendered with gruff vs glamour |
 | [`compare-glamour`](examples/compare-glamour/) | Side-by-side glamour standard vs minimal |
 | [`compare-theme`](examples/compare-theme/) | Side-by-side gruff dark vs light theme |
+| [`compare-simple`](examples/compare-simple/) | Glamour minimal vs standard without viewport/bubbletea |
 
 ```bash
 go run examples/basic/main.go
@@ -120,6 +127,7 @@ go run examples/api/main.go
 go run examples/compare-benchmark/main.go
 go run examples/compare-glamour/main.go
 go run examples/compare-theme/main.go
+go run examples/compare-simple/main.go
 ```
 
 ## Theme Customization
@@ -153,7 +161,7 @@ Code blocks are rendered line-by-line with language tags shown in gray, content 
 
 **Runtime:** `github.com/yuin/goldmark`, `github.com/mattn/go-runewidth`
 
-**Test/Benchmark only:** `github.com/charmbracelet/glamour` (not included in production builds)
+**Examples only:** `charm.land/bubbles/v2`, `charm.land/bubbletea/v2`, `charm.land/lipgloss/v2`, `charm.land/glamour/v2` (not included in library builds)
 
 ## License
 

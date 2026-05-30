@@ -141,15 +141,18 @@ func (m model) wxhInfo() string {
 }
 
 func (m model) renderAll() model {
-	t1 := time.Now()
-	r1, err := glamour.NewTermRenderer(
-		glamour.WithStyles(benchmark.GlamourStandardStyle()),
+	r, err := glamour.NewTermRenderer(
+		glamour.WithStyles(benchmark.GlamourMinimalStyle()),
 		glamour.WithWordWrap(m.viewWidth),
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
-	out, err := r1.Render(m.md)
+
+	cleaned := benchmark.CleanInput(m.md)
+
+	t1 := time.Now()
+	out, err := r.Render(cleaned)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -181,10 +184,10 @@ func (m model) headerFor(left bool) string {
 		activeBg = lipgloss.Color("#0891b2")
 		inactiveBg = lipgloss.Color("#056982")
 	} else {
-		title = "glamour standard"
+		title = "glamour minimal"
 		info = m.wxhInfo() + "  " + m.glamourDur.Round(time.Microsecond).String()
-		activeBg = lipgloss.Color("#7c3aed")
-		inactiveBg = lipgloss.Color("#3a1a6e")
+		activeBg = lipgloss.Color("#059669")
+		inactiveBg = lipgloss.Color("#056f4d")
 	}
 	active := (left && m.focus == focusLeft) || (!left && m.focus == focusRight)
 	bg := inactiveBg
@@ -206,7 +209,7 @@ func (m model) View() tea.View {
 		m.headerFor(true) + "\n" + m.leftView.View(),
 	)
 
-	rightPane := m.paneBorder(m.focus == focusRight, lipgloss.Color("#7c3aed")).Render(
+	rightPane := m.paneBorder(m.focus == focusRight, lipgloss.Color("#059669")).Render(
 		m.headerFor(false) + "\n" + m.rightView.View(),
 	)
 

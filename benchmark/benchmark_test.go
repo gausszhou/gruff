@@ -28,14 +28,13 @@ func benchGlamourMinimal(b *testing.B, file string) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	input := strings.Repeat(string(source), 100)
+	input := CleanInput(strings.Repeat(string(source), 100))
 
 	r, err := glamour.NewTermRenderer(
 		glamour.WithStyles(GlamourMinimalStyle()),
 		glamour.WithWordWrap(0),
 		glamour.WithTableWrap(false),
 		glamour.WithInlineTableLinks(true),
-		glamour.WithChromaFormatter("noop"),
 	)
 	if err != nil {
 		b.Fatal(err)

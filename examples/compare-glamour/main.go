@@ -146,7 +146,6 @@ func (m model) renderAll() model {
 		var err error
 		m.leftRenderer, err = glamour.NewTermRenderer(
 			glamour.WithStyles(benchmark.GlamourMinimalStyle()),
-			glamour.WithChromaFormatter("noop"),
 			glamour.WithWordWrap(halfW),
 			glamour.WithTableWrap(false),
 			glamour.WithInlineTableLinks(false),
@@ -164,8 +163,10 @@ func (m model) renderAll() model {
 		m.renderWidth = halfW
 	}
 
+	cleaned := benchmark.CleanInput(m.md)
+
 	t1 := time.Now()
-	out, err := m.leftRenderer.Render(m.md)
+	out, err := m.leftRenderer.Render(cleaned)
 	if err != nil {
 		log.Fatal(err)
 	}
