@@ -16,7 +16,7 @@
 - `main.go` — CLI entry point via `cmd.Execute()` (cobra)
 - `cmd/root.go` — root cobra command (positional arg `<file>` or subcommands)
 - `cmd/render.go` — `gruff render <file>` subcommand, shared `renderFile` logic
-- `cmd/gruff/main.go` — alternative CLI entry point (also cobra, same `cmd` package)
+
 - `Makefile` — `build` / `release` / `clean` targets (`dist/` output)
 - `.github/workflows/release.yml` — tag `v*` triggers `make release` + uploads archives
 - Benchmark input: `testdata/benchmark.md`
