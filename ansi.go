@@ -17,8 +17,7 @@ const (
 	ansiNoItalic    ansiCode = "\x1b[23m"
 	ansiNoUnderline ansiCode = "\x1b[24m"
 	ansiDefaultFg   ansiCode = "\x1b[39m"
-	ansiDefaultBg   ansiCode = "\x1b[49m"
-	ansiEraseLine   ansiCode = "\x1b[K"
+	ansiDefaultBg    ansiCode = "\x1b[49m"
 )
 
 func is4bit(c string) bool {

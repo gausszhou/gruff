@@ -151,8 +151,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.termWidth = msg.Width
 		m.termHeight = msg.Height
-		halfW := (msg.Width-2)/2 - 2
-		rightH := (msg.Height - 6) / 2
+		halfW := (msg.Width - 4) / 2
+		rightH := (msg.Height - 4) / 2
 
 		m.leftView = viewport.New(halfW, msg.Height-3)
 		m.leftView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414"))
@@ -199,12 +199,12 @@ func (m model) wxhInfo() string {
 }
 
 func (m model) renderAll() model {
-	halfW := (m.termWidth-2)/2 - 1
+	halfW := (m.termWidth - 4) / 2
 
 	t0 := time.Now()
 	r, err := glamour.NewTermRenderer(
 		glamour.WithStandardStyle("dark"),
-		glamour.WithWordWrap(halfW-2),
+		glamour.WithWordWrap(halfW),
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -220,7 +220,7 @@ func (m model) renderAll() model {
 	r2, err := glamour.NewTermRenderer(
 		glamour.WithStyles(benchmark.GruffMinimalStyle()),
 		glamour.WithChromaFormatter("noop"),
-		glamour.WithWordWrap(halfW-2),
+		glamour.WithWordWrap(halfW),
 		glamour.WithTableWrap(false),
 		glamour.WithInlineTableLinks(true),
 	)
@@ -236,7 +236,7 @@ func (m model) renderAll() model {
 
 	t0 = time.Now()
 	out3, err := gruff.Render(m.md,
-		gruff.WithWordWrap(halfW-2),
+		gruff.WithWordWrap(halfW),
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -256,7 +256,7 @@ func (m model) headerFor(pos int) string {
 	active := (pos == 0 && m.focus == focusLeft) ||
 		(pos == 1 && m.focus == focusTop) ||
 		(pos == 2 && m.focus == focusBottom)
-	halfW := ((m.termWidth - 4) / 2) - 2
+	halfW := ((m.termWidth - 4) / 2)
 	return makeHeader(slotNames[s], m.wxhInfo()+"  "+m.durations[s].Round(time.Microsecond).String(),
 		active, colors.activeBg, colors.inactiveBg, halfW)
 }

@@ -103,7 +103,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.termWidth = msg.Width
 		m.termHeight = msg.Height
 		if !m.ready {
-			w := (msg.Width-4)/2 - 2
+			w := (msg.Width - 4) / 2
 			h := msg.Height - 4
 			m.darkView = viewport.New(w, h)
 			m.darkView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414")).Foreground(lipgloss.Color("#ffffff"))
@@ -113,7 +113,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			t0 := time.Now()
 			dark, err := gruff.Render(sampleMD,
 				gruff.WithDark(),
-				gruff.WithWordWrap(w-2),
+				gruff.WithWordWrap(w),
 			)
 			if err != nil {
 				log.Fatal(err)
@@ -124,7 +124,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			t0 = time.Now()
 			light, err := gruff.Render(sampleMD,
 				gruff.WithLight(),
-				gruff.WithWordWrap(w-2),
+				gruff.WithWordWrap(w),
 			)
 			if err != nil {
 				log.Fatal(err)
@@ -142,7 +142,7 @@ func (m model) View() string {
 	if !m.ready {
 		return "\n  Loading..."
 	}
-	w := (m.termWidth-4)/2 - 2
+	w := (m.termWidth - 4) / 2
 
 	darkActive := m.focus == focusDark
 	lightActive := m.focus == focusLight
