@@ -200,7 +200,7 @@ func (r *nodeRenderer) renderSubtree(node ast.Node) string {
 func (r *nodeRenderer) renderCodeBlock(lines *text.Segments, lang []byte) {
 	st := r.th.Code
 	codeStyleStart := string(st.start())
-	const padding = 2
+	const padding = 0
 
 	for j := 0; j < padding; j++ {
 		r.buf.WriteByte(' ')
