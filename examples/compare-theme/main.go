@@ -1,25 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	flex "github.com/gausszhou/bubbleflex"
 	"github.com/gausszhou/gruff/gruff"
 )
-
-var sampleMD string
-
-func init() {
-	b, err := os.ReadFile("testdata/benchmark.md")
-	if err != nil {
-		log.Fatal(err)
-	}
-	sampleMD = string(b)
-}
 
 type focus int
 
@@ -28,23 +21,43 @@ const (
 	focusLight
 )
 
+type renderTickMsg time.Time
+
+const renderInterval = 1 * time.Second
+
+func renderTick() tea.Cmd {
+	return tea.Tick(renderInterval, func(t time.Time) tea.Msg {
+		return renderTickMsg(t)
+	})
+}
+
 type model struct {
+	md string
+
 	darkView   viewport.Model
 	lightView  viewport.Model
+	dirty      bool
 	ready      bool
 	termWidth  int
 	termHeight int
 	focus      focus
 	darkDur    time.Duration
 	lightDur   time.Duration
+	renderW    int
 }
 
 func (m model) Init() tea.Cmd {
-	return nil
+	return renderTick()
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case renderTickMsg:
+		if m.dirty {
+			m = m.renderAll()
+			m.dirty = false
+		}
+		return m, renderTick()
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "ctrl+c", "esc":
@@ -84,40 +97,56 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.termWidth = msg.Width
 		m.termHeight = msg.Height
-		if !m.ready {
-			w := (msg.Width - 4) / 2
-			h := msg.Height - 4
-			m.darkView = viewport.New(w, h)
-			m.darkView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414")).Foreground(lipgloss.Color("#ffffff")).Padding(1)
-			m.lightView = viewport.New(w, h)
-			m.lightView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#f0f0f0")).Foreground(lipgloss.Color("#000000")).Padding(1)
-
-			t0 := time.Now()
-			dark, err := gruff.Render(sampleMD,
-				gruff.WithDark(),
-				gruff.WithWordWrap(w),
-			)
-			if err != nil {
-				log.Fatal(err)
-			}
-			m.darkView.SetContent(dark)
-			m.darkDur = time.Since(t0)
-
-			t0 = time.Now()
-			light, err := gruff.Render(sampleMD,
-				gruff.WithLight(),
-				gruff.WithWordWrap(w),
-			)
-			if err != nil {
-				log.Fatal(err)
-			}
-			m.lightView.SetContent(light)
-			m.lightDur = time.Since(t0)
-
-			m.ready = true
-		}
+		w := (msg.Width - 4) / 2
+		h := msg.Height - 4
+		m.darkView = viewport.New(w, h)
+		m.darkView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414")).Foreground(lipgloss.Color("#ffffff")).Padding(1)
+		m.lightView = viewport.New(w, h)
+		m.lightView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#f0f0f0")).Foreground(lipgloss.Color("#000000")).Padding(1)
+		m.dirty = true
+		m.ready = true
 	}
 	return m, nil
+}
+
+func (m model) renderAll() model {
+	w := (m.termWidth - 4) / 2
+	if m.renderW == w {
+		return m
+	}
+	m.renderW = w
+
+	t0 := time.Now()
+	dark, err := gruff.Render(m.md,
+		gruff.WithDark(),
+		gruff.WithWordWrap(w),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	m.darkView.SetContent(dark)
+	m.darkDur = time.Since(t0)
+
+	t0 = time.Now()
+	light, err := gruff.Render(m.md,
+		gruff.WithLight(),
+		gruff.WithWordWrap(w),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	m.lightView.SetContent(light)
+	m.lightDur = time.Since(t0)
+
+	return m
+}
+
+func (m model) wxhInfo() string {
+	return fmt.Sprintf("%dx%d", m.termWidth, m.termHeight)
+}
+
+func makeHeader(width int, left, right string) string {
+	return flex.New(flex.Row).JustifyContent(flex.SpaceBetween).Width(width).Join(left, right)
 }
 
 func (m model) View() string {
@@ -129,16 +158,12 @@ func (m model) View() string {
 	darkActive := m.focus == focusDark
 	lightActive := m.focus == focusLight
 
-	darkHeader := lipgloss.NewStyle().
-		Background(lipgloss.Color("#222222")).
-		Foreground(lipgloss.Color("#ffffff")).
-		Width(w).
-		Render(" dark  " + m.darkDur.Round(time.Microsecond).String())
-	lightHeader := lipgloss.NewStyle().
-		Background(lipgloss.Color("#dddddd")).
-		Foreground(lipgloss.Color("#000000")).
-		Width(w).
-		Render(" light " + m.lightDur.Round(time.Microsecond).String())
+	darkHeader := lipgloss.NewStyle().Background(lipgloss.Color("#222222")).Foreground(lipgloss.Color("#ffffff")).Padding(0, 1).Render(
+		makeHeader(w-2, "dark", m.wxhInfo()+"  "+m.darkDur.Round(time.Microsecond).String()),
+	)
+	lightHeader := lipgloss.NewStyle().Background(lipgloss.Color("#dddddd")).Foreground(lipgloss.Color("#000000")).Padding(0, 1).Render(
+		makeHeader(w-2, "light", m.wxhInfo()+"  "+m.lightDur.Round(time.Microsecond).String()),
+	)
 
 	darkBorderColor := lipgloss.Color("#444444")
 	lightBorderColor := lipgloss.Color("#444444")
@@ -166,7 +191,12 @@ func (m model) View() string {
 }
 
 func main() {
-	p := tea.NewProgram(model{}, tea.WithAltScreen(), tea.WithMouseAllMotion())
+	b, err := os.ReadFile("testdata/benchmark.md")
+	if err != nil {
+		log.Fatal(err)
+	}
+	md := strings.Repeat(string(b), 100)
+	p := tea.NewProgram(model{md: md}, tea.WithAltScreen(), tea.WithMouseAllMotion())
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}

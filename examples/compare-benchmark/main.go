@@ -12,6 +12,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/gausszhou/bubbleflex"
 	"github.com/gausszhou/gruff/benchmark"
 	"github.com/gausszhou/gruff/gruff"
 )
@@ -114,10 +115,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewHeight = msg.Height - 4
 
 		m.leftView = viewport.New(m.viewWidth, m.viewHeight)
-		m.leftView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414"))
 		m.rightView = viewport.New(m.viewWidth, m.viewHeight)
-		m.rightView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414"))
-
 		m.dirty = true
 		return m, nil
 	default:
@@ -125,20 +123,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func makeHeader(title, info string, active bool, activeBg, inactiveBg lipgloss.Color, width int) string {
-	bg := inactiveBg
-	if active {
-		bg = activeBg
-	}
-	base := lipgloss.NewStyle().Background(bg)
-	left := base.Foreground(lipgloss.Color("#ffffff")).Render(title)
-	gap := width - lipgloss.Width(left) - lipgloss.Width(info)
-	if gap < 0 {
-		gap = 0
-	}
-	middle := base.Width(gap).Render("")
-	right := base.Foreground(lipgloss.Color("#ffffff")).Render(info)
-	return left + middle + right
+func makeHeader(width int, left, right string) string {
+	return flex.New(flex.Row).JustifyContent(flex.SpaceBetween).Width(width).Join(left, right)
 }
 
 func (m model) paneBorder(active bool, activeColor lipgloss.Color) lipgloss.Style {
@@ -188,14 +174,27 @@ func (m model) renderAll() model {
 
 func (m model) headerFor(left bool) string {
 	halfW := (m.termWidth - 4) / 2
+	var title, info string
+	var activeBg, inactiveBg lipgloss.Color
 	if left {
-		active := m.focus == focusLeft
-		return makeHeader(" gruff ", m.wxhInfo()+"  "+m.gruffDur.Round(time.Microsecond).String(),
-			active, lipgloss.Color("#0891b2"), lipgloss.Color("#056982"), halfW)
+		title = "gruff"
+		info = m.wxhInfo() + "  " + m.gruffDur.Round(time.Microsecond).String()
+		activeBg = lipgloss.Color("#0891b2")
+		inactiveBg = lipgloss.Color("#056982")
+	} else {
+		title = "glamour standard"
+		info = m.wxhInfo() + "  " + m.glamourDur.Round(time.Microsecond).String()
+		activeBg = lipgloss.Color("#7c3aed")
+		inactiveBg = lipgloss.Color("#3a1a6e")
 	}
-	active := m.focus == focusRight
-	return makeHeader(" glamour standard ", m.wxhInfo()+"  "+m.glamourDur.Round(time.Microsecond).String(),
-		active, lipgloss.Color("#7c3aed"), lipgloss.Color("#3a1a6e"), halfW)
+	active := (left && m.focus == focusLeft) || (!left && m.focus == focusRight)
+	bg := inactiveBg
+	if active {
+		bg = activeBg
+	}
+	return lipgloss.NewStyle().Background(bg).Foreground(lipgloss.Color("#ffffff")).Padding(0, 1).Render(
+		makeHeader(halfW-2, title, info),
+	)
 }
 
 func (m model) View() string {

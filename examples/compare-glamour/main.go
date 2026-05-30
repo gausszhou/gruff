@@ -12,6 +12,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/gausszhou/bubbleflex"
 	"github.com/gausszhou/gruff/benchmark"
 )
 
@@ -41,10 +42,13 @@ type model struct {
 	focus      focus
 	md         string
 
-	leftContent  string
-	rightContent string
-	leftDur      time.Duration
-	rightDur     time.Duration
+	leftContent   string
+	rightContent  string
+	leftDur       time.Duration
+	rightDur      time.Duration
+	leftRenderer  *glamour.TermRenderer
+	rightRenderer *glamour.TermRenderer
+	renderWidth   int
 }
 
 func NewModel(md string) model {
@@ -115,20 +119,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func makeHeader(title, info string, active bool, activeBg, inactiveBg lipgloss.Color, width int) string {
-	bg := inactiveBg
-	if active {
-		bg = activeBg
-	}
-	base := lipgloss.NewStyle().Background(bg)
-	left := base.Foreground(lipgloss.Color("#ffffff")).Render(title)
-	gap := width - lipgloss.Width(left) - lipgloss.Width(info)
-	if gap < 0 {
-		gap = 0
-	}
-	middle := base.Width(gap).Render("")
-	right := base.Foreground(lipgloss.Color("#ffffff")).Render(info)
-	return left + middle + right
+func makeHeader(width int, left, right string) string {
+	return flex.New(flex.Row).JustifyContent(flex.SpaceBetween).Width(width).Join(left, right)
 }
 
 func (m model) paneBorder(active bool, activeColor lipgloss.Color) lipgloss.Style {
@@ -146,18 +138,30 @@ func (m model) wxhInfo() string {
 func (m model) renderAll() model {
 	halfW := (m.termWidth - 4) / 2
 
-	t0 := time.Now()
-	r, err := glamour.NewTermRenderer(
-		glamour.WithStyles(benchmark.GlamourMinimalStyle()),
-		glamour.WithChromaFormatter("noop"),
-		glamour.WithWordWrap(halfW),
-		glamour.WithTableWrap(false),
-		glamour.WithInlineTableLinks(false),
-	)
-	if err != nil {
-		log.Fatal(err)
+	if m.leftRenderer == nil || m.renderWidth != halfW {
+		var err error
+		m.leftRenderer, err = glamour.NewTermRenderer(
+			glamour.WithStyles(benchmark.GlamourMinimalStyle()),
+			glamour.WithChromaFormatter("noop"),
+			glamour.WithWordWrap(halfW),
+			glamour.WithTableWrap(false),
+			glamour.WithInlineTableLinks(false),
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+		m.rightRenderer, err = glamour.NewTermRenderer(
+			glamour.WithStyles(benchmark.GlamourStandardStyle()),
+			glamour.WithWordWrap(halfW),
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+		m.renderWidth = halfW
 	}
-	out, err := r.Render(m.md)
+
+	t0 := time.Now()
+	out, err := m.leftRenderer.Render(m.md)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -165,14 +169,7 @@ func (m model) renderAll() model {
 	m.leftDur = time.Since(t0)
 
 	t0 = time.Now()
-	r2, err := glamour.NewTermRenderer(
-		glamour.WithStyles(benchmark.GlamourStandardStyle()),
-		glamour.WithWordWrap(halfW),
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-	out2, err := r2.Render(m.md)
+	out2, err := m.rightRenderer.Render(m.md)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -186,14 +183,27 @@ func (m model) renderAll() model {
 
 func (m model) headerFor(left bool) string {
 	halfW := (m.termWidth - 4) / 2
+	var title, info string
+	var activeBg, inactiveBg lipgloss.Color
 	if left {
-		active := m.focus == focusLeft
-		return makeHeader(" glamour minimal ", m.wxhInfo()+"  "+m.leftDur.Round(time.Microsecond).String(),
-			active, lipgloss.Color("#059669"), lipgloss.Color("#056f4d"), halfW)
+		title = "glamour minimal"
+		info = m.wxhInfo() + "  " + m.leftDur.Round(time.Microsecond).String()
+		activeBg = lipgloss.Color("#059669")
+		inactiveBg = lipgloss.Color("#056f4d")
+	} else {
+		title = "glamour standard"
+		info = m.wxhInfo() + "  " + m.rightDur.Round(time.Microsecond).String()
+		activeBg = lipgloss.Color("#7c3aed")
+		inactiveBg = lipgloss.Color("#3a1a6e")
 	}
-	active := m.focus == focusRight
-	return makeHeader(" glamour standard ", m.wxhInfo()+"  "+m.rightDur.Round(time.Microsecond).String(),
-		active, lipgloss.Color("#7c3aed"), lipgloss.Color("#3a1a6e"), halfW)
+	active := (left && m.focus == focusLeft) || (!left && m.focus == focusRight)
+	bg := inactiveBg
+	if active {
+		bg = activeBg
+	}
+	return lipgloss.NewStyle().Background(bg).Foreground(lipgloss.Color("#ffffff")).Padding(0, 1).Render(
+		makeHeader(halfW-2, title, info),
+	)
 }
 
 func (m model) View() string {
@@ -220,7 +230,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	md := strings.TrimSpace(strings.Repeat(string(b), 100))
+	md := strings.Repeat(string(b), 100)
 	p := tea.NewProgram(NewModel(md), tea.WithAltScreen(), tea.WithMouseAllMotion())
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
