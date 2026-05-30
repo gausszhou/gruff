@@ -40,7 +40,7 @@ package main
 import "fmt"
 
 func main() {
-	fmt.Println("Hello, World!")
+  fmt.Println("Hello, World!")
 }
 ```
 
@@ -48,19 +48,18 @@ And a JavaScript example:
 
 ```javascript
 function greet(name) {
-	return `Hello, ${name}!`;
+  return `Hello, ${name}!`;
 }
-
 console.log(greet("World"));
 ```
 
 ## Tables
 
-| Name | Type | Default | Description |
-|------|------|---------|-------------|
-| Theme | string | "dark" | Color theme |
-| Width | int | 120 | Word wrap width |
-| Debug | bool | false | Enable debug mode |
+| Name  | Type   | Default | Description       |
+| ----- | ------ | ------- | ----------------- |
+| Theme | string | "dark"  | Color theme       |
+| Width | int    | 120     | Word wrap width   |
+| Debug | bool   | false   | Enable debug mode |
 
 ## Blockquotes
 

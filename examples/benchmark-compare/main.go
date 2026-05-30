@@ -152,9 +152,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.termWidth = msg.Width
 		m.termHeight = msg.Height
 		halfW := (msg.Width - 4) / 2
-		rightH := (msg.Height - 4) / 2
+		rightH := (msg.Height - 6) / 2
 
-		m.leftView = viewport.New(halfW, msg.Height-3)
+		m.leftView = viewport.New(halfW, msg.Height-4)
 		m.leftView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414"))
 		m.topView = viewport.New(halfW, rightH)
 		m.topView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414"))
@@ -203,7 +203,7 @@ func (m model) renderAll() model {
 
 	t0 := time.Now()
 	r, err := glamour.NewTermRenderer(
-		glamour.WithStandardStyle("dark"),
+		glamour.WithStyles(benchmark.GruffStandradStyle()),
 		glamour.WithWordWrap(halfW),
 	)
 	if err != nil {

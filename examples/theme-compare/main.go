@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"time"
 
 	"github.com/charmbracelet/bubbles/viewport"
@@ -10,34 +11,15 @@ import (
 	"github.com/gausszhou/gruff"
 )
 
-var sampleMD = "# Gruff\n\n" +
-	"A **lightweight** markdown renderer for the terminal.\n\n" +
-	"## Text Formatting\n\n" +
-	"Markdown supports **bold** and *italic* text, as well as ***bold italic***.\n" +
-	"You can also use `inline code` for short snippets, or ~~strikethrough~~ for crossed-out text.\n" +
-	"Standard paragraphs are the most common element in any document.\n" +
-	"## Text\n\n" +
-	"- *Italic* and **bold**\n" +
-	"- `inline code`\n" +
-	"- ***bold italic***\n" +
-	"- ~~strikethrough~~\n\n" +
-	"## Table\n\n" +
-	"| Left | Center | Right |\n" +
-	"|:-----|:------:|------:|\n" +
-	"| a | b | c |\n" +
-	"| 1 | 2 | 3 |\n\n" +
-	"## Code\n\n" +
-	"```\n" +
-	"func main() {\n" +
-	"    fmt.Println(\"Hello\")\n" +
-	"}\n" +
-	"```\n\n" +
-	"> A wise quote.\n\n" +
-	"\n\n" +
-	"- [x] done\n" +
-	"- [ ] todo\n\n" +
-	"---\n\n" +
-	"Visit [Gruff](https://github.com/gausszhou/gruff) for more.\n"
+var sampleMD string
+
+func init() {
+	b, err := os.ReadFile("testdata/benchmark.md")
+	if err != nil {
+		log.Fatal(err)
+	}
+	sampleMD = string(b)
+}
 
 type focus int
 
@@ -106,9 +88,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			w := (msg.Width - 4) / 2
 			h := msg.Height - 4
 			m.darkView = viewport.New(w, h)
-			m.darkView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414")).Foreground(lipgloss.Color("#ffffff"))
+			m.darkView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414")).Foreground(lipgloss.Color("#ffffff")).Padding(1)
 			m.lightView = viewport.New(w, h)
-			m.lightView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#ffffff")).Foreground(lipgloss.Color("#000000"))
+			m.lightView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#f0f0f0")).Foreground(lipgloss.Color("#000000")).Padding(1)
 
 			t0 := time.Now()
 			dark, err := gruff.Render(sampleMD,

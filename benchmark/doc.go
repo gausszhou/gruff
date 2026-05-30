@@ -17,6 +17,7 @@ func strPtr(s string) *string { return &s }
 // FencedCodeBlock, CodeBlock, ThematicBreak, Table.
 func GruffMinimalStyle() ansi.StyleConfig {
 	cfg := styles.DarkStyleConfig
+	cfg.Document.BackgroundColor = strPtr("#141414")
 	cfg.Strikethrough = ansi.StylePrimitive{}
 	cfg.DefinitionList = ansi.StyleBlock{}
 	cfg.DefinitionTerm = ansi.StylePrimitive{}
@@ -24,5 +25,11 @@ func GruffMinimalStyle() ansi.StyleConfig {
 	cfg.HTMLBlock = ansi.StyleBlock{}
 	cfg.HTMLSpan = ansi.StyleBlock{}
 
+	return cfg
+}
+
+func GruffStandradStyle() ansi.StyleConfig {
+	cfg := styles.DarkStyleConfig
+	cfg.Document.BackgroundColor = strPtr("#141414")
 	return cfg
 }
