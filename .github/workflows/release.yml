@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Build binaries
+        run: |
+          mkdir -p dist
+          for os in linux darwin windows; do
+            for arch in amd64 arm64; do
+              ext=""
+              if [ "$os" = "windows" ]; then ext=".exe"; fi
+              GOOS=$os GOARCH=$arch go build -o "dist/gruff_${os}_${arch}${ext}" .
+              # Build examples
+              for dir in examples/*/; do
+                name=$(basename "$dir")
+                GOOS=$os GOARCH=$arch go build -o "dist/${name}_${os}_${arch}${ext}" "./$dir"
+              done
+            done
+          done
+
+      - name: Create archive
+        run: |
+          cd dist
+          tar czf gruff_linux_amd64.tar.gz gruff_linux_amd64
+          tar czf gruff_linux_arm64.tar.gz gruff_linux_arm64
+          tar czf gruff_darwin_amd64.tar.gz gruff_darwin_amd64
+          tar czf gruff_darwin_arm64.tar.gz gruff_darwin_arm64
+          zip gruff_windows_amd64.zip gruff_windows_amd64.exe
+          zip gruff_windows_arm64.zip gruff_windows_arm64.exe
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.tar.gz dist/*.zip
+          generate_release_notes: true
