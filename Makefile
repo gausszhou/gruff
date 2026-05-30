@@ -1,21 +1,27 @@
-.PHONY: all build test lint bench clean
+.PHONY: build release clean
 
-all: build lint test
+BINARY ?= gruff
+DIST ?= dist
 
 build:
-	CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o bin/ ./...
+	@mkdir -p $(DIST)
+	go build -o $(DIST)/$(BINARY) ./cmd/gruff/
 
-test:
-	go test ./...
-
-lint:
-	go vet ./...
-
-bench:
-	go test -bench=. -benchmem ./...
-
-bench-compare:
-	go test -bench=BenchmarkGruff,BenchmarkGlamour -benchmem ./benchmark/
+release:
+	@mkdir -p $(DIST)
+	for os in linux darwin windows; do \
+		for arch in amd64 arm64; do \
+			ext=""; \
+			[ "$$os" = "windows" ] && ext=".exe"; \
+			GOOS=$$os GOARCH=$$arch go build -o "$(DIST)/$(BINARY)_$${os}_$${arch}$${ext}" ./cmd/gruff/; \
+			file="$(DIST)/$(BINARY)_$${os}_$${arch}$${ext}"; \
+			if [ "$$os" = "windows" ]; then \
+				cd $(DIST) && zip "$(BINARY)_$${os}_$${arch}.zip" "$(BINARY)_$${os}_$${arch}$${ext}" && cd ..; \
+			else \
+				cd $(DIST) && tar czf "$(BINARY)_$${os}_$${arch}.tar.gz" "$(BINARY)_$${os}_$${arch}$${ext}" && cd ..; \
+			fi; \
+		done; \
+	done
 
 clean:
-	rm -rf bin/
+	rm -rf $(DIST)
