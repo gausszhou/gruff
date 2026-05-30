@@ -111,14 +111,14 @@ func TestDisplayWidth_VS16(t *testing.T) {
 }
 
 // Known limitation: go-runewidth doesn't handle regional indicator pairs
-// as single graphemes. go-runewidth v0.0.23 with default settings treats
-// an RI pair as having combined width 1.
+// as single graphemes. go-runewidth treats an RI pair as having width 2,
+// matching the terminal display width but not the grapheme cluster width.
 func TestDisplayWidth_FlagSequence(t *testing.T) {
 	china := "🇨🇳" // U+1F1E8 + U+1F1F3, a regional indicator pair
 	got := displayWidth(china)
-	want := 1 // known limitation: go-runewidth reports 1 for RI pairs
+	want := 2 // matches terminal display behavior
 	if got != want {
-		t.Errorf("displayWidth(🇨🇳) = %d, want %d (known go-runewidth limitation)", got, want)
+		t.Errorf("displayWidth(🇨🇳) = %d, want %d", got, want)
 	}
 }
 
