@@ -63,7 +63,7 @@ func Render(source string, opts ...Option) (string, error) {
 	doc := md.Parser().Parse(reader)
 
 	out := renderMarkdown(sourceBytes, o.Theme, o.WordWrap, o.Theme.Document.Padding, doc)
-	out = strings.TrimRight(out, "\n\r")
+	out = strings.TrimSpace(out)
 
 	bgCode := string(ansiBg(o.Theme.Bg))
 	if o.WordWrap > 0 {

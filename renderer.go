@@ -25,7 +25,6 @@ func renderMarkdown(source []byte, th Theme, wordWrap int, padding int, node ast
 	r.th = th
 	r.wordWrap = wordWrap
 	r.padding = padding
-	r.buf.WriteByte('\n')
 	r.renderNode(node)
 	return r.buf.String()
 }
