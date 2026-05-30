@@ -527,7 +527,7 @@ func TestRender_CJKTableWidthExpansion(t *testing.T) {
 		t.Fatal(err)
 	}
 	lines := strings.Split(strings.TrimRight(got, "\n"), "\n")
-	sepLine := stripANSI(lines[2])
+	sepLine := stripANSI(lines[1])
 	dashCount := strings.Count(sepLine, "─")
 	if dashCount != 14 { // seg(6)+seg(4) = 8+6 dashes
 		t.Errorf("separator has %d dashes, want 14 (col widths [6,4])", dashCount)

@@ -63,6 +63,7 @@ func Render(source string, opts ...Option) (string, error) {
 	doc := md.Parser().Parse(reader)
 
 	out := renderMarkdown(sourceBytes, o.Theme, o.WordWrap, doc)
+	out = strings.TrimRight(out, "\n\r")
 
 	bgCode := string(ansiBg(o.Theme.Bg))
 	if o.WordWrap > 0 {
@@ -101,9 +102,7 @@ func wrapText(s string, width int, padding int, bgCode string) string {
 	spaces := 0
 	inAnsi := false
 
-	// 整行宽度 = 内容区 + 左内边距
-	// 填充到 fillWidth 使右侧区域也有背景色，\x1b[K 已在 fillWidth 之外无效
-	fillWidth := width + padding
+	fillWidth := width
 
 	flushWord := func() {
 		if len(word) == 0 {
