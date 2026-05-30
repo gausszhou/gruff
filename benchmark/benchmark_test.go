@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"charm.land/glamour/v2"
-	"github.com/gausszhou/gruff"
+	"github.com/gausszhou/gruff/gruff"
 )
 
 func benchGruff(b *testing.B, file string) {

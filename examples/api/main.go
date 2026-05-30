@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gausszhou/gruff"
+	"github.com/gausszhou/gruff/gruff"
 	"golang.org/x/term"
 )
 

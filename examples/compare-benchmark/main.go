@@ -12,7 +12,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/gausszhou/gruff"
+	"github.com/gausszhou/gruff/gruff"
 	"github.com/gausszhou/gruff/benchmark"
 )
 

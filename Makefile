@@ -3,7 +3,7 @@
 BINARY_NAME=gruff
 BIN_DIR=bin
 DIST_DIR=dist
-CMD_DIR=./cmd/gruff/
+CMD_DIR=.
 
 build: build-all
 
