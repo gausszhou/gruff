@@ -15,14 +15,16 @@ type nodeRenderer struct {
 	source       []byte
 	th           Theme
 	wordWrap     int
+	padding      int
 	inBlockquote bool
 }
 
-func renderMarkdown(source []byte, th Theme, wordWrap int, node ast.Node) string {
+func renderMarkdown(source []byte, th Theme, wordWrap int, padding int, node ast.Node) string {
 	var r nodeRenderer
 	r.source = source
 	r.th = th
 	r.wordWrap = wordWrap
+	r.padding = padding
 	r.renderNode(node)
 	return r.buf.String()
 }
@@ -517,14 +519,15 @@ func (r *nodeRenderer) renderTable(table *extensionAst.Table) {
 	}
 	totalNat += overhead
 
-	if totalNat <= r.wordWrap {
+	maxWidth := r.wordWrap - r.padding
+	if totalNat <= maxWidth {
 		for i := range colWidths {
 			if colWidths[i] < 3 {
 				colWidths[i] = 3
 			}
 		}
 	} else {
-		equal := (r.wordWrap - overhead) / numCols
+		equal := (maxWidth - overhead) / numCols
 		if equal < 3 {
 			equal = 3
 		}
