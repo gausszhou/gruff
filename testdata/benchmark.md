@@ -121,6 +121,17 @@ fn main() {
 }
 ```
 
+### Code Without Language
+
+```
+GET    /users              # 获取用户列表
+GET    /users/123          # 获取单个用户
+POST   /users              # 创建用户
+PUT    /users/123          # 更新用户（完整）
+PATCH  /users/123          # 更新用户（部分）
+DELETE /users/123          # 删除用户
+```
+
 ## Summary
 
 This benchmark file exercises all major markdown features including headings, paragraphs, text formatting, lists, links, code blocks, tables, blockquotes, and task lists. The mixed structure provides a realistic workload for performance comparison between Gruff and Glamour.

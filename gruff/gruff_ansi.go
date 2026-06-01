@@ -166,7 +166,7 @@ func (th *Theme) inheritFg() {
 }
 
 var darkTheme = Theme{
-	Bg:            "#141414",
+	Bg:            "",
 	Document:      Style{Padding: 1, Fg: "#e0e0e0"},
 	Paragraph:     Style{Fg: "#e0e0e0"},
 	H1:            Style{Bold: true, Fg: "#FFFF87"},
@@ -188,7 +188,7 @@ var darkTheme = Theme{
 }
 
 var lightTheme = Theme{
-	Bg:            "#f0f0f0",
+	Bg:            "",
 	Document:      Style{Padding: 1, Fg: "#333333"},
 	Paragraph:     Style{Fg: "#333333"},
 	H1:            Style{Bold: true, Underline: true, Fg: "#000000"},
