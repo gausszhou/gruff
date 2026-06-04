@@ -99,15 +99,15 @@ func TestDisplayWidth_VS16(t *testing.T) {
 	if got := displayWidth(base); got != 1 {
 		t.Errorf("displayWidth(♥) = %d, want 1", got)
 	}
-	if got := displayWidth(withVS16); got != 1 {
-		t.Errorf("displayWidth(♥️) = %d, want 1 (runewidth does not promote via VS16)", got)
+	if got := displayWidth(withVS16); got != 2 {
+		t.Errorf("displayWidth(♥️) = %d, want 2 (VS16 promotes to emoji width)", got)
 	}
 }
 
 func TestDisplayWidth_FlagSequence(t *testing.T) {
 	china := "🇨🇳" // U+1F1E8 + U+1F1F3, a regional indicator pair
 	got := displayWidth(china)
-	want := 1
+	want := 2
 	if got != want {
 		t.Errorf("displayWidth(🇨🇳) = %d, want %d", got, want)
 	}
@@ -165,7 +165,7 @@ func TestDisplayWidth_ZWJSequence(t *testing.T) {
 		want  int
 	}{
 		{"woman technologist", "\U0001F469\u200D\U0001F4BB", 2},
-		{"heart on fire", "\u2764\uFE0F\u200D\U0001F525", 1},
+		{"heart on fire", "\u2764\uFE0F\u200D\U0001F525", 2},
 		{"family", "\U0001F468\u200D\U0001F469\u200D\U0001F467", 2},
 	}
 	for _, tt := range tests {
