@@ -12,6 +12,26 @@ This document contains a balanced mix of markdown elements for performance testi
 
 ###### 6-Level Title
 
+## Unicode Showcase
+
+| Category | Characters | Width |
+|:---------|:-----------|:-----|
+| Emoji | ✅ ❌ 🚀 ⭐ ⚠️ ✨ 🎉 😀 🔥 | Mixed |
+| CJK | 你好世界 畫龍點睛 | 2 ea |
+| Japanese | こんにちは コンニチハ | 2 ea |
+| Korean | 안녕하세요 | 2 ea |
+| Fullwidth | ＡＢＣＸＹＺ １２３ | 2 ea |
+| Accented | àáâãäåæçèéêë éèêë çæœ | 1 ea |
+| Math | ∑ ∫ ∞ π λ α β γ | 1 ea |
+| Greek | αβγδεζηθικλμνξοπρςστυφχψω | 1 ea |
+| Currency | ¥ € £ $ ¢ ₩ ₹ ₽ ₿ | Mixed |
+| Symbols | ★ ♥ ♦ ♠ ♣ → ← ⇒ § ¶ © ® | Mixed |
+| Dingbats | ✓ ✗ ✘ ✝ ✞ ✟ | 1 ea |
+| Suits | ♠ ♥ ♦ ♣ | 1 ea |
+| Arrows | ← ↑ → ↓ ↔ ⇒ ⇔ | 1 ea |
+| Operators | ± ≠ ≈ ≤ ≥ ≡ | 1 ea |
+| Brackets | 【「『』」】 | 2 ea |
+
 ## Text Formatting
 
 Markdown supports **bold** and *italic* text, as well as ***bold italic***.
