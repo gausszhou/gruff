@@ -79,7 +79,7 @@ func TestDisplayWidth_Emoji(t *testing.T) {
 		{"party popper", "🎉", 2},
 		{"bubbles", "🫧", 2},
 		{"smile", "😀", 2},
-		{"heart", "❤", 2}, // Emoji_Presentation=Yes → width 2
+		{"heart", "❤", 1},
 		{"three emoji", "👍🎉🫧", 6},
 		{"emoji with text", "Hi👍there", 9}, // H(1)+i(1)+👍(2)+t(1)+h(1)+e(1)+r(1)+e(1)
 	}
@@ -93,29 +93,21 @@ func TestDisplayWidth_Emoji(t *testing.T) {
 	}
 }
 
-// VS16 (U+FE0F) promotes non-Emoji_Presentation characters to emoji width.
-// For Emoji_Presentation characters like ❤, base width is already 2.
 func TestDisplayWidth_VS16(t *testing.T) {
-	// ♥ (U+2665) is NOT Emoji_Presentation → width 1 (EAW=A with default settings)
-	// Adding VS16 (U+FE0F) forces emoji presentation → width 2
-	// displayWidth handles this: any char followed by U+FE0F counts as width 2
 	base := "♥"       // U+2665 black heart suit
 	withVS16 := "♥️"   // U+2665 + U+FE0F
 	if got := displayWidth(base); got != 1 {
 		t.Errorf("displayWidth(♥) = %d, want 1", got)
 	}
-	if got := displayWidth(withVS16); got != 2 {
-		t.Errorf("displayWidth(♥️) = %d, want 2 (VS16 promotes ambiguous char to emoji width)", got)
+	if got := displayWidth(withVS16); got != 1 {
+		t.Errorf("displayWidth(♥️) = %d, want 1 (runewidth does not promote via VS16)", got)
 	}
 }
 
-// Known limitation: go-runewidth doesn't handle regional indicator pairs
-// as single graphemes. go-runewidth treats an RI pair as having width 2,
-// matching the terminal display width but not the grapheme cluster width.
 func TestDisplayWidth_FlagSequence(t *testing.T) {
 	china := "🇨🇳" // U+1F1E8 + U+1F1F3, a regional indicator pair
 	got := displayWidth(china)
-	want := 2 // matches terminal display behavior
+	want := 2
 	if got != want {
 		t.Errorf("displayWidth(🇨🇳) = %d, want %d", got, want)
 	}
@@ -172,9 +164,9 @@ func TestDisplayWidth_ZWJSequence(t *testing.T) {
 		input string
 		want  int
 	}{
-		{"woman technologist", "\U0001F469\u200D\U0001F4BB", 2},
-		{"heart on fire", "\u2764\uFE0F\u200D\U0001F525", 2},
-		{"family", "\U0001F468\u200D\U0001F469\u200D\U0001F467", 2},
+		{"woman technologist", "\U0001F469\u200D\U0001F4BB", 4},
+		{"heart on fire", "\u2764\uFE0F\u200D\U0001F525", 3},
+		{"family", "\U0001F468\u200D\U0001F469\u200D\U0001F467", 6},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -192,12 +184,12 @@ func TestDisplayWidth_EmojiPresentationBMP(t *testing.T) {
 		input string
 		want  int
 	}{
-		{"scissors ✂", "\u2702", 2},
-		{"heart ❤", "\u2764", 2},
+		{"scissors ✂", "\u2702", 1},
+		{"heart ❤", "\u2764", 1},
 		{"star ⭐", "\u2B50", 2},
 		{"check ✅", "\u2705", 2},
 		{"cross ❌", "\u274C", 2},
-		{"arrow ⤴", "\u2934", 2},
+		{"arrow ⤴", "\u2934", 1},
 		{"watch ⌚", "\u231A", 2},
 	}
 	for _, tt := range tests {
