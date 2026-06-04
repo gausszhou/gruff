@@ -105,6 +105,19 @@ func (v *ViewportWithScrollbar) Update(msg tea.Msg) (ViewportWithScrollbar, tea.
 		v.dragging = false
 		return *v, nil
 
+	case tea.KeyPressMsg:
+		switch msg.String() {
+		case "home", "g":
+			v.inner.GotoTop()
+		case "end", "G":
+			v.inner.GotoBottom()
+		default:
+			var cmd tea.Cmd
+			v.inner, cmd = v.inner.Update(msg)
+			return *v, cmd
+		}
+		return *v, nil
+
 	default:
 		var cmd tea.Cmd
 		v.inner, cmd = v.inner.Update(msg)
