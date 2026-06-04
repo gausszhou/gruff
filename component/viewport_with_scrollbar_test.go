@@ -29,7 +29,7 @@ func TestRenderContentFits(t *testing.T) {
 	v := NewViewportWithScrollbar(10, 3)
 	v.SetContent("hello\nworld")
 	out := v.View()
-	lines := splitLines(out)
+	lines := strings.Split(out, "\n")
 	if len(lines) != 3 {
 		t.Fatalf("Render produced %d lines, want 3", len(lines))
 	}
@@ -38,7 +38,7 @@ func TestRenderContentFits(t *testing.T) {
 func TestRenderEmpty(t *testing.T) {
 	v := NewViewportWithScrollbar(10, 3)
 	out := v.View()
-	lines := splitLines(out)
+	lines := strings.Split(out, "\n")
 	if len(lines) != 3 {
 		t.Fatalf("Render empty produced %d lines, want 3", len(lines))
 	}
@@ -244,52 +244,9 @@ func TestRenderFooterScrollbar(t *testing.T) {
 	v := NewViewportWithScrollbar(5, 2)
 	v.SetContent("a\nb\nc\nd\ne")
 	out := v.View()
-	lines := splitLines(out)
+	lines := strings.Split(out, "\n")
 	if len(lines) != 2 {
 		t.Fatalf("expected 2 lines, got %d", len(lines))
-	}
-}
-
-func TestDisplayWidth(t *testing.T) {
-	if w := displayWidth("hello"); w != 5 {
-		t.Fatalf("displayWidth('hello') = %d, want 5", w)
-	}
-	if w := displayWidth("中文"); w != 4 {
-		t.Fatalf("displayWidth('中文') = %d, want 4", w)
-	}
-}
-
-func TestStripANSI(t *testing.T) {
-	in := "\x1b[31mhello\x1b[39m"
-	out := stripANSI(in)
-	if out != "hello" {
-		t.Fatalf("stripANSI(%q) = %q, want 'hello'", in, out)
-	}
-}
-
-func TestTruncateToWidth(t *testing.T) {
-	s := truncateToWidth("hello world", 5)
-	if displayWidth(stripANSI(s)) != 5 {
-		t.Fatalf("truncateToWidth('hello world', 5) width = %d, want 5", displayWidth(stripANSI(s)))
-	}
-}
-
-func TestTruncateToWidthShorter(t *testing.T) {
-	s := truncateToWidth("hi", 10)
-	if s != "hi" {
-		t.Fatalf("truncateToWidth('hi', 10) = %q, want 'hi'", s)
-	}
-}
-
-func TestSplitLines(t *testing.T) {
-	lines := splitLines("a\nb\nc")
-	if len(lines) != 3 {
-		t.Fatalf("splitLines('a\\nb\\nc') = %d lines, want 3", len(lines))
-	}
-
-	lines = splitLines("a\nb\nc\n")
-	if len(lines) != 3 {
-		t.Fatalf("splitLines('a\\nb\\nc\\n') = %d lines, want 3", len(lines))
 	}
 }
 

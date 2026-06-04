@@ -142,7 +142,7 @@ func (m model) wxhInfo() string {
 
 func (m model) renderAll() model {
 	r, err := glamour.NewTermRenderer(
-		glamour.WithStyles(benchmark.GlamourMinimalStyle()),
+		glamour.WithStyles(benchmark.GlamourStandardStyle()),
 		glamour.WithWordWrap(m.viewWidth),
 	)
 	if err != nil {

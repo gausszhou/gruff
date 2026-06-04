@@ -213,15 +213,41 @@ var lightTheme = Theme{
 // 对 go-runewidth 的补充：
 //   - U+FE0F（Variation Selector-16）单独不占宽度
 //   - 后跟 U+FE0F 的码位强制为 emoji 宽度 2（弥补 runewidth 不处理 ambiguous + VS16 的不足）
+//   - Emoji_Presentation BMP 码位强制为宽度 2（xterm.js 等终端会把它们渲染为 emoji 宽度）
+//   - U+200D（ZWJ）不占宽度，且跳过 ZWJ 序列中的后续字符
+//   - U+20E3（Combining Enclosing Keycap）不占宽度
 func displayWidth(s string) int {
 	w := 0
 	for i := 0; i < len(s); {
 		r, size := utf8.DecodeRuneInString(s[i:])
-		// U+FE0F（Variation Selector-16）单独出现时宽度为 0
-		if r == 0xFE0F {
+
+		switch {
+		case r == 0xFE0F || r == 0xFE0E:
+			// 变体选择符，不占宽度
+			i += size
+			continue
+
+		case r == 0x200D || r == 0x200C:
+			// ZWJ / ZWNJ：跳过自身及后续一个字符（ZWJ 序列的整体宽度由前导码位决定）
+			i += size
+			// 跳过后续可能的变体选择符和组合符号，然后跳过一个 base 字符
+			for i < len(s) {
+				r2, s2 := utf8.DecodeRuneInString(s[i:])
+				if r2 == 0xFE0F || r2 == 0xFE0E || r2 == 0x20E3 || r2 == 0x20DD || r2 == 0x20DE {
+					i += s2
+					continue
+				}
+				i += s2
+				break
+			}
+			continue
+
+		case r == 0x20E3 || r == 0x20DD || r == 0x20DE:
+			// 组合包围键帽等，不占宽度
 			i += size
 			continue
 		}
+
 		// 若后跟 U+FE0F，则该码位为 emoji 呈现 → 宽度 2
 		if i+size < len(s) {
 			next, nextSize := utf8.DecodeRuneInString(s[i+size:])
@@ -231,10 +257,82 @@ func displayWidth(s string) int {
 				continue
 			}
 		}
+
+		// Emoji_Presentation BMP 码位 → 宽度 2
+		if isEmojiPresentation(r) {
+			w += 2
+			i += size
+			continue
+		}
+
 		w += runewidth.RuneWidth(r)
 		i += size
 	}
 	return w
+}
+
+// isEmojiPresentation 判断 BMP 码位是否具有 Unicode Emoji_Presentation=Yes 属性。
+// 这些字符在 xterm.js 等现代终端中默认渲染为 emoji 宽度 2，即使 go-runewidth 可能返回 1。
+func isEmojiPresentation(r rune) bool {
+	switch {
+	case r >= 0x231A && r <= 0x231B:
+		return true
+	case r >= 0x23E9 && r <= 0x23FA:
+		return true
+	case r >= 0x25FD && r <= 0x25FE:
+		return true
+	case r >= 0x2614 && r <= 0x2615:
+		return true
+	case r >= 0x2648 && r <= 0x2653:
+		return true
+	case r == 0x267F, r == 0x2693, r == 0x26A1:
+		return true
+	case r >= 0x26AA && r <= 0x26AB:
+		return true
+	case r >= 0x26BD && r <= 0x26BE:
+		return true
+	case r >= 0x26C4 && r <= 0x26C5:
+		return true
+	case r == 0x26CE, r == 0x26D4, r == 0x26EA:
+		return true
+	case r >= 0x26F2 && r <= 0x26F3:
+		return true
+	case r == 0x26F5, r == 0x26FA, r == 0x26FD:
+		return true
+	case r == 0x2702:
+		return true
+	case r >= 0x2705 && r <= 0x270D:
+		return true
+	case r == 0x270F, r == 0x2712, r == 0x2714, r == 0x2716:
+		return true
+	case r == 0x271D, r == 0x2721, r == 0x2728:
+		return true
+	case r >= 0x2733 && r <= 0x2734:
+		return true
+	case r == 0x2744, r == 0x2747, r == 0x274C, r == 0x274E:
+		return true
+	case r >= 0x2753 && r <= 0x2755:
+		return true
+	case r == 0x2757:
+		return true
+	case r >= 0x2763 && r <= 0x2764:
+		return true
+	case r >= 0x2795 && r <= 0x2797:
+		return true
+	case r == 0x27A1, r == 0x27B0, r == 0x27BF:
+		return true
+	case r >= 0x2934 && r <= 0x2935:
+		return true
+	case r >= 0x2B05 && r <= 0x2B07:
+		return true
+	case r >= 0x2B1B && r <= 0x2B1C:
+		return true
+	case r == 0x2B50, r == 0x2B55:
+		return true
+	case r == 0x3030, r == 0x303D, r == 0x3297, r == 0x3299:
+		return true
+	}
+	return false
 }
 
 // stripANSI 移除字符串中所有 ANSI 转义序列，返回纯文本
@@ -269,6 +367,45 @@ func ansiDisplayWidth(b []byte) int {
 			continue
 		}
 		r, size := utf8.DecodeRune(b[i:])
+
+		switch {
+		case r == 0xFE0F || r == 0xFE0E:
+			i += size
+			continue
+
+		case r == 0x200D || r == 0x200C:
+			i += size
+			for i < len(b) {
+				r2, s2 := utf8.DecodeRune(b[i:])
+				if r2 == 0xFE0F || r2 == 0xFE0E || r2 == 0x20E3 || r2 == 0x20DD || r2 == 0x20DE {
+					i += s2
+					continue
+				}
+				i += s2
+				break
+			}
+			continue
+
+		case r == 0x20E3 || r == 0x20DD || r == 0x20DE:
+			i += size
+			continue
+		}
+
+		if i+size < len(b) {
+			next, nextSize := utf8.DecodeRune(b[i+size:])
+			if next == 0xFE0F {
+				w += 2
+				i += size + nextSize
+				continue
+			}
+		}
+
+		if isEmojiPresentation(r) {
+			w += 2
+			i += size
+			continue
+		}
+
 		w += runewidth.RuneWidth(r)
 		i += size
 	}

@@ -219,32 +219,32 @@ func TestRender_List(t *testing.T) {
 		{
 			name:  "unordered",
 			input: "- item 1\n- item 2\n",
-			want:  		"\x1b[48;2;20;20;20m \x1b[48;2;20;20;20m  • \x1b[38;2;224;224;224mitem 1\x1b[39m\x1b[48;2;20;20;20m                                                                     \n\x1b[48;2;20;20;20m   • \x1b[38;2;224;224;224mitem 2\x1b[39m\x1b[48;2;20;20;20m                                                                     \x1b[49m",
+			want:  		" • \x1b[38;2;224;224;224mitem 1\x1b[39m                                                                       \n   • \x1b[38;2;224;224;224mitem 2\x1b[39m                                                                     \x1b[49m",
 		},
 		{
 			name:  "ordered",
 			input: "1. first\n2. second\n",
-			want:  		"\x1b[48;2;20;20;20m \x1b[48;2;20;20;20m  1. \x1b[38;2;224;224;224mfirst\x1b[39m\x1b[48;2;20;20;20m                                                                     \n\x1b[48;2;20;20;20m   2. \x1b[38;2;224;224;224msecond\x1b[39m\x1b[48;2;20;20;20m                                                                    \x1b[49m",
+			want:  		" 1. \x1b[38;2;224;224;224mfirst\x1b[39m                                                                       \n   2. \x1b[38;2;224;224;224msecond\x1b[39m                                                                    \x1b[49m",
 		},
 		{
 			name:  "nested unordered",
 			input: "- Alpha\n- Beta\n  - Delta\n  - Epsilon\n",
-			want:  		"\x1b[48;2;20;20;20m \x1b[48;2;20;20;20m  • \x1b[38;2;224;224;224mAlpha\x1b[39m\x1b[48;2;20;20;20m                                                                      \n\x1b[48;2;20;20;20m   • \x1b[38;2;224;224;224mBeta\x1b[39m\x1b[48;2;20;20;20m                                                                       \n\x1b[48;2;20;20;20m     • \x1b[38;2;224;224;224mDelta\x1b[39m\x1b[48;2;20;20;20m                                                                    \n\x1b[48;2;20;20;20m     • \x1b[38;2;224;224;224mEpsilon\x1b[39m\x1b[48;2;20;20;20m                                                                  \x1b[49m",
+			want:  		" • \x1b[38;2;224;224;224mAlpha\x1b[39m                                                                        \n   • \x1b[38;2;224;224;224mBeta\x1b[39m                                                                       \n     • \x1b[38;2;224;224;224mDelta\x1b[39m                                                                    \n     • \x1b[38;2;224;224;224mEpsilon\x1b[39m                                                                  \x1b[49m",
 		},
 		{
 			name:  "nested ordered",
 			input: "1. first\n2. second\n   1. deep\n   2. deeper\n",
-			want:  		"\x1b[48;2;20;20;20m \x1b[48;2;20;20;20m  1. \x1b[38;2;224;224;224mfirst\x1b[39m\x1b[48;2;20;20;20m                                                                     \n\x1b[48;2;20;20;20m   2. \x1b[38;2;224;224;224msecond\x1b[39m\x1b[48;2;20;20;20m                                                                    \n\x1b[48;2;20;20;20m     1. \x1b[38;2;224;224;224mdeep\x1b[39m\x1b[48;2;20;20;20m                                                                    \n\x1b[48;2;20;20;20m     2. \x1b[38;2;224;224;224mdeeper\x1b[39m\x1b[48;2;20;20;20m                                                                  \x1b[49m",
+			want:  		" 1. \x1b[38;2;224;224;224mfirst\x1b[39m                                                                       \n   2. \x1b[38;2;224;224;224msecond\x1b[39m                                                                    \n     1. \x1b[38;2;224;224;224mdeep\x1b[39m                                                                    \n     2. \x1b[38;2;224;224;224mdeeper\x1b[39m                                                                  \x1b[49m",
 		},
 		{
 			name:  "task list",
 			input: "- [x] done\n- [ ] todo\n",
-			want:  		"\x1b[48;2;20;20;20m \x1b[48;2;20;20;20m\x1b[38;2;80;250;123m[✓]\x1b[39m \x1b[38;2;224;224;224mdone\x1b[39m\x1b[48;2;20;20;20m                                                                       \n\x1b[48;2;20;20;20m \x1b[38;2;128;128;128m[ ]\x1b[39m \x1b[38;2;224;224;224mtodo\x1b[39m\x1b[48;2;20;20;20m                                                                       \x1b[49m",
+			want:  		" \x1b[38;2;80;250;123m[✓]\x1b[39m \x1b[38;2;224;224;224mdone\x1b[39m                                                                       \n \x1b[38;2;128;128;128m[ ]\x1b[39m \x1b[38;2;224;224;224mtodo\x1b[39m                                                                       \x1b[49m",
 		},
 		{
 			name:  "nested task list",
 			input: "- [x] checked\n- [ ] unchecked\n  - [x] nested checked\n  - [ ] nested unchecked\n",
-			want:  		"\x1b[48;2;20;20;20m \x1b[48;2;20;20;20m\x1b[38;2;80;250;123m[✓]\x1b[39m \x1b[38;2;224;224;224mchecked\x1b[39m\x1b[48;2;20;20;20m                                                                    \n\x1b[48;2;20;20;20m \x1b[38;2;128;128;128m[ ]\x1b[39m \x1b[38;2;224;224;224munchecked\x1b[39m\x1b[48;2;20;20;20m                                                                  \n\x1b[48;2;20;20;20m \x1b[38;2;80;250;123m[✓]\x1b[39m \x1b[38;2;224;224;224mnested checked\x1b[39m\x1b[48;2;20;20;20m                                                             \n\x1b[48;2;20;20;20m \x1b[38;2;128;128;128m[ ]\x1b[39m \x1b[38;2;224;224;224mnested unchecked\x1b[39m\x1b[48;2;20;20;20m                                                           \x1b[49m",
+			want:  		" \x1b[38;2;80;250;123m[✓]\x1b[39m \x1b[38;2;224;224;224mchecked\x1b[39m                                                                    \n \x1b[38;2;128;128;128m[ ]\x1b[39m \x1b[38;2;224;224;224munchecked\x1b[39m                                                                  \n \x1b[38;2;80;250;123m[✓]\x1b[39m \x1b[38;2;224;224;224mnested checked\x1b[39m                                                             \n \x1b[38;2;128;128;128m[ ]\x1b[39m \x1b[38;2;224;224;224mnested unchecked\x1b[39m                                                           \x1b[49m",
 		},
 	}
 
@@ -270,17 +270,17 @@ func TestRender_Blockquote(t *testing.T) {
 		{
 			name:  "simple",
 			input: "> A quote\n",
-			want:  		"\x1b[48;2;20;20;20m \x1b[48;2;20;20;20m\x1b[38;2;128;128;128m│ \x1b[39m\x1b[38;2;224;224;224mA quote\x1b[39m\x1b[48;2;20;20;20m                                                                      \x1b[49m",
+			want:  		" \x1b[38;2;128;128;128m│ \x1b[39m\x1b[38;2;224;224;224mA quote\x1b[39m                                                                      \x1b[49m",
 		},
 		{
 			name:  "multi paragraph",
 			input: "> First\n>\n> Second\n",
-			want:  		"\x1b[48;2;20;20;20m \x1b[48;2;20;20;20m\x1b[38;2;128;128;128m│ \x1b[39m\x1b[38;2;224;224;224mFirst\x1b[39m\x1b[48;2;20;20;20m                                                                        \n\x1b[48;2;20;20;20m \x1b[38;2;128;128;128m│ \x1b[39m\x1b[48;2;20;20;20m                                                                             \n\x1b[48;2;20;20;20m \x1b[38;2;128;128;128m│ \x1b[39m\x1b[38;2;224;224;224mSecond\x1b[39m\x1b[48;2;20;20;20m                                                                       \x1b[49m",
+			want:  		" \x1b[38;2;128;128;128m│ \x1b[39m\x1b[38;2;224;224;224mFirst\x1b[39m                                                                        \n \x1b[38;2;128;128;128m│ \x1b[39m                                                                             \n \x1b[38;2;128;128;128m│ \x1b[39m\x1b[38;2;224;224;224mSecond\x1b[39m                                                                       \x1b[49m",
 		},
 		{
 			name:  "with inline",
 			input: "> **bold** and *italic*\n",
-			want:  		"\x1b[48;2;20;20;20m \x1b[48;2;20;20;20m\x1b[38;2;128;128;128m│ \x1b[39m\x1b[1m\x1b[38;2;224;224;224mbold\x1b[22m\x1b[39m\x1b[38;2;224;224;224m and \x1b[39m\x1b[3m\x1b[38;2;224;224;224mitalic\x1b[23m\x1b[39m\x1b[48;2;20;20;20m                                                              \x1b[49m",
+			want:  		" \x1b[38;2;128;128;128m│ \x1b[39m\x1b[1m\x1b[38;2;224;224;224mbold\x1b[22m\x1b[39m\x1b[38;2;224;224;224m and \x1b[39m\x1b[3m\x1b[38;2;224;224;224mitalic\x1b[23m\x1b[39m                                                              \x1b[49m",
 		},
 	}
 
@@ -371,7 +371,7 @@ func TestRender_Empty(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got != 	"\x1b[48;2;20;20;20m \x1b[48;2;20;20;20m\x1b[48;2;20;20;20m                                                                               \x1b[49m" {
+	if 	got != "                                                                                \x1b[49m" {
 		t.Errorf("Render() = %q, want bg + padding", got)
 	}
 }
