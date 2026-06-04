@@ -84,7 +84,7 @@ on AMD Ryzen 7 7435H.
 |----------------|-------------|---------------------|----------------------|----------------------------------------|
 | Time/op        | **~46 ms**  | ~468 ms             | ~2.45 s              | **~10× / ~53×**                        |
 | Memory/op      | **~39 MB**  | ~86 MB              | ~389 MB              | **~2.2× / ~10×**                       |
-| Allocations/op | **~406,000**| ~6,440,000          | ~32,900,000          | **~16× / ~81×**                        |
+| Allocations/op | **~425,000**| ~6,440,000          | ~32,900,000          | **~15× / ~77×**                        |
 
 ¹ gruff: `WithDark()` (no background), `WithWordWrap(120)`.
 ² glamour minimal: `Chroma = nil`, `CleanInput`, word wrap off, table wrap off, inline table links on.
@@ -160,7 +160,7 @@ Code blocks are rendered line-by-line with language tags shown in gray, content 
 
 ## Dependencies
 
-**Runtime:** `github.com/yuin/goldmark`, `github.com/mattn/go-runewidth`
+**Runtime:** `github.com/yuin/goldmark`, `github.com/clipperhouse/displaywidth`, `github.com/mattn/go-runewidth`
 
 **Examples only:** `charm.land/bubbles/v2`, `charm.land/bubbletea/v2`, `charm.land/lipgloss/v2`, `charm.land/glamour/v2` (not included in library builds)
 

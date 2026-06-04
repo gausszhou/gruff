@@ -2,7 +2,7 @@
 
 ## 概述
 
-Gruff 是一个 Markdown 到 ANSI 终端渲染器，运行时除了 goldmark（解析器）、go-runewidth / lipgloss v2（Unicode 宽度、颜色解析）之外，没有其他依赖。
+Gruff 是一个 Markdown 到 ANSI 终端渲染器，运行时除了 goldmark（解析器）、clipperhouse/displaywidth（Unicode 宽度）、mattn/go-runewidth（退路宽度）、lipgloss v2（颜色解析）之外，没有其他依赖。
 
 ```
 输入 (markdown 字符串)
@@ -34,7 +34,7 @@ wrapText (文档级自动换行)
 
 2. **两遍表格渲染** — 第一遍收集所有单元格内容并计算列宽；第二遍使用 UTF-8 制表符分隔符渲染。参见 `feature-table.md`。
 
-3. **ANSI 感知自动换行** — `wrapText`（文档级）和 `wrapCellLines`（单元格级）使用 `displayWidth`（go-runewidth）仅计算可见字符，保留前导空格。
+3. **ANSI 感知自动换行** — `wrapText`（文档级）和 `wrapCellLines`（单元格级）使用 `displayWidth`（clipperhouse/displaywidth）仅计算可见字符，保留前导空格。
 
 4. **通过 lipgloss v2 处理颜色** — 颜色为字符串（十六进制 `"#RRGGBB"` 或调色板 `"0"-"255"`）。十六进制解析委托给 `lipgloss.Color(s)`。十六进制输出 24 位真彩色，调色板索引输出 8 位。参见 `feature-color.md`。
 
