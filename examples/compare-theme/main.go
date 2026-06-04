@@ -73,15 +73,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.focus = focusDark
 			}
 			return m, nil
+		case "up", "down", "pgup", "pgdown", "home", "end", "g", "G", "ctrl+u", "ctrl+d":
+			var cmd tea.Cmd
+			switch m.focus {
+			case focusDark:
+				m.darkView, cmd = m.darkView.Update(msg)
+			case focusLight:
+				m.lightView, cmd = m.lightView.Update(msg)
+			}
+			return m, cmd
 		}
-		var cmd tea.Cmd
-		switch m.focus {
-		case focusDark:
-			m.darkView, cmd = m.darkView.Update(msg)
-		case focusLight:
-			m.lightView, cmd = m.lightView.Update(msg)
-		}
-		return m, cmd
+		return m, nil
 	case tea.MouseMsg:
 		halfW := m.termWidth / 2
 		if msg.Mouse().X < halfW {
@@ -103,8 +105,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewWidth = (msg.Width - 4) / 2
 		m.viewHeight = msg.Height - 4
 		m.darkView = component.NewViewportWithScrollbar(m.viewWidth, m.viewHeight)
+		m.darkView.OriginX = 1
+		m.darkView.OriginY = 2
 		m.darkView.Inner().Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414")).Foreground(lipgloss.Color("#ffffff")).Padding(1)
 		m.lightView = component.NewViewportWithScrollbar(m.viewWidth, m.viewHeight)
+		m.lightView.OriginX = m.viewWidth + 3
+		m.lightView.OriginY = 2
 		m.lightView.Inner().Style = lipgloss.NewStyle().Background(lipgloss.Color("#f0f0f0")).Foreground(lipgloss.Color("#000000")).Padding(1)
 		m.dirty = true
 	}

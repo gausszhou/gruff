@@ -83,15 +83,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.focus = focusLeft
 			}
 			return m, nil
+		case "up", "down", "pgup", "pgdown", "home", "end", "g", "G", "ctrl+u", "ctrl+d":
+			var cmd tea.Cmd
+			switch m.focus {
+			case focusLeft:
+				m.leftView, cmd = m.leftView.Update(msg)
+			case focusRight:
+				m.rightView, cmd = m.rightView.Update(msg)
+			}
+			return m, cmd
 		}
-		var cmd tea.Cmd
-		switch m.focus {
-		case focusLeft:
-			m.leftView, cmd = m.leftView.Update(msg)
-		case focusRight:
-			m.rightView, cmd = m.rightView.Update(msg)
-		}
-		return m, cmd
+		return m, nil
 	case tea.MouseMsg:
 		halfW := m.termWidth / 2
 		if msg.Mouse().X < halfW {
@@ -114,7 +116,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewHeight = msg.Height - 3
 
 		m.leftView = component.NewViewportWithScrollbar(m.viewWidth, m.viewHeight)
+		m.leftView.OriginX = 1
+		m.leftView.OriginY = 2
 		m.rightView = component.NewViewportWithScrollbar(m.viewWidth, m.viewHeight)
+		m.rightView.OriginX = m.viewWidth + 3
+		m.rightView.OriginY = 2
 		m.dirty = true
 		return m, nil
 	default:
