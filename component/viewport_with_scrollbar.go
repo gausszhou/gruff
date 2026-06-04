@@ -3,19 +3,13 @@ package component
 import (
 	"image/color"
 	"strings"
-	"unicode/utf8"
 
 	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/mattn/go-runewidth"
 )
 
 const (
-	ansiDefaultFg = "\x1b[39m"
-	ansiNoBold    = "\x1b[22m"
-	ansiNoItalic  = "\x1b[23m"
-
 	scrollbarWidth = 1
 )
 
@@ -67,31 +61,19 @@ func (v ViewportWithScrollbar) View() string {
 		return ""
 	}
 
-	contentWidth := v.Width - scrollbarWidth
-	if contentWidth < 0 {
-		contentWidth = 0
-	}
+	scrollbar := v.renderScrollbar()
+	return lipgloss.JoinHorizontal(lipgloss.Top, v.inner.View(), scrollbar)
+}
 
-	innerContent := v.inner.View()
-	inLines := splitLines(innerContent)
+func (v ViewportWithScrollbar) renderScrollbar() string {
 	thumbPos, thumbSize := v.calcThumb()
 	hasScrollbar := v.inner.TotalLineCount() > v.Height
 
 	var buf strings.Builder
 	for i := 0; i < v.Height; i++ {
-		if i < len(inLines) {
-			line := inLines[i]
-			rendered := truncateToWidth(line, contentWidth)
-			buf.WriteString(rendered)
-			w := displayWidth(stripANSI(rendered))
-			if w < contentWidth {
-				buf.WriteString(strings.Repeat(" ", contentWidth-w))
-			}
-		} else {
-			buf.WriteString(strings.Repeat(" ", contentWidth))
+		if i > 0 {
+			buf.WriteByte('\n')
 		}
-
-		buf.WriteString(ansiNoBold + ansiNoItalic + ansiDefaultFg)
 		if !hasScrollbar {
 			buf.WriteString(v.trackStyle.Render(" "))
 		} else if i >= thumbPos && i < thumbPos+thumbSize {
@@ -99,12 +81,7 @@ func (v ViewportWithScrollbar) View() string {
 		} else {
 			buf.WriteString(v.trackStyle.Render(" "))
 		}
-
-		if i < v.Height-1 {
-			buf.WriteByte('\n')
-		}
 	}
-
 	return buf.String()
 }
 
@@ -270,83 +247,4 @@ func (v *ViewportWithScrollbar) Inner() *viewport.Model {
 	return &v.inner
 }
 
-func splitLines(s string) []string {
-	lines := strings.Split(s, "\n")
-	for len(lines) > 0 && lines[len(lines)-1] == "" {
-		lines = lines[:len(lines)-1]
-	}
-	return lines
-}
 
-func displayWidth(s string) int {
-	w := 0
-	for i := 0; i < len(s); {
-		r, size := utf8.DecodeRuneInString(s[i:])
-		if r == 0xFE0F {
-			i += size
-			continue
-		}
-		if i+size < len(s) {
-			next, nextSize := utf8.DecodeRuneInString(s[i+size:])
-			if next == 0xFE0F {
-				w += 2
-				i += size + nextSize
-				continue
-			}
-		}
-		w += runewidth.RuneWidth(r)
-		i += size
-	}
-	return w
-}
-
-func stripANSI(s string) string {
-	var out []byte
-	for i := 0; i < len(s); i++ {
-		if s[i] == '\x1b' && i+1 < len(s) && s[i+1] == '[' {
-			for j := i + 2; j < len(s); j++ {
-				if s[j] >= 0x40 && s[j] <= 0x7E {
-					i = j
-					break
-				}
-			}
-			continue
-		}
-		out = append(out, s[i])
-	}
-	return string(out)
-}
-
-func truncateToWidth(s string, width int) string {
-	if width <= 0 {
-		return ""
-	}
-	if displayWidth(stripANSI(s)) <= width {
-		return s
-	}
-	var out strings.Builder
-	w := 0
-	for i := 0; i < len(s); {
-		if s[i] == '\x1b' && i+1 < len(s) && s[i+1] == '[' {
-			j := i + 2
-			for j < len(s) && !(s[j] >= 0x40 && s[j] <= 0x7E) {
-				j++
-			}
-			if j < len(s) {
-				j++
-			}
-			out.WriteString(s[i:j])
-			i = j
-			continue
-		}
-		r, size := utf8.DecodeRuneInString(s[i:])
-		rw := runewidth.RuneWidth(r)
-		if w+rw > width {
-			break
-		}
-		out.WriteRune(r)
-		w += rw
-		i += size
-	}
-	return out.String()
-}
