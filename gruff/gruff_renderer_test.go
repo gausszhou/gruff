@@ -79,7 +79,7 @@ func TestDisplayWidth_Emoji(t *testing.T) {
 		{"party popper", "🎉", 2},
 		{"bubbles", "🫧", 2},
 		{"smile", "😀", 2},
-		{"heart", "❤", 1}, // without VS16 — ambiguous, width 1
+		{"heart", "❤", 2}, // Emoji_Presentation=Yes → width 2
 		{"three emoji", "👍🎉🫧", 6},
 		{"emoji with text", "Hi👍there", 9}, // H(1)+i(1)+👍(2)+t(1)+h(1)+e(1)+r(1)+e(1)
 	}
@@ -93,20 +93,19 @@ func TestDisplayWidth_Emoji(t *testing.T) {
 	}
 }
 
-// Known limitation: go-runewidth is code-point-level, not grapheme-cluster-level.
-// VS16 (U+FE0F) does not increase width beyond the base codepoint width.
-// Run with `RUNEWIDTH_EASTASIAN=1` to treat ambiguous chars as wide.
+// VS16 (U+FE0F) promotes non-Emoji_Presentation characters to emoji width.
+// For Emoji_Presentation characters like ❤, base width is already 2.
 func TestDisplayWidth_VS16(t *testing.T) {
-	// ❤ (U+2764) is East Asian Ambiguous → width 1 with default settings
+	// ♥ (U+2665) is NOT Emoji_Presentation → width 1 (EAW=A with default settings)
 	// Adding VS16 (U+FE0F) forces emoji presentation → width 2
 	// displayWidth handles this: any char followed by U+FE0F counts as width 2
-	base := "❤"       // U+2764
-	withVS16 := "❤️"   // U+2764 + U+FE0F
+	base := "♥"       // U+2665 black heart suit
+	withVS16 := "♥️"   // U+2665 + U+FE0F
 	if got := displayWidth(base); got != 1 {
-		t.Errorf("displayWidth(❤) = %d, want 1", got)
+		t.Errorf("displayWidth(♥) = %d, want 1", got)
 	}
 	if got := displayWidth(withVS16); got != 2 {
-		t.Errorf("displayWidth(❤️) = %d, want 2 (VS16 promotes ambiguous char to emoji width)", got)
+		t.Errorf("displayWidth(♥️) = %d, want 2 (VS16 promotes ambiguous char to emoji width)", got)
 	}
 }
 
@@ -162,6 +161,50 @@ func TestDisplayWidth_ZeroWidth(t *testing.T) {
 			got := displayWidth(tt.input)
 			if got != tt.want {
 				t.Errorf("displayWidth(U+%04X) = %d, want %d", []rune(tt.input)[0], got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDisplayWidth_ZWJSequence(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  int
+	}{
+		{"woman technologist", "\U0001F469\u200D\U0001F4BB", 2},
+		{"heart on fire", "\u2764\uFE0F\u200D\U0001F525", 2},
+		{"family", "\U0001F468\u200D\U0001F469\u200D\U0001F467", 2},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := displayWidth(tt.input)
+			if got != tt.want {
+				t.Errorf("displayWidth(%q) = %d, want %d", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDisplayWidth_EmojiPresentationBMP(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  int
+	}{
+		{"scissors ✂", "\u2702", 2},
+		{"heart ❤", "\u2764", 2},
+		{"star ⭐", "\u2B50", 2},
+		{"check ✅", "\u2705", 2},
+		{"cross ❌", "\u274C", 2},
+		{"arrow ⤴", "\u2934", 2},
+		{"watch ⌚", "\u231A", 2},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := displayWidth(tt.input)
+			if got != tt.want {
+				t.Errorf("displayWidth(%q) = %d, want %d", tt.input, got, tt.want)
 			}
 		})
 	}
