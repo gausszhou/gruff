@@ -82,17 +82,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.focus = focusLeft
 			}
 			return m, nil
-		case "up", "down", "pgup", "pgdown":
-			var cmd tea.Cmd
-			switch m.focus {
-			case focusLeft:
-				m.leftView, cmd = m.leftView.Update(msg)
-			case focusRight:
-				m.rightView, cmd = m.rightView.Update(msg)
-			}
-			return m, cmd
 		}
-		return m, nil
+		var cmd tea.Cmd
+		switch m.focus {
+		case focusLeft:
+			m.leftView, cmd = m.leftView.Update(msg)
+		case focusRight:
+			m.rightView, cmd = m.rightView.Update(msg)
+		}
+		return m, cmd
 	case tea.MouseMsg:
 		if msg.Mouse().X < m.viewWidth {
 			m.focus = focusLeft
