@@ -210,11 +210,7 @@ var lightTheme = Theme{
 }
 
 func displayWidth(s string) int {
-	var w int
-	for _, r := range s {
-		w += runewidth.RuneWidth(r)
-	}
-	return w
+	return runewidth.StringWidth(s)
 }
 
 // stripANSI 移除字符串中所有 ANSI 转义序列，返回纯文本
