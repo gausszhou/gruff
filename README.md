@@ -77,15 +77,16 @@ out, err := gruff.Render(source, gruff.WithLight(), gruff.WithWordWrap(80))
 
 ## Performance
 
-Benchmarked against `testdata/benchmark.md` (2.4 KB) repeated 100× (~240 KB input).
+Benchmarked against `testdata/benchmark.md` (~2.4 KB) repeated 100× (~240 KB input),
+on AMD Ryzen 7 7435H.
 
-| Metric         | gruff ¹     | glamour (minimal) ² | glamour (standard) ³ | Improvement (vs minimal) |
-|----------------|-------------|---------------------|----------------------|--------------------------|
-| Time/op        | **~33 ms**  | ~209 ms             | ~1.38 s              | **~6.3× / ~42×**         |
-| Memory/op      | **~26 MB**  | ~58.7 MB            | ~354 MB              | **~2.3× / ~14×**         |
-| Allocations/op | **~270,000**| ~5,267,000          | ~31,200,000          | **~20× / ~116×**         |
+| Metric         | gruff ¹     | glamour (minimal) ² | glamour (standard) ³ | Improvement (vs minimal / vs standard) |
+|----------------|-------------|---------------------|----------------------|----------------------------------------|
+| Time/op        | **~46 ms**  | ~468 ms             | ~2.45 s              | **~10× / ~53×**                        |
+| Memory/op      | **~39 MB**  | ~86 MB              | ~389 MB              | **~2.2× / ~10×**                       |
+| Allocations/op | **~425,000**| ~6,440,000          | ~32,900,000          | **~15× / ~77×**                        |
 
-¹ gruff: `WithDark()`, `WithWordWrap(120)`.
+¹ gruff: `WithDark()` (no background), `WithWordWrap(120)`.
 ² glamour minimal: `Chroma = nil`, `CleanInput`, word wrap off, table wrap off, inline table links on.
 ³ glamour standard: `WithStandardStyle("dark")`, word wrap at 120 cols.
 
@@ -113,6 +114,8 @@ Ready-to-run examples are in the [`examples/`](examples/) directory:
 | [`compare-glamour`](examples/compare-glamour/) | Side-by-side glamour standard vs minimal |
 | [`compare-theme`](examples/compare-theme/) | Side-by-side gruff dark vs light theme |
 | [`compare-simple`](examples/compare-simple/) | Glamour minimal vs standard without viewport/bubbletea |
+| [`viewport-gruff`](examples/viewport-gruff/) | Gruff output in a bubbletea viewport with scrollbar |
+| [`viewport-glamour`](examples/viewport-glamour/) | Glamour output in a bubbletea viewport with scrollbar |
 
 ```bash
 go run examples/basic/main.go
@@ -124,6 +127,8 @@ go run examples/compare-benchmark/main.go
 go run examples/compare-glamour/main.go
 go run examples/compare-theme/main.go
 go run examples/compare-simple/main.go
+go run examples/viewport-gruff/main.go
+go run examples/viewport-glamour/main.go
 ```
 
 ## Theme Customization
@@ -155,7 +160,7 @@ Code blocks are rendered line-by-line with language tags shown in gray, content 
 
 ## Dependencies
 
-**Runtime:** `github.com/yuin/goldmark`, `github.com/mattn/go-runewidth`
+**Runtime:** `github.com/yuin/goldmark`, `github.com/clipperhouse/displaywidth`, `github.com/mattn/go-runewidth`
 
 **Examples only:** `charm.land/bubbles/v2`, `charm.land/bubbletea/v2`, `charm.land/lipgloss/v2`, `charm.land/glamour/v2` (not included in library builds)
 

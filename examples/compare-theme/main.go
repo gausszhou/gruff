@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	flex "github.com/gausszhou/bubbleflex"
+	"github.com/gausszhou/gruff/component"
 	"github.com/gausszhou/gruff/gruff"
 )
 
@@ -39,8 +39,8 @@ type model struct {
 	viewWidth  int
 	viewHeight int
 
-	darkView  viewport.Model
-	lightView viewport.Model
+	darkView  component.ViewportWithScrollbar
+	lightView component.ViewportWithScrollbar
 	renderW   int
 
 	dirty bool
@@ -73,7 +73,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.focus = focusDark
 			}
 			return m, nil
-		case "up", "down", "pgup", "pgdown":
+		case "up", "down", "pgup", "pgdown", "home", "end", "g", "G", "ctrl+u", "ctrl+d":
 			var cmd tea.Cmd
 			switch m.focus {
 			case focusDark:
@@ -83,6 +83,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, cmd
 		}
+		return m, nil
 	case tea.MouseMsg:
 		halfW := m.termWidth / 2
 		if msg.Mouse().X < halfW {
@@ -103,32 +104,37 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.termHeight = msg.Height
 		m.viewWidth = (msg.Width - 4) / 2
 		m.viewHeight = msg.Height - 4
-		m.darkView = viewport.New(viewport.WithWidth(m.viewWidth), viewport.WithHeight(m.viewHeight))
-		m.darkView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414")).Foreground(lipgloss.Color("#ffffff")).Padding(1)
-		m.lightView = viewport.New(viewport.WithWidth(m.viewWidth), viewport.WithHeight(m.viewHeight))
-		m.lightView.Style = lipgloss.NewStyle().Background(lipgloss.Color("#f0f0f0")).Foreground(lipgloss.Color("#000000")).Padding(1)
+		m.darkView = component.NewViewportWithScrollbar(m.viewWidth, m.viewHeight)
+		m.darkView.OriginX = 1
+		m.darkView.OriginY = 2
+		m.darkView.Inner().Style = lipgloss.NewStyle().Background(lipgloss.Color("#141414")).Foreground(lipgloss.Color("#ffffff")).Padding(1)
+		m.lightView = component.NewViewportWithScrollbar(m.viewWidth, m.viewHeight)
+		m.lightView.OriginX = m.viewWidth + 3
+		m.lightView.OriginY = 2
+		m.lightView.Inner().Style = lipgloss.NewStyle().Background(lipgloss.Color("#f0f0f0")).Foreground(lipgloss.Color("#000000")).Padding(1)
 		m.dirty = true
 	}
 	return m, nil
 }
 
 func (m model) renderAll() model {
-	// Left
+	wrapWidth := m.viewWidth - 1
+
 	t0 := time.Now()
 	dark, err := gruff.Render(m.md,
 		gruff.WithDark(),
-		gruff.WithWordWrap(m.viewWidth),
+		gruff.WithWordWrap(wrapWidth),
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
 	m.darkView.SetContent(dark)
 	m.darkDur = time.Since(t0)
-	// Right
+
 	t1 := time.Now()
 	light, err := gruff.Render(m.md,
 		gruff.WithLight(),
-		gruff.WithWordWrap(m.viewWidth),
+		gruff.WithWordWrap(wrapWidth),
 	)
 	if err != nil {
 		log.Fatal(err)

@@ -33,7 +33,7 @@ for each row:
 
 ### displayWidth 与 Emoji 宽度
 
-列宽通过 `displayWidth(stripANSI(content))` 计算，该函数处理 Emoji Variation Selector-16（U+FE0F）：
+列宽通过 `displayWidth(stripANSI(content))` 计算，底层使用 [`clipperhouse/displaywidth`](https://github.com/clipperhouse/displaywidth)：
 
 ```
 input:  "✅ ❌ 🚀 ⭐ ⚠️ ✨ 🎉 😀 🔥"
@@ -52,8 +52,9 @@ input:  "✅ ❌ 🚀 ⭐ ⚠️ ✨ 🎉 😀 🔥"
 ```
 
 - `go-runewidth` 对 ambiguous width 字符（如 U+26A0 ⚠）返回 1，不因 U+FE0F 自动提升
-- 自定义 `displayWidth` 弥补此不足：凡是后跟 U+FE0F 的码位强制为宽度 2
-- U+FE0F 本身计 0，RI pairs（Regional Indicator，如国旗）仍沿用 `runewidth` 的宽度
+- `displaywidth` 弥补此不足：对后跟 U+FE0F 的码位强制为宽度 2（VS16 提升）
+- RI pairs（Regional Indicator，如国旗 🇨🇳）计为 width 2（两个 RI 字符各宽 1）
+- ZWJ 序列（如 👩‍💻）计为 width 2（字素簇内首字符宽度）
 
 ## 第二遍 — 列宽计算
 

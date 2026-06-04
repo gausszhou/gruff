@@ -4,6 +4,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/mattn/go-runewidth"
 	"github.com/yuin/goldmark/ast"
 	extensionAst "github.com/yuin/goldmark/extension/ast"
 	"github.com/yuin/goldmark/text"
@@ -385,9 +386,9 @@ func wrapCellLines(content string, width int) []string {
 			}
 			continue
 		}
-		if displayWidth(string(r)) > 1 {
+		if runewidth.RuneWidth(r) > 1 {
 			flushWord()
-			rw := displayWidth(string(r))
+			rw := runewidth.RuneWidth(r)
 			if lineVisLen+rw > width && lineVisLen > 0 {
 				lines = append(lines, line.String())
 				line.Reset()
@@ -398,7 +399,7 @@ func wrapCellLines(content string, width int) []string {
 			continue
 		}
 		word = utf8.AppendRune(word, r)
-		wordVisLen += displayWidth(string(r))
+		wordVisLen += runewidth.RuneWidth(r)
 	}
 	flushWord()
 

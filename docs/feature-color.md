@@ -12,13 +12,14 @@ type Color string
 
 ## 十六进制解析
 
-十六进制颜色由 `charm.land/lipgloss/v2` 的 `lipgloss.Color(s)` 解析，返回 `color.Color` 接口。Gruff 调用 `.RGBA()` 提取 R/G/B 值：
+十六进制颜色由内建 `hexRGB()` 直接解析，返回 R/G/B 值：
 
 ```go
-func hexRGB(c Color) (r, g, b uint8) {
-    cc := lipgloss.Color(string(c))
-    rr, gg, bb, _ := cc.RGBA()
-    return uint8(rr >> 8), uint8(gg >> 8), uint8(bb >> 8)
+func hexRGB(c string) (r, g, b uint8) {
+    if len(c) < 7 || c[0] != '#' {
+        return 0, 0, 0
+    }
+    return hex(c[1], c[2]), hex(c[3], c[4]), hex(c[5], c[6])
 }
 ```
 

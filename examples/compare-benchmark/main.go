@@ -10,11 +10,11 @@ import (
 
 	"charm.land/glamour/v2"
 
-	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	flex "github.com/gausszhou/bubbleflex"
 	"github.com/gausszhou/gruff/benchmark"
+	"github.com/gausszhou/gruff/component"
 	"github.com/gausszhou/gruff/gruff"
 )
 
@@ -36,8 +36,8 @@ func renderTick() tea.Cmd {
 }
 
 type model struct {
-	leftView  viewport.Model
-	rightView viewport.Model
+	leftView  component.ViewportWithScrollbar
+	rightView component.ViewportWithScrollbar
 
 	termWidth  int
 	termHeight int
@@ -83,7 +83,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.focus = focusLeft
 			}
 			return m, nil
-		case "up", "down", "pgup", "pgdown":
+		case "up", "down", "pgup", "pgdown", "home", "end", "g", "G", "ctrl+u", "ctrl+d":
 			var cmd tea.Cmd
 			switch m.focus {
 			case focusLeft:
@@ -115,8 +115,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewWidth = (msg.Width - 4) / 2
 		m.viewHeight = msg.Height - 3
 
-		m.leftView = viewport.New(viewport.WithWidth(m.viewWidth), viewport.WithHeight(m.viewHeight))
-		m.rightView = viewport.New(viewport.WithWidth(m.viewWidth), viewport.WithHeight(m.viewHeight))
+		m.leftView = component.NewViewportWithScrollbar(m.viewWidth, m.viewHeight)
+		m.leftView.OriginX = 1
+		m.leftView.OriginY = 2
+		m.rightView = component.NewViewportWithScrollbar(m.viewWidth, m.viewHeight)
+		m.rightView.OriginX = m.viewWidth + 3
+		m.rightView.OriginY = 2
 		m.dirty = true
 		return m, nil
 	default:
@@ -141,9 +145,11 @@ func (m model) wxhInfo() string {
 }
 
 func (m model) renderAll() model {
+	wrapWidth := m.viewWidth - 1
+
 	r, err := glamour.NewTermRenderer(
 		glamour.WithStyles(benchmark.GlamourStandardStyle()),
-		glamour.WithWordWrap(m.viewWidth),
+		glamour.WithWordWrap(wrapWidth),
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -161,7 +167,7 @@ func (m model) renderAll() model {
 
 	t2 := time.Now()
 	out2, err := gruff.Render(m.md,
-		gruff.WithWordWrap(m.viewWidth),
+		gruff.WithWordWrap(wrapWidth),
 	)
 	if err != nil {
 		log.Fatal(err)

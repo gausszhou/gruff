@@ -10,11 +10,11 @@ import (
 
 	"charm.land/glamour/v2"
 
-	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	flex "github.com/gausszhou/bubbleflex"
 	"github.com/gausszhou/gruff/benchmark"
+	"github.com/gausszhou/gruff/component"
 )
 
 type focus int
@@ -35,8 +35,8 @@ func renderTick() tea.Cmd {
 }
 
 type model struct {
-	leftView   viewport.Model
-	rightView  viewport.Model
+	leftView   component.ViewportWithScrollbar
+	rightView  component.ViewportWithScrollbar
 	dirty      bool
 	termWidth  int
 	termHeight int
@@ -82,7 +82,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.focus = focusLeft
 			}
 			return m, nil
-		case "up", "down", "pgup", "pgdown":
+		case "up", "down", "pgup", "pgdown", "home", "end", "g", "G", "ctrl+u", "ctrl+d":
 			var cmd tea.Cmd
 			switch m.focus {
 			case focusLeft:
@@ -113,8 +113,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewWidth = (msg.Width - 4) / 2
 		m.viewHeight = msg.Height - 3
 
-		m.leftView = viewport.New(viewport.WithWidth(m.viewWidth), viewport.WithHeight(m.viewHeight))
-		m.rightView = viewport.New(viewport.WithWidth(m.viewWidth), viewport.WithHeight(m.viewHeight))
+		m.leftView = component.NewViewportWithScrollbar(m.viewWidth, m.viewHeight)
+		m.leftView.OriginX = 1
+		m.leftView.OriginY = 2
+		m.rightView = component.NewViewportWithScrollbar(m.viewWidth, m.viewHeight)
+		m.rightView.OriginX = m.viewWidth + 3
+		m.rightView.OriginY = 2
 
 		m.dirty = true
 		return m, nil
@@ -140,7 +144,7 @@ func (m model) wxhInfo() string {
 }
 
 func (m model) renderAll() model {
-	halfW := m.viewWidth
+	halfW := m.viewWidth - 1
 
 	if m.leftRenderer == nil || m.renderWidth != halfW {
 		var err error
