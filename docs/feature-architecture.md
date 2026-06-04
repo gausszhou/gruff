@@ -2,7 +2,7 @@
 
 ## 概述
 
-Gruff 是一个 Markdown 到 ANSI 终端渲染器，运行时除了 goldmark（解析器）、clipperhouse/displaywidth（Unicode 宽度）、mattn/go-runewidth（退路宽度）、lipgloss v2（颜色解析）之外，没有其他依赖。
+Gruff 是一个 Markdown 到 ANSI 终端渲染器，运行时除了 goldmark（解析器）、clipperhouse/displaywidth（Unicode 宽度）、mattn/go-runewidth（退路宽度）之外，没有其他依赖。
 
 ```
 输入 (markdown 字符串)
