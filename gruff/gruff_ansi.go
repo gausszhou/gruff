@@ -367,6 +367,45 @@ func ansiDisplayWidth(b []byte) int {
 			continue
 		}
 		r, size := utf8.DecodeRune(b[i:])
+
+		switch {
+		case r == 0xFE0F || r == 0xFE0E:
+			i += size
+			continue
+
+		case r == 0x200D || r == 0x200C:
+			i += size
+			for i < len(b) {
+				r2, s2 := utf8.DecodeRune(b[i:])
+				if r2 == 0xFE0F || r2 == 0xFE0E || r2 == 0x20E3 || r2 == 0x20DD || r2 == 0x20DE {
+					i += s2
+					continue
+				}
+				i += s2
+				break
+			}
+			continue
+
+		case r == 0x20E3 || r == 0x20DD || r == 0x20DE:
+			i += size
+			continue
+		}
+
+		if i+size < len(b) {
+			next, nextSize := utf8.DecodeRune(b[i+size:])
+			if next == 0xFE0F {
+				w += 2
+				i += size + nextSize
+				continue
+			}
+		}
+
+		if isEmojiPresentation(r) {
+			w += 2
+			i += size
+			continue
+		}
+
 		w += runewidth.RuneWidth(r)
 		i += size
 	}
