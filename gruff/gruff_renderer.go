@@ -129,6 +129,12 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 			r.buf.WriteString(string(uSt.end()))
 		}
 
+	case *ast.AutoLink:
+		st := r.th.Link
+		r.buf.WriteString(string(st.start()))
+		r.buf.Write(n.Label(r.source))
+		r.buf.WriteString(string(st.end()))
+
 	case *ast.Image:
 		for c := n.FirstChild(); c != nil; c = c.NextSibling() {
 			if text, ok := c.(*ast.Text); ok {
