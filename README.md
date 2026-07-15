@@ -7,7 +7,7 @@ A lightweight, high-performance [Go](https://go.dev) library for rendering Markd
 - **Headings** (H1–H6) with distinct styles per level
 - **Bold**, *italic*, and ***bold italic***
 - `Inline code` and fenced/indented **code blocks** — green text, language tag in gray
-- [Links](https://github.com/gausszhou/gruff) — underlined + blue text with gray URL suffix
+- [Links](https://github.com/gausszhou/gruff) — bold link text + underlined URL with OSC 8 terminal hyperlink support
 - Unordered (`-`, `*`) and ordered (`1.`) lists
 - GFM tables with **UTF-8 box‑drawing borders**, alignment (left/center/right), inline formatting inside cells, and **automatic text wrapping** at a max column width
 - Strikethrough text (`~~strikethrough~~`)
@@ -77,14 +77,14 @@ out, err := gruff.Render(source, gruff.WithLight(), gruff.WithWordWrap(80))
 
 ## Performance
 
-Benchmarked against `testdata/benchmark.md` (~2.4 KB) repeated 100× (~240 KB input),
-on AMD Ryzen 7 7435H.
+Benchmarked against `testdata/benchmark.md` (~5.6 KB) repeated 100× (~560 KB input),
+on Intel Core Ultra 7 255H.
 
 | Metric         | gruff ¹     | glamour (minimal) ² | glamour (standard) ³ | Improvement (vs minimal / vs standard) |
 |----------------|-------------|---------------------|----------------------|----------------------------------------|
-| Time/op        | **~46 ms**  | ~468 ms             | ~2.45 s              | **~10× / ~53×**                        |
-| Memory/op      | **~39 MB**  | ~86 MB              | ~389 MB              | **~2.2× / ~10×**                       |
-| Allocations/op | **~425,000**| ~6,440,000          | ~32,900,000          | **~15× / ~77×**                        |
+| Time/op        | **~75 ms**  | ~403 ms             | ~1.49 s              | **~5× / ~20×**                         |
+| Memory/op      | **~53 MB**  | ~121 MB             | ~455 MB              | **~2.3× / ~8.6×**                      |
+| Allocations/op | **~443,000**| ~10,700,000         | ~42,500,000          | **~24× / ~96×**                        |
 
 ¹ gruff: `WithDark()` (no background), `WithWordWrap(120)`.
 ² glamour minimal: `Chroma = nil`, `CleanInput`, word wrap off, table wrap off, inline table links on.
@@ -143,7 +143,8 @@ customTheme := func() gruff.Option {
         o.Theme.H1 = gruff.Style{Fg: gruff.Color(196), Bold: true}       // red
         o.Theme.Strong = gruff.Style{Bold: true, Fg: gruff.Color(51)}    // cyan
         o.Theme.Code = gruff.Style{Fg: gruff.Color("#50865a")}            // green
-        o.Theme.Link = gruff.Style{Underline: true, Fg: gruff.Color("#5c9cf5")}
+        o.Theme.Link = gruff.Style{Bold: true, Fg: gruff.Color("#5c9cf5")}
+        o.Theme.LinkURL = gruff.Style{Underline: true, Fg: gruff.Color("#5c9cf5")}
     }
 }
 

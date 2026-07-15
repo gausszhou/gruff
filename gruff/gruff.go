@@ -90,19 +90,39 @@ func wrapText(s string, width int, padding int, bgCode string) string {
 	var out strings.Builder
 	out.Grow(len(s) + len(s)/(width+1) + 32)
 
-	// ① 首行前：激活主题背景色，后续填充空格才有背景色
 	out.WriteString(bgCode)
-	// 首行左内边距（<padding> 个空格）
 	for range padding {
 		out.WriteByte(' ')
 	}
 	lineLen := padding
 
+	activeStyle := make([]byte, 0, 128)
+	wordStartStyle := make([]byte, 0, 128)
+	tempEsc := make([]byte, 0, 32)
 	word := make([]byte, 0, 64)
 	spaces := 0
-	inAnsi := false
+	escSt := escNone
 
 	fillWidth := width
+
+	newLine := func() {
+		if len(activeStyle) > 0 {
+			out.WriteString("\x1b[0m")
+			out.WriteString(osc8End)
+		}
+		out.WriteString(bgCode)
+		for i := lineLen; i < fillWidth; i++ {
+			out.WriteByte(' ')
+		}
+		out.WriteByte('\n')
+		out.WriteString(bgCode)
+		for range padding {
+			out.WriteByte(' ')
+		}
+		out.Write(activeStyle)
+		lineLen = padding
+		spaces = 0
+	}
 
 	flushWord := func() {
 		if len(word) == 0 {
@@ -110,73 +130,120 @@ func wrapText(s string, width int, padding int, bgCode string) string {
 		}
 		wLen := ansiDisplayWidth(word)
 		if lineLen > padding && lineLen+wLen+(b2i(spaces > 0)) > width-padding {
-			// ② 换行前：填充本行剩余位置（含右内边距）的背景色
-			out.WriteString(bgCode)
-			for i := lineLen; i < fillWidth; i++ {
-				out.WriteByte(' ')
-			}
-			out.WriteByte('\n')
-			// ③ 换行后：下一行开头重新激活背景色
-			out.WriteString(bgCode)
-			// 下一行左内边距
-			for range padding {
-				out.WriteByte(' ')
-			}
-			lineLen = padding
-			spaces = 0
+			savedStyle := activeStyle
+			activeStyle = wordStartStyle
+			newLine()
+			activeStyle = savedStyle
 		} else if spaces > 0 {
 			for i := 0; i < spaces; i++ {
 				out.WriteByte(' ')
 			}
 			lineLen += spaces
+			spaces = 0
 		}
+
+		if lineLen == padding && wLen > width-2*padding {
+			remaining := word
+			splitStyle := make([]byte, len(wordStartStyle))
+			copy(splitStyle, wordStartStyle)
+			for len(remaining) > 0 {
+				available := width - padding - lineLen
+				head, tail := breakChunk(remaining, available, &splitStyle)
+				if len(head) == 0 {
+					out.Write(remaining)
+					lineLen += ansiDisplayWidth(remaining)
+					break
+				}
+				out.Write(head)
+				lineLen += ansiDisplayWidth(head)
+				remaining = tail
+				if len(remaining) > 0 {
+					savedStyle := activeStyle
+					activeStyle = splitStyle
+					newLine()
+					activeStyle = savedStyle
+				}
+			}
+			word = word[:0]
+			activeStyle = append(activeStyle[:0], splitStyle...)
+			wordStartStyle = append(wordStartStyle[:0], splitStyle...)
+			return
+		}
+
 		out.Write(word)
 		lineLen += wLen
 		spaces = 0
 		word = word[:0]
+		wordStartStyle = append(wordStartStyle[:0], activeStyle...)
 	}
 
 	for _, r := range s {
-		if inAnsi {
+		switch escSt {
+		case escStart:
 			word = utf8.AppendRune(word, r)
-			if r == 'm' {
-				inAnsi = false
+			tempEsc = utf8.AppendRune(tempEsc, r)
+			if r == '[' {
+				escSt = escCSI
+			} else if r == ']' {
+				escSt = escOSC
+			} else {
+				escSt = escNone
+				tempEsc = tempEsc[:0]
 			}
-			continue
-		}
-		if r == '\x1b' {
-			inAnsi = true
+		case escCSI:
 			word = utf8.AppendRune(word, r)
-			continue
-		}
-		if r == '\n' {
-			flushWord()
-			// ④ 硬换行前：填充本行剩余位置（含右内边距）的背景色
-			out.WriteString(bgCode)
-			for i := lineLen; i < fillWidth; i++ {
-				out.WriteByte(' ')
+			tempEsc = utf8.AppendRune(tempEsc, r)
+			if r >= 0x40 && r <= 0x7E {
+				escSt = escNone
+				updateActiveStyle(&activeStyle, tempEsc)
+				tempEsc = tempEsc[:0]
 			}
-			out.WriteByte('\n')
-			// ⑤ 硬换行后：下一行开头重新激活背景色
-			out.WriteString(bgCode)
-			// 下一行左内边距
-			for range padding {
-				out.WriteByte(' ')
+		case escOSC:
+			word = utf8.AppendRune(word, r)
+			tempEsc = utf8.AppendRune(tempEsc, r)
+			if r == '\x1b' {
+				escSt = escOSCSt
+			} else if r == '\x07' {
+				escSt = escNone
+				updateActiveStyle(&activeStyle, tempEsc)
+				tempEsc = tempEsc[:0]
 			}
-			lineLen = padding
-			spaces = 0
-			continue
+		case escOSCSt:
+			word = utf8.AppendRune(word, r)
+			tempEsc = utf8.AppendRune(tempEsc, r)
+			if r == '\\' {
+				escSt = escNone
+				updateActiveStyle(&activeStyle, tempEsc)
+				tempEsc = tempEsc[:0]
+			} else {
+				escSt = escOSC
+			}
+		default: // escNone
+			if r == '\x1b' {
+				word = utf8.AppendRune(word, r)
+				tempEsc = utf8.AppendRune(tempEsc, r)
+				escSt = escStart
+				continue
+			}
+			if r == '\n' {
+				flushWord()
+				newLine()
+				continue
+			}
+			if r == ' ' {
+				flushWord()
+				spaces++
+				continue
+			}
+			word = utf8.AppendRune(word, r)
 		}
-		if r == ' ' {
-			flushWord()
-			spaces++
-			continue
-		}
-		word = utf8.AppendRune(word, r)
 	}
 	flushWord()
 
-	// ⑥ 文档末尾：填充最后一行剩余位置（含右内边距）的背景色
+	if len(activeStyle) > 0 {
+		out.WriteString("\x1b[0m")
+		out.WriteString(osc8End)
+	}
 	out.WriteString(bgCode)
 	for i := lineLen; i < fillWidth; i++ {
 		out.WriteByte(' ')
