@@ -195,6 +195,7 @@ func breakLongWord(out *strings.Builder, word []byte, width, padding, lineLen in
 			*activeStyle = *splitStyle
 			newLine()
 			*activeStyle = savedStyle
+			lineLen = padding
 		}
 	}
 	return lineLen

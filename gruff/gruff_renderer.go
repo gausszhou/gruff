@@ -107,6 +107,10 @@ func (r *nodeRenderer) renderTextLike(parent ast.Node, value []byte, softBreak b
 	_, isTB := parent.(*ast.TextBlock)
 	_, isTC := parent.(*extensionAst.TableCell)
 	if isPara || isTB || isTC {
+		if len(value) > 0 && value[0] == ' ' {
+			r.buf.WriteByte(' ')
+			value = value[1:]
+		}
 		r.buf.WriteString(string(r.th.Paragraph.start()))
 	}
 	r.buf.Write(value)
@@ -155,7 +159,9 @@ func (r *nodeRenderer) renderLink(n *ast.Link) {
 		r.buf.WriteByte(' ')
 		uSt := r.th.LinkURL
 		r.buf.WriteString(string(uSt.start()))
+		r.buf.WriteByte('(')
 		r.buf.WriteString(url)
+		r.buf.WriteByte(')')
 		r.buf.WriteString(string(uSt.end()))
 	}
 	r.buf.WriteString(osc8End)
