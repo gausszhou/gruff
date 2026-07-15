@@ -74,7 +74,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, renderTick()
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "q", "ctrl+c", "esc":
+		case "q", "ctrl+c":
 			return m, tea.Quit
 		case "left", "right":
 			if m.focus == focusLeft {
@@ -175,8 +175,8 @@ func (m model) renderAll() model {
 	m.gruffContent = out2
 	m.gruffDur = time.Since(t2)
 
-	m.leftView.SetContent("\n" + m.gruffContent + "\n")
-	m.rightView.SetContent(m.glamourContent)
+	m.leftView.SetContent(m.glamourContent)
+	m.rightView.SetContent("\n" + m.gruffContent + "\n")
 	return m
 }
 
@@ -185,15 +185,15 @@ func (m model) headerFor(left bool) string {
 	var title, info string
 	var activeBg, inactiveBg color.Color
 	if left {
-		title = "gruff"
-		info = m.wxhInfo() + "  " + m.gruffDur.Round(time.Microsecond).String()
-		activeBg = lipgloss.Color("#0891b2")
-		inactiveBg = lipgloss.Color("#056982")
-	} else {
 		title = "glamour minimal"
 		info = m.wxhInfo() + "  " + m.glamourDur.Round(time.Microsecond).String()
 		activeBg = lipgloss.Color("#059669")
 		inactiveBg = lipgloss.Color("#056f4d")
+	} else {
+		title = "gruff"
+		info = m.wxhInfo() + "  " + m.gruffDur.Round(time.Microsecond).String()
+		activeBg = lipgloss.Color("#0891b2")
+		inactiveBg = lipgloss.Color("#056982")
 	}
 	active := (left && m.focus == focusLeft) || (!left && m.focus == focusRight)
 	bg := inactiveBg
@@ -211,11 +211,11 @@ func (m model) View() tea.View {
 		width = 80
 	}
 
-	leftPane := m.paneBorder(m.focus == focusLeft, lipgloss.Color("#0891b2")).Render(
+	leftPane := m.paneBorder(m.focus == focusLeft, lipgloss.Color("#059669")).Render(
 		m.headerFor(true) + "\n" + m.leftView.View(),
 	)
 
-	rightPane := m.paneBorder(m.focus == focusRight, lipgloss.Color("#059669")).Render(
+	rightPane := m.paneBorder(m.focus == focusRight, lipgloss.Color("#0891b2")).Render(
 		m.headerFor(false) + "\n" + m.rightView.View(),
 	)
 
