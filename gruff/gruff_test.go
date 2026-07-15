@@ -138,17 +138,34 @@ func TestRender_Link(t *testing.T) {
 		{
 			name:  "basic link",
 			input: "[Gruff](https://example.com)\n",
-			check: []string{"\x1b[4m\x1b[38;2;92;156;245mGruff\x1b[24m\x1b[39m \x1b[38;2;92;156;245m(https://example.com)\x1b[39m"},
+			check: []string{
+				osc8Link("https://example.com"),
+				"\x1b[1m\x1b[38;2;92;156;245mGruff\x1b[22m\x1b[39m",
+				"\x1b[4m\x1b[38;2;92;156;245mhttps://example.com\x1b[24m\x1b[39m",
+				osc8End,
+			},
 		},
 		{
 			name:  "link with bold text",
 			input: "[**bold**](https://example.com)\n",
-			check: []string{"\x1b[4m\x1b[38;2;92;156;245m\x1b[1m\x1b[38;2;224;224;224mbold\x1b[22m\x1b[39m\x1b[24m\x1b[39m \x1b[38;2;92;156;245m(https://example.com)\x1b[39m"},
+			check: []string{
+				osc8Link("https://example.com"),
+				"\x1b[1m\x1b[38;2;92;156;245m\x1b[1m\x1b[38;2;224;224;224mbold\x1b[22m\x1b[39m\x1b[22m\x1b[39m",
+				"\x1b[4m\x1b[38;2;92;156;245mhttps://example.com\x1b[24m\x1b[39m",
+				osc8End,
+			},
 		},
 		{
 			name:  "link in paragraph",
 			input: "click [here](https://example.com) now\n",
-			check: []string{"\x1b[38;2;224;224;224mclick \x1b[39m\x1b[4m\x1b[38;2;92;156;245mhere\x1b[24m\x1b[39m \x1b[38;2;92;156;245m(https://example.com)\x1b[39m\x1b[38;2;224;224;224m now\x1b[39m"},
+			check: []string{
+				"\x1b[38;2;224;224;224mclick \x1b[39m",
+				osc8Link("https://example.com"),
+				"\x1b[1m\x1b[38;2;92;156;245mhere\x1b[22m\x1b[39m",
+				"\x1b[4m\x1b[38;2;92;156;245mhttps://example.com\x1b[24m\x1b[39m",
+				osc8End,
+				"\x1b[38;2;224;224;224m now\x1b[39m",
+			},
 		},
 	}
 
@@ -167,6 +184,33 @@ func TestRender_Link(t *testing.T) {
 	}
 }
 
+func TestRender_LongURL_Wrap(t *testing.T) {
+	input := "[x](https://example.com/very-long-path-that-exceeds-line-width)\n"
+	got, err := Render(input, WithWordWrap(40))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	checks := []string{
+		osc8Link("https://example.com/very-long-path-that-exceeds-line-width"),
+		"\x1b[1m\x1b[38;2;92;156;245mx\x1b[22m\x1b[39m",
+		osc8End,
+		"\x1b[4m\x1b[38;2;92;156;245mhttps://example.com/very-long-path-tha",
+		"t-exceeds-line-width",
+	}
+	for _, c := range checks {
+		if !strings.Contains(got, c) {
+			t.Errorf("output missing %q\n got: %q", c, got)
+		}
+	}
+
+	stripped := stripANSI(got)
+	lines := strings.Split(strings.TrimRight(stripped, "\n"), "\n")
+	if len(lines) < 2 {
+		t.Errorf("expected URL to wrap across multiple lines, got %d lines:\n%q", len(lines), stripped)
+	}
+}
+
 func TestRender_CodeBlock(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -181,7 +225,7 @@ func TestRender_CodeBlock(t *testing.T) {
 		{
 			name:  "fenced code with language",
 			input: "```go\nvar x = 1\n```\n",
-			check: []string{"\x1b[38;2;92;156;245mgo\x1b[39m", "\x1b[38;2;80;250;123mvar x = 1\x1b[39m"},
+			check: []string{"\x1b[4m\x1b[38;2;92;156;245mgo\x1b[24m\x1b[39m", "\x1b[38;2;80;250;123mvar x = 1\x1b[39m"},
 		},
 		{
 			name:  "indented code block",

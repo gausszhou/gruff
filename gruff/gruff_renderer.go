@@ -115,25 +115,28 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 
 	case *ast.Link:
 		st := r.th.Link
+		url := string(n.Destination)
+		r.buf.WriteString(osc8Link(url))
 		r.buf.WriteString(string(st.start()))
 		r.renderChildren(n)
 		r.buf.WriteString(string(st.end()))
 		if len(n.Destination) > 0 {
-			url := string(n.Destination)
-			uSt := r.th.LinkURL
 			r.buf.WriteByte(' ')
+			uSt := r.th.LinkURL
 			r.buf.WriteString(string(uSt.start()))
-			r.buf.WriteByte('(')
 			r.buf.WriteString(url)
-			r.buf.WriteByte(')')
 			r.buf.WriteString(string(uSt.end()))
 		}
+		r.buf.WriteString(osc8End)
 
 	case *ast.AutoLink:
-		st := r.th.Link
+		url := string(n.URL(r.source))
+		r.buf.WriteString(osc8Link(url))
+		st := r.th.LinkURL
 		r.buf.WriteString(string(st.start()))
 		r.buf.Write(n.Label(r.source))
 		r.buf.WriteString(string(st.end()))
+		r.buf.WriteString(osc8End)
 
 	case *ast.Image:
 		for c := n.FirstChild(); c != nil; c = c.NextSibling() {
@@ -343,7 +346,7 @@ func wrapCellLines(content string, width int) []string {
 	word := make([]byte, 0, 64)
 	lineVisLen := 0
 	wordVisLen := 0
-	inAnsi := false
+	escSt := escNone
 
 	flushWord := func() {
 		if len(word) == 0 && wordVisLen == 0 {
@@ -365,47 +368,64 @@ func wrapCellLines(content string, width int) []string {
 	}
 
 	for _, r := range content {
-		if inAnsi {
-			word = utf8.AppendRune(word, r)
-			if r == 'm' {
-				inAnsi = false
-			}
-			continue
-		}
-		if r == '\x1b' {
-			inAnsi = true
-			word = utf8.AppendRune(word, r)
-			continue
-		}
-		if r == ' ' {
-			flushWord()
-			continue
-		}
-		if r == '\n' {
-			flushWord()
-			if line.Len() > 0 {
-				lines = append(lines, line.String())
-				line.Reset()
-				lineVisLen = 0
-			} else {
-				lines = append(lines, "")
-			}
-			continue
-		}
-		if runewidth.RuneWidth(r) > 1 {
-			flushWord()
-			rw := runewidth.RuneWidth(r)
-			if lineVisLen+rw > width && lineVisLen > 0 {
-				lines = append(lines, line.String())
-				line.Reset()
-				lineVisLen = 0
-			}
-			line.WriteRune(r)
-			lineVisLen += rw
-			continue
-		}
 		word = utf8.AppendRune(word, r)
-		wordVisLen += runewidth.RuneWidth(r)
+		switch escSt {
+		case escStart:
+			if r == '[' {
+				escSt = escCSI
+			} else if r == ']' {
+				escSt = escOSC
+			} else {
+				escSt = escNone
+			}
+		case escCSI:
+			if r >= 0x40 && r <= 0x7E {
+				escSt = escNone
+			}
+		case escOSC:
+			if r == '\x1b' {
+				escSt = escOSCSt
+			} else if r == '\x07' {
+				escSt = escNone
+			}
+		case escOSCSt:
+			if r == '\\' {
+				escSt = escNone
+			} else {
+				escSt = escOSC
+			}
+		default: // escNone
+			word = word[:len(word)-utf8.RuneLen(r)]
+			if r == ' ' {
+				flushWord()
+				continue
+			}
+			if r == '\n' {
+				flushWord()
+				if line.Len() > 0 {
+					lines = append(lines, line.String())
+					line.Reset()
+					lineVisLen = 0
+				} else {
+					lines = append(lines, "")
+				}
+				continue
+			}
+			if runewidth.RuneWidth(r) > 1 {
+				flushWord()
+				rw := runewidth.RuneWidth(r)
+				if lineVisLen+rw > width && lineVisLen > 0 {
+					lines = append(lines, line.String())
+					line.Reset()
+					lineVisLen = 0
+				}
+				line.WriteRune(r)
+				lineVisLen += rw
+				continue
+			}
+			word = utf8.AppendRune(word, r)
+			wordVisLen += runewidth.RuneWidth(r)
+		}
 	}
 	flushWord()
 
