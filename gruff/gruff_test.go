@@ -77,7 +77,7 @@ func TestRender_BoldItalic(t *testing.T) {
 		{
 			name:  "mixed inline paragraph",
 			input: "plain **bold** and *italic*.\n",
-			check: []string{"\x1b[38;2;224;224;224mplain \x1b[39m\x1b[1m\x1b[38;2;224;224;224mbold\x1b[22m\x1b[39m\x1b[38;2;224;224;224m and \x1b[39m\x1b[3m\x1b[38;2;224;224;224mitalic\x1b[23m\x1b[39m\x1b[38;2;224;224;224m.\x1b[39m"},
+			check: []string{"\x1b[38;2;224;224;224mplain \x1b[39m\x1b[1m\x1b[38;2;224;224;224mbold\x1b[22m\x1b[39m \x1b[38;2;224;224;224mand \x1b[39m\x1b[3m\x1b[38;2;224;224;224mitalic\x1b[23m\x1b[39m\x1b[38;2;224;224;224m.\x1b[39m"},
 		},
 	}
 
@@ -164,7 +164,7 @@ func TestRender_Link(t *testing.T) {
 				"\x1b[1m\x1b[38;2;92;156;245mhere\x1b[22m\x1b[39m",
 				"\x1b[38;2;92;156;245m(https://example.com)\x1b[39m",
 				osc8End,
-				"\x1b[38;2;224;224;224m now\x1b[39m",
+				" \x1b[38;2;224;224;224mnow\x1b[39m",
 			},
 		},
 	}
@@ -324,7 +324,7 @@ func TestRender_Blockquote(t *testing.T) {
 		{
 			name:  "with inline",
 			input: "> **bold** and *italic*\n",
-			want:  		" \x1b[38;2;128;128;128m│ \x1b[39m\x1b[1m\x1b[38;2;224;224;224mbold\x1b[22m\x1b[39m\x1b[38;2;224;224;224m and \x1b[39m\x1b[3m\x1b[38;2;224;224;224mitalic\x1b[23m\x1b[39m                                                              \x1b[49m",
+			want:  		" \x1b[38;2;128;128;128m│ \x1b[39m\x1b[1m\x1b[38;2;224;224;224mbold\x1b[22m\x1b[39m \x1b[38;2;224;224;224mand \x1b[39m\x1b[3m\x1b[38;2;224;224;224mitalic\x1b[23m\x1b[39m                                                              \x1b[49m",
 		},
 	}
 

@@ -107,6 +107,10 @@ func (r *nodeRenderer) renderTextLike(parent ast.Node, value []byte, softBreak b
 	_, isTB := parent.(*ast.TextBlock)
 	_, isTC := parent.(*extensionAst.TableCell)
 	if isPara || isTB || isTC {
+		if len(value) > 0 && value[0] == ' ' {
+			r.buf.WriteByte(' ')
+			value = value[1:]
+		}
 		r.buf.WriteString(string(r.th.Paragraph.start()))
 	}
 	r.buf.Write(value)
@@ -176,9 +180,7 @@ func (r *nodeRenderer) renderAutoLink(n *ast.AutoLink) {
 	r.buf.WriteString(osc8Link(url))
 	st := r.th.LinkURL
 	r.buf.WriteString(string(st.start()))
-	r.buf.WriteByte('(')
 	r.buf.Write(n.Label(r.source))
-	r.buf.WriteByte(')')
 	r.buf.WriteString(string(st.end()))
 	r.buf.WriteString(osc8End)
 }
