@@ -1,6 +1,7 @@
 package gruff
 
 import (
+	"bytes"
 	"strings"
 	"unicode/utf8"
 
@@ -106,8 +107,7 @@ func wrapText(s string, width int, padding int, bgCode string) string {
 	fillWidth := width
 
 	newLine := func() {
-		if len(activeStyle) > 0 {
-			out.WriteString("\x1b[0m")
+		if len(activeStyle) > 0 && bytes.HasPrefix(activeStyle, []byte("\x1b]8;")) {
 			out.WriteString(osc8End)
 		}
 		out.WriteString(bgCode)
