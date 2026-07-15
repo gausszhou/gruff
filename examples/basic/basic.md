@@ -94,3 +94,16 @@ Indented code block:
     line2
 
 Visit [Gruff on GitHub](https://github.com/gausszhou/gruff) for more information.
+
+
+## Unicode Showcase
+
+| Category | Characters | Width | Reference |
+|:---------|:-----------|:-----|:----------|
+| Emoji | ✅ ❌ 🚀 ⭐ ⚠️ ✨ 🎉 😀 🔥 | Mixed | [Emoji List](https://unicode.org/emoji/charts/full-emoji-list.html) |
+| CJK | 你好世界 畫龍點睛 | 2 ea | [CJK Unified](https://en.wikipedia.org/wiki/CJK_Unified_Ideographs) |
+| Dingbats | ✓ ✗ ✘ ✝ ✞ ✟ | 1 ea | [Dingbat](https://en.wikipedia.org/wiki/Dingbat) |
+| Suits | ♠ ♥ ♦ ♣ | 1 ea | <https://en.wikipedia.org/wiki/Playing_cards_in_Unicode> |
+| Arrows | ← ↑ → ↓ ↔ ⇒ ⇔ | 1 ea | <https://en.wikipedia.org/wiki/Arrows_(Unicode_block)> |
+| Operators | ± ≠ ≈ ≤ ≥ ≡ | 1 ea | https://en.wikipedia.org/wiki/Mathematical_operators_and_symbols_in_Unicode |
+| Brackets | 【「『』」】 | 2 ea | https://en.wikipedia.org/wiki/Bracket#East_Asian_brackets |
