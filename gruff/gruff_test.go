@@ -5,6 +5,7 @@ import (
 	"testing"
 )
 
+// TestRender_Heading 标题渲染（h1~h6 + 内联样式）。
 func TestRender_Heading(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -48,6 +49,7 @@ func TestRender_Heading(t *testing.T) {
 	}
 }
 
+// TestRender_BoldItalic 加粗/斜体/嵌套组合。
 func TestRender_BoldItalic(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -96,6 +98,7 @@ func TestRender_BoldItalic(t *testing.T) {
 	}
 }
 
+// TestRender_InlineCode 行内代码及与加粗嵌套。
 func TestRender_InlineCode(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -129,6 +132,7 @@ func TestRender_InlineCode(t *testing.T) {
 	}
 }
 
+// TestRender_Link [text](url) 链接：OSC8 + 加粗 + URL 括号 + 段内嵌。
 func TestRender_Link(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -184,6 +188,7 @@ func TestRender_Link(t *testing.T) {
 	}
 }
 
+// TestRender_LongURL_Wrap 长 URL 跨行切断 + OSC8 配对。
 func TestRender_LongURL_Wrap(t *testing.T) {
 	input := "[x](https://example.com/very-long-path-that-exceeds-line-width)\n"
 	got, err := Render(input, WithWordWrap(40))
@@ -211,6 +216,7 @@ func TestRender_LongURL_Wrap(t *testing.T) {
 	}
 }
 
+// TestRender_AutoLink <url> 自动链接（无括号无加粗）。
 func TestRender_AutoLink(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -253,6 +259,7 @@ func TestRender_AutoLink(t *testing.T) {
 	}
 }
 
+// TestRender_BareURL GFM Linkify 裸 URL 识别。
 func TestRender_BareURL(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -296,6 +303,7 @@ func TestRender_BareURL(t *testing.T) {
 	}
 }
 
+// TestRender_LinkInTable 表格 cell 内的链接。
 func TestRender_LinkInTable(t *testing.T) {
 	input := "| Col |\n|-----|\n| [link](https://example.com) |\n"
 	got, err := Render(input)
@@ -315,6 +323,7 @@ func TestRender_LinkInTable(t *testing.T) {
 	}
 }
 
+// TestRender_MultiLink 同段落多链接 OSC8 配对。
 func TestRender_MultiLink(t *testing.T) {
 	input := "see [A](https://a.com) and [B](https://b.com)\n"
 	got, err := Render(input)
@@ -331,6 +340,7 @@ func TestRender_MultiLink(t *testing.T) {
 	}
 }
 
+// TestRender_CodeBlock 围栏/缩进/语言标注/多行。
 func TestRender_CodeBlock(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -374,6 +384,7 @@ func TestRender_CodeBlock(t *testing.T) {
 	}
 }
 
+// TestRender_List 无序/有序/嵌套/任务列表。
 func TestRender_List(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -425,6 +436,7 @@ func TestRender_List(t *testing.T) {
 	}
 }
 
+// TestRender_Blockquote 基本/多段/内联样式。
 func TestRender_Blockquote(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -461,6 +473,7 @@ func TestRender_Blockquote(t *testing.T) {
 	}
 }
 
+// TestRender_Table 简单/对齐/内联样式。
 func TestRender_Table(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -499,6 +512,7 @@ func TestRender_Table(t *testing.T) {
 	}
 }
 
+// TestRender_Mixed 所有元素混合冒烟测试。
 func TestRender_Mixed(t *testing.T) {
 	input := "# Title\n\nThis is **bold** and *italic* and `code`.\n\nA [link](https://example.com) here.\n\n- list with **bold**\n- list with `code`\n\n1. first\n2. second\n\n> A quote\n\n| A | B |\n|---|---|\n| 1 | 2 |\n"
 
@@ -530,6 +544,7 @@ func TestRender_Mixed(t *testing.T) {
 	}
 }
 
+// TestRender_Empty 空输入。
 func TestRender_Empty(t *testing.T) {
 	got, err := Render("")
 	if err != nil {
@@ -540,6 +555,7 @@ func TestRender_Empty(t *testing.T) {
 	}
 }
 
+// TestRender_PlainText 纯文本段落。
 func TestRender_PlainText(t *testing.T) {
 	got, err := Render("Hello, world!\n")
 	if err != nil {
@@ -550,6 +566,7 @@ func TestRender_PlainText(t *testing.T) {
 	}
 }
 
+// TestOptions 主题和行宽选项测试。
 func TestOptions(t *testing.T) {
 	t.Run("light theme", func(t *testing.T) {
 		got, err := Render("# Hello", WithLight())
@@ -577,6 +594,7 @@ func TestOptions(t *testing.T) {
 	})
 }
 
+// TestRenderBytes []byte 接口。
 func TestRenderBytes(t *testing.T) {
 	out, err := RenderBytes([]byte("# Hello"))
 	if err != nil {

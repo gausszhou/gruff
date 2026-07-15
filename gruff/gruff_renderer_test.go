@@ -11,6 +11,7 @@ import (
 // displayWidth — character display width calculation
 // ============================================================
 
+// TestDisplayWidth_ASCII 纯 ASCII 显示宽度。
 func TestDisplayWidth_ASCII(t *testing.T) {
 	tests := []struct {
 		input string
@@ -30,6 +31,7 @@ func TestDisplayWidth_ASCII(t *testing.T) {
 	}
 }
 
+// TestDisplayWidth_CJK 中文全角宽度=2。
 func TestDisplayWidth_CJK(t *testing.T) {
 	tests := []struct {
 		input string
@@ -52,6 +54,7 @@ func TestDisplayWidth_CJK(t *testing.T) {
 	}
 }
 
+// TestDisplayWidth_Fullwidth 全角字母/数字（FF01-FF5E）宽度=2。
 func TestDisplayWidth_Fullwidth(t *testing.T) {
 	tests := []struct {
 		input string
@@ -69,6 +72,7 @@ func TestDisplayWidth_Fullwidth(t *testing.T) {
 	}
 }
 
+// TestDisplayWidth_Emoji emoji 宽度=2。
 func TestDisplayWidth_Emoji(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -93,6 +97,7 @@ func TestDisplayWidth_Emoji(t *testing.T) {
 	}
 }
 
+// TestDisplayWidth_VS16 VS16 强制 emoji 呈现宽度=2。
 func TestDisplayWidth_VS16(t *testing.T) {
 	base := "♥"       // U+2665 black heart suit
 	withVS16 := "♥️"   // U+2665 + U+FE0F
@@ -104,6 +109,7 @@ func TestDisplayWidth_VS16(t *testing.T) {
 	}
 }
 
+// TestDisplayWidth_FlagSequence 国旗序列宽度。
 func TestDisplayWidth_FlagSequence(t *testing.T) {
 	china := "🇨🇳" // U+1F1E8 + U+1F1F3, a regional indicator pair
 	got := displayWidth(china)
@@ -113,6 +119,7 @@ func TestDisplayWidth_FlagSequence(t *testing.T) {
 	}
 }
 
+// TestDisplayWidth_Combining 组合字符零宽度。
 func TestDisplayWidth_Combining(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -134,6 +141,7 @@ func TestDisplayWidth_Combining(t *testing.T) {
 	}
 }
 
+// TestDisplayWidth_ZeroWidth 零宽字符宽度=0。
 func TestDisplayWidth_ZeroWidth(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -158,6 +166,7 @@ func TestDisplayWidth_ZeroWidth(t *testing.T) {
 	}
 }
 
+// TestDisplayWidth_ZWJSequence ZWJ emoji 序列宽度。
 func TestDisplayWidth_ZWJSequence(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -178,6 +187,7 @@ func TestDisplayWidth_ZWJSequence(t *testing.T) {
 	}
 }
 
+// TestDisplayWidth_EmojiPresentationBMP BMP emoji 呈现宽度。
 func TestDisplayWidth_EmojiPresentationBMP(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -202,6 +212,7 @@ func TestDisplayWidth_EmojiPresentationBMP(t *testing.T) {
 	}
 }
 
+// TestDisplayWidth_Halfwidth 半角假名/符号宽度=1。
 func TestDisplayWidth_Halfwidth(t *testing.T) {
 	tests := []struct {
 		input string
@@ -223,6 +234,7 @@ func TestDisplayWidth_Halfwidth(t *testing.T) {
 // stripANSI — ANSI escape sequence removal with Unicode
 // ============================================================
 
+// TestStripANSI_Unicode ANSI 移除 + Unicode 保留。
 func TestStripANSI_Unicode(t *testing.T) {
 	tests := []struct {
 		input string
@@ -250,6 +262,7 @@ func TestStripANSI_Unicode(t *testing.T) {
 // wrapCellLines — table cell word wrapping with Unicode
 // ============================================================
 
+// TestWrapCellLines_ASCII 纯 ASCII cell 换行。
 func TestWrapCellLines_ASCII(t *testing.T) {
 	tests := []struct {
 		content string
@@ -278,6 +291,7 @@ func TestWrapCellLines_ASCII(t *testing.T) {
 	}
 }
 
+// TestWrapCellLines_CJK CJK cell 换行（字符边界断行）。
 func TestWrapCellLines_CJK(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -307,6 +321,7 @@ func TestWrapCellLines_CJK(t *testing.T) {
 	}
 }
 
+// TestWrapCellLines_ZeroWidth 零宽字符 cell 换行。
 func TestWrapCellLines_ZeroWidth(t *testing.T) {
 	// After the fix: wordVisLen += RuneWidth(r) instead of wordVisLen++
 	// Zero-width chars should not contribute to word width.
@@ -336,6 +351,7 @@ func TestWrapCellLines_ZeroWidth(t *testing.T) {
 	}
 }
 
+// TestWrapCellLines_Emoji emoji cell 换行。
 func TestWrapCellLines_Emoji(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -363,6 +379,7 @@ func TestWrapCellLines_Emoji(t *testing.T) {
 	}
 }
 
+// TestWrapCellLines_NoOverflow 验证各行不超宽。
 func TestWrapCellLines_NoOverflow(t *testing.T) {
 	// Ensure no line exceeds the specified width for various content types.
 	tests := []struct {
@@ -392,6 +409,7 @@ func TestWrapCellLines_NoOverflow(t *testing.T) {
 // wrapText — document-level word wrapping with Unicode
 // ============================================================
 
+// TestWrapText_CJK 文档级 CJK/emoji word wrap。
 func TestWrapText_CJK(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -419,6 +437,7 @@ func TestWrapText_CJK(t *testing.T) {
 // Rendering integration — CJK / emoji in Markdown structures
 // ============================================================
 
+// TestRender_CJKHeading 中文标题。
 func TestRender_CJKHeading(t *testing.T) {
 	input := "# 你好世界\n"
 	got, err := Render(input)
@@ -431,6 +450,7 @@ func TestRender_CJKHeading(t *testing.T) {
 	}
 }
 
+// TestRender_CJKInline 中文加粗/斜体/行内代码。
 func TestRender_CJKInline(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -456,6 +476,7 @@ func TestRender_CJKInline(t *testing.T) {
 	}
 }
 
+// TestRender_CJKList 中文列表。
 func TestRender_CJKList(t *testing.T) {
 	input := "- 项目一\n- 项目二\n- 项目三\n"
 	got, err := Render(input)
@@ -469,6 +490,7 @@ func TestRender_CJKList(t *testing.T) {
 	}
 }
 
+// TestRender_CJKTable 中文表格。
 func TestRender_CJKTable(t *testing.T) {
 	input := "| 中文 | English |\n|------|---------|\n| 你好 | Hello |\n| 世界 | World |\n"
 	got, err := Render(input)
@@ -486,6 +508,7 @@ func TestRender_CJKTable(t *testing.T) {
 	}
 }
 
+// TestRender_EmojiTable emoji 表格。
 func TestRender_EmojiTable(t *testing.T) {
 	input := "| Emoji | Desc |\n|-------|------|\n| 👍 | Thumbs up |\n| 🎉 | Party |\n"
 	got, err := Render(input)
@@ -499,6 +522,7 @@ func TestRender_EmojiTable(t *testing.T) {
 	}
 }
 
+// TestRender_CJKCodeBlock 中文代码块。
 func TestRender_CJKCodeBlock(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -520,6 +544,7 @@ func TestRender_CJKCodeBlock(t *testing.T) {
 	}
 }
 
+// TestRender_CJKParagraph 中文段落。
 func TestRender_CJKParagraph(t *testing.T) {
 	input := "这是一个中文段落。它包含**加粗**和*斜体*，以及`代码`。\n"
 	got, err := Render(input)
@@ -531,6 +556,7 @@ func TestRender_CJKParagraph(t *testing.T) {
 	}
 }
 
+// TestRender_EmojiInline 行内 emoji。
 func TestRender_EmojiInline(t *testing.T) {
 	input := "# Emoji Title\n\nParagraph with 👍 emoji.\n"
 	got, err := Render(input)
@@ -550,6 +576,7 @@ func TestRender_EmojiInline(t *testing.T) {
 // Table column width expansion with CJK content
 // ============================================================
 
+// TestRender_CJKTableWidthExpansion CJK 内容宽度计入列宽计算。
 func TestRender_CJKTableWidthExpansion(t *testing.T) {
 	// "李四四" (width 6) should expand column from 4 to 6
 	input := "| 姓名 | 年龄 |\n|------|------|\n| 李四四 | 35 |\n"
@@ -572,6 +599,7 @@ func TestRender_CJKTableWidthExpansion(t *testing.T) {
 // Table column alignment with CJK — visual width verification
 // ============================================================
 
+// TestRender_CJKTableContentPreserved CJK 表格内容不丢失。
 func TestRender_CJKTableContentPreserved(t *testing.T) {
 	input := "| 姓名 | 年龄 |\n|------|------|\n| 张三 | 28 |\n| 李四四 | 35 |\n"
 	got, err := Render(input)
@@ -589,6 +617,7 @@ func TestRender_CJKTableContentPreserved(t *testing.T) {
 // Mixed CJK + emoji + ASCII in one document
 // ============================================================
 
+// TestRender_MixedCJKEmoji 中英文/emoji 混合冒烟。
 func TestRender_MixedCJKEmoji(t *testing.T) {
 	input := `# 综合测试
 
