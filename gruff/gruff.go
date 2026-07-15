@@ -146,24 +146,7 @@ func wrapText(s string, width int, padding int, bgCode string) string {
 			remaining := word
 			splitStyle := make([]byte, len(wordStartStyle))
 			copy(splitStyle, wordStartStyle)
-			for len(remaining) > 0 {
-				available := width - padding - lineLen
-				head, tail := breakChunk(remaining, available, &splitStyle)
-				if len(head) == 0 {
-					out.Write(remaining)
-					lineLen += ansiDisplayWidth(remaining)
-					break
-				}
-				out.Write(head)
-				lineLen += ansiDisplayWidth(head)
-				remaining = tail
-				if len(remaining) > 0 {
-					savedStyle := activeStyle
-					activeStyle = splitStyle
-					newLine()
-					activeStyle = savedStyle
-				}
-			}
+			lineLen = breakLongWord(&out, remaining, width, padding, lineLen, &splitStyle, &activeStyle, newLine)
 			word = word[:0]
 			activeStyle = append(activeStyle[:0], splitStyle...)
 			wordStartStyle = append(wordStartStyle[:0], splitStyle...)
@@ -178,65 +161,7 @@ func wrapText(s string, width int, padding int, bgCode string) string {
 	}
 
 	for _, r := range s {
-		switch escSt {
-		case escStart:
-			word = utf8.AppendRune(word, r)
-			tempEsc = utf8.AppendRune(tempEsc, r)
-			if r == '[' {
-				escSt = escCSI
-			} else if r == ']' {
-				escSt = escOSC
-			} else {
-				escSt = escNone
-				tempEsc = tempEsc[:0]
-			}
-		case escCSI:
-			word = utf8.AppendRune(word, r)
-			tempEsc = utf8.AppendRune(tempEsc, r)
-			if r >= 0x40 && r <= 0x7E {
-				escSt = escNone
-				updateActiveStyle(&activeStyle, tempEsc)
-				tempEsc = tempEsc[:0]
-			}
-		case escOSC:
-			word = utf8.AppendRune(word, r)
-			tempEsc = utf8.AppendRune(tempEsc, r)
-			if r == '\x1b' {
-				escSt = escOSCSt
-			} else if r == '\x07' {
-				escSt = escNone
-				updateActiveStyle(&activeStyle, tempEsc)
-				tempEsc = tempEsc[:0]
-			}
-		case escOSCSt:
-			word = utf8.AppendRune(word, r)
-			tempEsc = utf8.AppendRune(tempEsc, r)
-			if r == '\\' {
-				escSt = escNone
-				updateActiveStyle(&activeStyle, tempEsc)
-				tempEsc = tempEsc[:0]
-			} else {
-				escSt = escOSC
-			}
-		default: // escNone
-			if r == '\x1b' {
-				word = utf8.AppendRune(word, r)
-				tempEsc = utf8.AppendRune(tempEsc, r)
-				escSt = escStart
-				continue
-			}
-			if r == '\n' {
-				flushWord()
-				newLine()
-				continue
-			}
-			if r == ' ' {
-				flushWord()
-				spaces++
-				continue
-			}
-			word = utf8.AppendRune(word, r)
-		}
+		processWrapRune(r, &escSt, &word, &tempEsc, &activeStyle, flushWord, newLine, &spaces)
 	}
 	flushWord()
 
@@ -250,6 +175,91 @@ func wrapText(s string, width int, padding int, bgCode string) string {
 	}
 
 	return out.String()
+}
+
+func breakLongWord(out *strings.Builder, word []byte, width, padding, lineLen int, splitStyle, activeStyle *[]byte, newLine func()) int {
+	remaining := word
+	for len(remaining) > 0 {
+		available := width - padding - lineLen
+		head, tail := breakChunk(remaining, available, splitStyle)
+		if len(head) == 0 {
+			out.Write(remaining)
+			lineLen += ansiDisplayWidth(remaining)
+			break
+		}
+		out.Write(head)
+		lineLen += ansiDisplayWidth(head)
+		remaining = tail
+		if len(remaining) > 0 {
+			savedStyle := *activeStyle
+			*activeStyle = *splitStyle
+			newLine()
+			*activeStyle = savedStyle
+		}
+	}
+	return lineLen
+}
+
+func processWrapRune(r rune, escSt *escapeState, word, tempEsc, activeStyle *[]byte, flushWord, newLine func(), spaces *int) {
+	switch *escSt {
+	case escStart:
+		*word = utf8.AppendRune(*word, r)
+		*tempEsc = utf8.AppendRune(*tempEsc, r)
+		if r == '[' {
+			*escSt = escCSI
+		} else if r == ']' {
+			*escSt = escOSC
+		} else {
+			*escSt = escNone
+			*tempEsc = (*tempEsc)[:0]
+		}
+	case escCSI:
+		*word = utf8.AppendRune(*word, r)
+		*tempEsc = utf8.AppendRune(*tempEsc, r)
+		if r >= 0x40 && r <= 0x7E {
+			*escSt = escNone
+			updateActiveStyle(activeStyle, *tempEsc)
+			*tempEsc = (*tempEsc)[:0]
+		}
+	case escOSC:
+		*word = utf8.AppendRune(*word, r)
+		*tempEsc = utf8.AppendRune(*tempEsc, r)
+		if r == '\x1b' {
+			*escSt = escOSCSt
+		} else if r == '\x07' {
+			*escSt = escNone
+			updateActiveStyle(activeStyle, *tempEsc)
+			*tempEsc = (*tempEsc)[:0]
+		}
+	case escOSCSt:
+		*word = utf8.AppendRune(*word, r)
+		*tempEsc = utf8.AppendRune(*tempEsc, r)
+		if r == '\\' {
+			*escSt = escNone
+			updateActiveStyle(activeStyle, *tempEsc)
+			*tempEsc = (*tempEsc)[:0]
+		} else {
+			*escSt = escOSC
+		}
+	default:
+		if r == '\x1b' {
+			*word = utf8.AppendRune(*word, r)
+			*tempEsc = utf8.AppendRune(*tempEsc, r)
+			*escSt = escStart
+			return
+		}
+		if r == '\n' {
+			flushWord()
+			newLine()
+			return
+		}
+		if r == ' ' {
+			flushWord()
+			*spaces++
+			return
+		}
+		*word = utf8.AppendRune(*word, r)
+	}
 }
 
 func b2i(b bool) int {

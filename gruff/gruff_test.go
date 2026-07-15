@@ -141,7 +141,7 @@ func TestRender_Link(t *testing.T) {
 			check: []string{
 				osc8Link("https://example.com"),
 				"\x1b[1m\x1b[38;2;92;156;245mGruff\x1b[22m\x1b[39m",
-				"\x1b[4m\x1b[38;2;92;156;245mhttps://example.com\x1b[24m\x1b[39m",
+				"\x1b[38;2;92;156;245mhttps://example.com\x1b[39m",
 				osc8End,
 			},
 		},
@@ -151,7 +151,7 @@ func TestRender_Link(t *testing.T) {
 			check: []string{
 				osc8Link("https://example.com"),
 				"\x1b[1m\x1b[38;2;92;156;245m\x1b[1m\x1b[38;2;224;224;224mbold\x1b[22m\x1b[39m\x1b[22m\x1b[39m",
-				"\x1b[4m\x1b[38;2;92;156;245mhttps://example.com\x1b[24m\x1b[39m",
+				"\x1b[38;2;92;156;245mhttps://example.com\x1b[39m",
 				osc8End,
 			},
 		},
@@ -162,7 +162,7 @@ func TestRender_Link(t *testing.T) {
 				"\x1b[38;2;224;224;224mclick \x1b[39m",
 				osc8Link("https://example.com"),
 				"\x1b[1m\x1b[38;2;92;156;245mhere\x1b[22m\x1b[39m",
-				"\x1b[4m\x1b[38;2;92;156;245mhttps://example.com\x1b[24m\x1b[39m",
+				"\x1b[38;2;92;156;245mhttps://example.com\x1b[39m",
 				osc8End,
 				"\x1b[38;2;224;224;224m now\x1b[39m",
 			},
@@ -195,7 +195,7 @@ func TestRender_LongURL_Wrap(t *testing.T) {
 		osc8Link("https://example.com/very-long-path-that-exceeds-line-width"),
 		"\x1b[1m\x1b[38;2;92;156;245mx\x1b[22m\x1b[39m",
 		osc8End,
-		"\x1b[4m\x1b[38;2;92;156;245mhttps://example.com/very-long-path-tha",
+		"\x1b[38;2;92;156;245mhttps://example.com/very-long-path-tha",
 		"t-exceeds-line-width",
 	}
 	for _, c := range checks {
@@ -225,7 +225,7 @@ func TestRender_CodeBlock(t *testing.T) {
 		{
 			name:  "fenced code with language",
 			input: "```go\nvar x = 1\n```\n",
-			check: []string{"\x1b[4m\x1b[38;2;92;156;245mgo\x1b[24m\x1b[39m", "\x1b[38;2;80;250;123mvar x = 1\x1b[39m"},
+			check: []string{"\x1b[38;2;92;156;245mgo\x1b[39m", "\x1b[38;2;80;250;123mvar x = 1\x1b[39m"},
 		},
 		{
 			name:  "indented code block",
@@ -395,7 +395,7 @@ func TestRender_Mixed(t *testing.T) {
 		{"contains bold ANSI", func(s string) bool { return strings.Contains(s, "\x1b[1m") }},
 		{"contains italic ANSI", func(s string) bool { return strings.Contains(s, "\x1b[3m") }},
 		{"contains code ANSI", func(s string) bool { return strings.Contains(s, "\x1b[38;2;80;250;123m") }},
-		{"contains link underline", func(s string) bool { return strings.Contains(s, "\x1b[4m") }},
+		{"contains link bold", func(s string) bool { return strings.Contains(s, "\x1b[1m") }},
 		{"contains link URL", func(s string) bool { return strings.Contains(s, "example.com") }},
 		{"contains bullet", func(s string) bool { return strings.Contains(s, "•") }},
 		{"contains ordered num", func(s string) bool { return strings.Contains(s, "1.") }},
