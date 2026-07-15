@@ -211,6 +211,126 @@ func TestRender_LongURL_Wrap(t *testing.T) {
 	}
 }
 
+func TestRender_AutoLink(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		check []string
+	}{
+		{
+			name:  "basic autolink",
+			input: "<https://example.com>\n",
+			check: []string{
+				osc8Link("https://example.com"),
+				"\x1b[38;2;92;156;245mhttps://example.com\x1b[39m",
+				osc8End,
+			},
+		},
+		{
+			name:  "autolink in paragraph",
+			input: "visit <https://example.com> now\n",
+			check: []string{
+				"\x1b[38;2;224;224;224mvisit \x1b[39m",
+				osc8Link("https://example.com"),
+				"\x1b[38;2;92;156;245mhttps://example.com\x1b[39m",
+				osc8End,
+				"\x1b[38;2;224;224;224m now\x1b[39m",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Render(tt.input)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, c := range tt.check {
+				if !strings.Contains(got, c) {
+					t.Errorf("output missing %q\n got: %q", c, got)
+				}
+			}
+		})
+	}
+}
+
+func TestRender_BareURL(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		check []string
+	}{
+		{
+			name:  "linkify bare url",
+			input: "visit https://example.com now\n",
+			check: []string{
+				"\x1b[38;2;224;224;224mvisit \x1b[39m",
+				osc8Link("https://example.com"),
+				"\x1b[38;2;92;156;245mhttps://example.com\x1b[39m",
+				osc8End,
+				"\x1b[38;2;224;224;224m now\x1b[39m",
+			},
+		},
+		{
+			name:  "bare url at paragraph start",
+			input: "https://example.com is the site\n",
+			check: []string{
+				osc8Link("https://example.com"),
+				"\x1b[38;2;92;156;245mhttps://example.com\x1b[39m",
+				osc8End,
+				"\x1b[38;2;224;224;224m is the site\x1b[39m",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Render(tt.input)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, c := range tt.check {
+				if !strings.Contains(got, c) {
+					t.Errorf("output missing %q\n got: %q", c, got)
+				}
+			}
+		})
+	}
+}
+
+func TestRender_LinkInTable(t *testing.T) {
+	input := "| Col |\n|-----|\n| [link](https://example.com) |\n"
+	got, err := Render(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	checks := []string{
+		osc8Link("https://example.com"),
+		"\x1b[1m\x1b[38;2;92;156;245mlink\x1b[22m\x1b[39m",
+		"\x1b[38;2;92;156;245m(https://example.com)\x1b[39m",
+		osc8End,
+	}
+	for _, c := range checks {
+		if !strings.Contains(got, c) {
+			t.Errorf("output missing %q\n got: %q", c, got)
+		}
+	}
+}
+
+func TestRender_MultiLink(t *testing.T) {
+	input := "see [A](https://a.com) and [B](https://b.com)\n"
+	got, err := Render(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, u := range []string{"https://a.com", "https://b.com"} {
+		if !strings.Contains(got, osc8Link(u)) {
+			t.Errorf("output missing OSC8 for %s", u)
+		}
+	}
+	if strings.Count(got, osc8End) < 2 {
+		t.Errorf("expected at least 2 osc8End, got %d", strings.Count(got, osc8End))
+	}
+}
+
 func TestRender_CodeBlock(t *testing.T) {
 	tests := []struct {
 		name  string
