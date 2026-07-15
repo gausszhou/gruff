@@ -10,12 +10,12 @@ import (
 	"github.com/yuin/goldmark/text"
 )
 
-func hasOSC8(style []byte) bool {
-	return len(style) >= 4 && style[0] == '\x1b' && style[1] == ']' && style[2] == '8' && style[3] == ';'
-}
-
 func hasOSC8String(s string) bool {
 	return len(s) >= 4 && s[0] == '\x1b' && s[1] == ']' && s[2] == '8' && s[3] == ';'
+}
+
+func endsWithOSC8End(s string) bool {
+	return len(s) >= 7 && s[len(s)-7] == '\x1b' && s[len(s)-6] == ']' && s[len(s)-5] == '8' && s[len(s)-4] == ';' && s[len(s)-3] == ';' && string(s[len(s)-2:]) == "\x1b\\"
 }
 
 type nodeRenderer struct {
@@ -437,10 +437,8 @@ func wrapCellLines(content string, width int) []string {
 				line.Write(head)
 				lineVisLen += ansiDisplayWidth(head)
 				lineStartStyle = append(lineStartStyle[:0], chunkStyle...)
-				if len(tail) > 0 {
-				if hasOSC8(lineStartStyle) {
-						line.WriteString(osc8End)
-					}
+			if len(tail) > 0 {
+					line.WriteString(osc8End)
 					lines = append(lines, line.String())
 					line.Reset()
 					lineVisLen = 0
@@ -476,9 +474,6 @@ func wrapCellLines(content string, width int) []string {
 	flushWord()
 
 	if line.Len() > 0 {
-		if hasOSC8(lineStartStyle) {
-			line.WriteString(osc8End)
-		}
 		lines = append(lines, line.String())
 	} else if len(lines) == 0 {
 		lines = []string{""}
@@ -743,7 +738,7 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 		r.buf.WriteByte(' ')
 
 		writeReset := content != ""
-		writeOSC8 := writeReset && hasOSC8String(content)
+		writeOSC8 := writeReset && hasOSC8String(content) && !endsWithOSC8End(content)
 
 		switch aligns[i] {
 		case extensionAst.AlignRight:
