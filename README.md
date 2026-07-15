@@ -82,9 +82,9 @@ on Intel Core Ultra 7 255H.
 
 | Metric         | gruff ¹     | glamour (minimal) ² | glamour (standard) ³ | Improvement (vs minimal / vs standard) |
 |----------------|-------------|---------------------|----------------------|----------------------------------------|
-| Time/op        | **~75 ms**  | ~403 ms             | ~1.49 s              | **~5× / ~20×**                         |
-| Memory/op      | **~53 MB**  | ~121 MB             | ~455 MB              | **~2.3× / ~8.6×**                      |
-| Allocations/op | **~443,000**| ~10,700,000         | ~42,500,000          | **~24× / ~96×**                        |
+| Time/op        | **~98 ms**  | ~435 ms             | ~1.39 s              | **~4.4× / ~14×**                       |
+| Memory/op      | **~69 MB**  | ~137 MB             | ~441 MB              | **~2.0× / ~6.4×**                      |
+| Allocations/op | **~459,000**| ~10,100,000         | ~39,300,000          | **~22× / ~86×**                        |
 
 ¹ gruff: `WithDark()` (no background), `WithWordWrap(120)`.
 ² glamour minimal: `Chroma = nil`, `CleanInput`, word wrap off, table wrap off, inline table links on.
