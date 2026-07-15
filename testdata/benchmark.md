@@ -31,23 +31,23 @@ Charm: Plain Text https://github.com/charmbracelet/bubbletea/blob/master/tutoria
 
 ## Unicode Showcase
 
-| Category | Characters | Width |
-|:---------|:-----------|:-----|
-| Emoji | ✅ ❌ 🚀 ⭐ ⚠️ ✨ 🎉 😀 🔥 | Mixed |
-| CJK | 你好世界 畫龍點睛 | 2 ea |
-| Japanese | こんにちは コンニチハ | 2 ea |
-| Korean | 안녕하세요 | 2 ea |
-| Fullwidth | ＡＢＣＸＹＺ １２３ | 2 ea |
-| Accented | àáâãäåæçèéêë éèêë çæœ | 1 ea |
-| Math | ∑ ∫ ∞ π λ α β γ | 1 ea |
-| Greek | αβγδεζηθικλμνξοπρςστυφχψω | 1 ea |
-| Currency | ¥ € £ $ ¢ ₩ ₹ ₽ ₿ | Mixed |
-| Symbols | ★ ♥ ♦ ♠ ♣ → ← ⇒ § ¶ © ® | Mixed |
-| Dingbats | ✓ ✗ ✘ ✝ ✞ ✟ | 1 ea |
-| Suits | ♠ ♥ ♦ ♣ | 1 ea |
-| Arrows | ← ↑ → ↓ ↔ ⇒ ⇔ | 1 ea |
-| Operators | ± ≠ ≈ ≤ ≥ ≡ | 1 ea |
-| Brackets | 【「『』」】 | 2 ea |
+| Category | Characters | Width | Reference |
+|:---------|:-----------|:-----|:----------|
+| Emoji | ✅ ❌ 🚀 ⭐ ⚠️ ✨ 🎉 😀 🔥 | Mixed | [Emoji List](https://unicode.org/emoji/charts/full-emoji-list.html) |
+| CJK | 你好世界 畫龍點睛 | 2 ea | [CJK Unified](https://en.wikipedia.org/wiki/CJK_Unified_Ideographs) |
+| Japanese | こんにちは コンニチハ | 2 ea | [Hiragana](https://en.wikipedia.org/wiki/Hiragana) / [Katakana](https://en.wikipedia.org/wiki/Katakana) |
+| Korean | 안녕하세요 | 2 ea | [Hangul](https://en.wikipedia.org/wiki/Hangul) |
+| Fullwidth | ＡＢＣＸＹＺ １２３ | 2 ea | [Halfwidth and Fullwidth](https://en.wikipedia.org/wiki/Halfwidth_and_fullwidth_forms) |
+| Accented | àáâãäåæçèéêë éèêë çæœ | 1 ea | [Latin Extended](https://en.wikipedia.org/wiki/Latin_Extended-A) |
+| Math | ∑ ∫ ∞ π λ α β γ | 1 ea | [Mathematical Operators](https://en.wikipedia.org/wiki/Mathematical_operators_and_symbols_in_Unicode) |
+| Greek | αβγδεζηθικλμνξοπρςστυφχψω | 1 ea | [Greek and Coptic](https://en.wikipedia.org/wiki/Greek_and_Coptic) |
+| Currency | ¥ € £ $ ¢ ₩ ₹ ₽ ₿ | Mixed | [Currency Symbols](https://en.wikipedia.org/wiki/Currency_symbol_(typography)) |
+| Symbols | ★ ♥ ♦ ♠ ♣ → ← ⇒ § ¶ © ® | Mixed | [Miscellaneous Symbols](https://en.wikipedia.org/wiki/Miscellaneous_Symbols) |
+| Dingbats | ✓ ✗ ✘ ✝ ✞ ✟ | 1 ea | [Dingbat](https://en.wikipedia.org/wiki/Dingbat) |
+| Suits | ♠ ♥ ♦ ♣ | 1 ea | [Playing Cards](https://en.wikipedia.org/wiki/Playing_cards_in_Unicode) |
+| Arrows | ← ↑ → ↓ ↔ ⇒ ⇔ | 1 ea | [Arrows block](https://en.wikipedia.org/wiki/Arrows_(Unicode_block)) |
+| Operators | ± ≠ ≈ ≤ ≥ ≡ | 1 ea | https://en.wikipedia.org/wiki/Mathematical_operators_and_symbols_in_Unicode |
+| Brackets | 【「『』」】 | 2 ea | https://en.wikipedia.org/wiki/Bracket#East_Asian_brackets |
 
 ## Text Formatting
 
@@ -89,11 +89,11 @@ And ordered lists:
 
 ## Tables
 
-| Name  | Type   | Default | Description       |
-| ----- | ------ | ------- | ----------------- |
-| Theme | string | "dark"  | Color theme       |
-| Width | int    | 120     | Word wrap width   |
-| Debug | bool   | false   | Enable debug mode |
+| Name  | Type   | Default | Description       | More Info |
+| ----- | ------ | ------- | ----------------- | --------- |
+| Theme | string | "dark"  | Color theme       | [ANSI colors](https://en.wikipedia.org/wiki/ANSI_escape_code#Colors) |
+| Width | int    | 120     | Word wrap width   | [Terminal width](https://en.wikipedia.org/wiki/Page_width) |
+| Debug | bool   | false   | Enable debug mode | [Debugging](https://en.wikipedia.org/wiki/Debugging) |
 
 ## Blockquotes
 

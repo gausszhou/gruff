@@ -10,6 +10,14 @@ import (
 	"github.com/yuin/goldmark/text"
 )
 
+func hasOSC8(style []byte) bool {
+	return len(style) >= 4 && style[0] == '\x1b' && style[1] == ']' && style[2] == '8' && style[3] == ';'
+}
+
+func hasOSC8String(s string) bool {
+	return len(s) >= 4 && s[0] == '\x1b' && s[1] == ']' && s[2] == '8' && s[3] == ';'
+}
+
 type nodeRenderer struct {
 	buf          strings.Builder
 	source       []byte
@@ -403,14 +411,50 @@ func wrapCellLines(content string, width int) []string {
 			return
 		}
 		if lineVisLen > 0 && lineVisLen+1+wordVisLen > width {
-			if len(lineStartStyle) > 0 {
-				line.WriteString("\x1b[0m")
-			}
 			lines = append(lines, line.String())
 			line.Reset()
 			line.Write(wordStartStyle)
 			lineStartStyle = append(lineStartStyle[:0], wordStartStyle...)
 			lineVisLen = 0
+		}
+		if lineVisLen == 0 && wordVisLen > width {
+			remaining := word
+			splitStyle := make([]byte, len(wordStartStyle))
+			copy(splitStyle, wordStartStyle)
+			line.Reset()
+
+			for len(remaining) > 0 {
+				chunkStyle := make([]byte, len(splitStyle))
+				copy(chunkStyle, splitStyle)
+				head, tail := breakChunk(remaining, width, &splitStyle)
+				if len(head) == 0 {
+					line.Write(chunkStyle)
+					line.Write(remaining)
+					lineVisLen += ansiDisplayWidth(remaining)
+					break
+				}
+				line.Write(chunkStyle)
+				line.Write(head)
+				lineVisLen += ansiDisplayWidth(head)
+				lineStartStyle = append(lineStartStyle[:0], chunkStyle...)
+				if len(tail) > 0 {
+				if hasOSC8(lineStartStyle) {
+						line.WriteString(osc8End)
+					}
+					lines = append(lines, line.String())
+					line.Reset()
+					lineVisLen = 0
+				}
+				remaining = tail
+			}
+
+			wordVisLen = 0
+			word = word[:0]
+			wordStartStyle = append(wordStartStyle[:0], activeStyle...)
+			if len(lineStartStyle) == 0 {
+				lineStartStyle = append(lineStartStyle[:0], activeStyle...)
+			}
+			return
 		}
 		if lineVisLen > 0 && wordVisLen > 0 {
 			line.WriteByte(' ')
@@ -432,8 +476,8 @@ func wrapCellLines(content string, width int) []string {
 	flushWord()
 
 	if line.Len() > 0 {
-		if len(lineStartStyle) > 0 {
-			line.WriteString("\x1b[0m")
+		if hasOSC8(lineStartStyle) {
+			line.WriteString(osc8End)
 		}
 		lines = append(lines, line.String())
 	} else if len(lines) == 0 {
@@ -485,6 +529,7 @@ func processCellRune(r rune, escSt *escapeState, word *[]byte, wordVisLen *int, 
 			*escSt = escStart
 			return
 		}
+		*tempEsc = (*tempEsc)[:0]
 		if r == ' ' {
 			flushWord()
 			return
@@ -492,9 +537,6 @@ func processCellRune(r rune, escSt *escapeState, word *[]byte, wordVisLen *int, 
 		if r == '\n' {
 			flushWord()
 			if line.Len() > 0 {
-				if len(*lineStartStyle) > 0 {
-					line.WriteString("\x1b[0m")
-				}
 				*lines = append(*lines, line.String())
 				line.Reset()
 				line.Write(*activeStyle)
@@ -509,9 +551,6 @@ func processCellRune(r rune, escSt *escapeState, word *[]byte, wordVisLen *int, 
 			flushWord()
 			rw := runewidth.RuneWidth(r)
 			if *lineVisLen+rw > width && *lineVisLen > 0 {
-				if len(*lineStartStyle) > 0 {
-					line.WriteString("\x1b[0m")
-				}
 				*lines = append(*lines, line.String())
 				line.Reset()
 				line.Write(*activeStyle)
@@ -595,8 +634,9 @@ func (r *nodeRenderer) renderTable(table *extensionAst.Table) {
 		case *extensionAst.TableHeader:
 			for c := n.FirstChild(); c != nil; c = c.NextSibling() {
 				if cell, ok := c.(*extensionAst.TableCell); ok {
+					content := strings.TrimSuffix(r.renderSubtree(cell), "\n")
 					headers = append(headers, cellData{
-						content: r.renderSubtree(cell),
+						content: content,
 						align:   cell.Alignment,
 					})
 				}
@@ -605,8 +645,9 @@ func (r *nodeRenderer) renderTable(table *extensionAst.Table) {
 			var rowCells []cellData
 			for c := n.FirstChild(); c != nil; c = c.NextSibling() {
 				if cell, ok := c.(*extensionAst.TableCell); ok {
+					content := strings.TrimSuffix(r.renderSubtree(cell), "\n")
 					rowCells = append(rowCells, cellData{
-						content: r.renderSubtree(cell),
+						content: content,
 						align:   cell.Alignment,
 					})
 				}
@@ -623,7 +664,7 @@ func (r *nodeRenderer) renderTable(table *extensionAst.Table) {
 		return
 	}
 
-	colWidths, colAligns := tableColWidths(headers, bodyRows, numCols, r.wordWrap-r.padding)
+	colWidths, colAligns := tableColWidths(headers, bodyRows, numCols, r.wordWrap-2*r.padding)
 	if colWidths == nil {
 		return
 	}
@@ -699,33 +740,52 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 				padding = 0
 			}
 
-			r.buf.WriteByte(' ')
-			switch aligns[i] {
-			case extensionAst.AlignRight:
-				for j := 0; j < padding; j++ {
-					r.buf.WriteByte(' ')
-				}
-				r.buf.WriteString(content)
-				r.buf.WriteString("\x1b[0m")
-			case extensionAst.AlignCenter:
-				leftPad := padding / 2
-				rightPad := padding - leftPad
-				for j := 0; j < leftPad; j++ {
-					r.buf.WriteByte(' ')
-				}
-				r.buf.WriteString(content)
-				r.buf.WriteString("\x1b[0m")
-				for j := 0; j < rightPad; j++ {
-					r.buf.WriteByte(' ')
-				}
-			default:
-				r.buf.WriteString(content)
-				r.buf.WriteString("\x1b[0m")
-				for j := 0; j < padding; j++ {
-					r.buf.WriteByte(' ')
-				}
+		r.buf.WriteByte(' ')
+
+		writeReset := content != ""
+		writeOSC8 := writeReset && hasOSC8String(content)
+
+		switch aligns[i] {
+		case extensionAst.AlignRight:
+			for j := 0; j < padding; j++ {
+				r.buf.WriteByte(' ')
 			}
-			r.buf.WriteByte(' ')
+			r.buf.WriteString(content)
+			if writeOSC8 {
+				r.buf.WriteString(osc8End)
+			}
+			if writeReset {
+				r.buf.WriteString("\x1b[39m")
+			}
+		case extensionAst.AlignCenter:
+			leftPad := padding / 2
+			rightPad := padding - leftPad
+			for j := 0; j < leftPad; j++ {
+				r.buf.WriteByte(' ')
+			}
+			r.buf.WriteString(content)
+			if writeOSC8 {
+				r.buf.WriteString(osc8End)
+			}
+			if writeReset {
+				r.buf.WriteString("\x1b[39m")
+			}
+			for j := 0; j < rightPad; j++ {
+				r.buf.WriteByte(' ')
+			}
+		default:
+			r.buf.WriteString(content)
+			if writeOSC8 {
+				r.buf.WriteString(osc8End)
+			}
+			if writeReset {
+				r.buf.WriteString("\x1b[39m")
+			}
+			for j := 0; j < padding; j++ {
+				r.buf.WriteByte(' ')
+			}
+		}
+		r.buf.WriteByte(' ')
 		}
 		r.buf.WriteByte('\n')
 	}
