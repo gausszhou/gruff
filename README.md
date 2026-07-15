@@ -161,7 +161,7 @@ Code blocks are rendered line-by-line with language tags shown in gray, content 
 
 ## Dependencies
 
-**Runtime:** `github.com/yuin/goldmark`, `github.com/clipperhouse/displaywidth`, `github.com/mattn/go-runewidth`
+**Runtime:** `github.com/yuin/goldmark`, `github.com/mattn/go-runewidth`
 
 **Examples only:** `charm.land/bubbles/v2`, `charm.land/bubbletea/v2`, `charm.land/lipgloss/v2`, `charm.land/glamour/v2` (not included in library builds)
 

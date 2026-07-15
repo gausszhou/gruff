@@ -33,28 +33,27 @@ for each row:
 
 ### displayWidth 与 Emoji 宽度
 
-列宽通过 `displayWidth(stripANSI(content))` 计算，底层使用 [`clipperhouse/displaywidth`](https://github.com/clipperhouse/displaywidth)：
+列宽通过 `displayWidth(stripANSI(content))` 计算，底层使用 [`mattn/go-runewidth`](https://github.com/mattn/go-runewidth)：
 
 ```
 input:  "✅ ❌ 🚀 ⭐ ⚠️ ✨ 🎉 😀 🔥"
-         ↑   ↑   ↑   ↑ ↑↑  ↑   ↑   ↑
-         │   │   │   │ ││  │   │   └─ 🔥 U+1F525        → width 2
-         │   │   │   │ ││  │   └───── 😀 U+1F600        → width 2
-         │   │   │   │ ││  └──────── 🎉 U+1F389         → width 2
-         │   │   │   │ │└──────────── ✨ U+2728          → width 2
-         │   │   │   │ └───────────── ⚠️ U+26A0 + U+FE0F  → width 2 (VS16 强制 emoji)
-         │   │   │   └─────────────── ⭐ U+2B50          → width 2
-         │   │   └─────────────────── 🚀 U+1F680         → width 2
-         │   └─────────────────────── ❌ U+274C          → width 2
-         └─────────────────────────── ✅ U+2705          → width 2
-                                 空格 × 8                → width 1 each
-                                                         → 总计 26
+          ↑   ↑   ↑   ↑ ↑↑  ↑   ↑   ↑
+          │   │   │   │ ││  │   │   └─ 🔥 U+1F525        → width 2
+          │   │   │   │ ││  │   └───── 😀 U+1F600        → width 2
+          │   │   │   │ ││  └──────── 🎉 U+1F389         → width 2
+          │   │   │   │ │└──────────── ✨ U+2728          → width 2
+          │   │   │   │ └───────────── ⚠️ U+26A0 + U+FE0F  → width 1 (runewidth 将 U+FE0F 计为 0)
+          │   │   │   └─────────────── ⭐ U+2B50          → width 2
+          │   │   └─────────────────── 🚀 U+1F680         → width 2
+          │   └─────────────────────── ❌ U+274C          → width 2
+          └─────────────────────────── ✅ U+2705          → width 2
+                                  空格 × 8                → width 1 each
+                                                         → 总计 25
 ```
 
-- `go-runewidth` 对 ambiguous width 字符（如 U+26A0 ⚠）返回 1，不因 U+FE0F 自动提升
-- `displaywidth` 弥补此不足：对后跟 U+FE0F 的码位强制为宽度 2（VS16 提升）
-- RI pairs（Regional Indicator，如国旗 🇨🇳）计为 width 2（两个 RI 字符各宽 1）
-- ZWJ 序列（如 👩‍💻）计为 width 2（字素簇内首字符宽度）
+- `runewidth` 对 U+FE0F (VS16) 计为宽度 0，因此 ⚠️（U+26A0 + U+FE0F）实际宽度为 1
+- RI pairs（Regional Indicator，如国旗 🇨🇳）runewidth 计为 width 1
+- ZWJ 序列中，由 text-presentation 字符开头的序列（如 ❤️‍🔥）计为 width 1
 
 ## 第二遍 — 列宽计算
 

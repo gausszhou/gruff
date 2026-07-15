@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"unicode/utf8"
 
-	"github.com/clipperhouse/displaywidth"
 	"github.com/mattn/go-runewidth"
 )
 
@@ -232,7 +231,7 @@ var lightTheme = Theme{
 }
 
 func displayWidth(s string) int {
-	return displaywidth.String(s)
+	return runewidth.StringWidth(s)
 }
 
 // stripANSI 移除字符串中所有 ANSI 转义序列，返回纯文本
