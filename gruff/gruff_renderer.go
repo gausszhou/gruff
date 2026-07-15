@@ -10,6 +10,14 @@ import (
 	"github.com/yuin/goldmark/text"
 )
 
+func hasOSC8(style []byte) bool {
+	return len(style) >= 4 && style[0] == '\x1b' && style[1] == ']' && style[2] == '8' && style[3] == ';'
+}
+
+func hasOSC8String(s string) bool {
+	return len(s) >= 4 && s[0] == '\x1b' && s[1] == ']' && s[2] == '8' && s[3] == ';'
+}
+
 type nodeRenderer struct {
 	buf          strings.Builder
 	source       []byte
@@ -430,7 +438,7 @@ func wrapCellLines(content string, width int) []string {
 				lineVisLen += ansiDisplayWidth(head)
 				lineStartStyle = append(lineStartStyle[:0], chunkStyle...)
 				if len(tail) > 0 {
-					if strings.HasPrefix(string(lineStartStyle), "\x1b]8;") {
+				if hasOSC8(lineStartStyle) {
 						line.WriteString(osc8End)
 					}
 					lines = append(lines, line.String())
@@ -468,7 +476,7 @@ func wrapCellLines(content string, width int) []string {
 	flushWord()
 
 	if line.Len() > 0 {
-		if strings.HasPrefix(string(lineStartStyle), "\x1b]8;") {
+		if hasOSC8(lineStartStyle) {
 			line.WriteString(osc8End)
 		}
 		lines = append(lines, line.String())
@@ -735,6 +743,7 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 		r.buf.WriteByte(' ')
 
 		writeReset := content != ""
+		writeOSC8 := writeReset && hasOSC8String(content)
 
 		switch aligns[i] {
 		case extensionAst.AlignRight:
@@ -742,8 +751,10 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 				r.buf.WriteByte(' ')
 			}
 			r.buf.WriteString(content)
-			if writeReset {
+			if writeOSC8 {
 				r.buf.WriteString(osc8End)
+			}
+			if writeReset {
 				r.buf.WriteString("\x1b[39m")
 			}
 		case extensionAst.AlignCenter:
@@ -753,8 +764,10 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 				r.buf.WriteByte(' ')
 			}
 			r.buf.WriteString(content)
-			if writeReset {
+			if writeOSC8 {
 				r.buf.WriteString(osc8End)
+			}
+			if writeReset {
 				r.buf.WriteString("\x1b[39m")
 			}
 			for j := 0; j < rightPad; j++ {
@@ -762,8 +775,10 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 			}
 		default:
 			r.buf.WriteString(content)
-			if writeReset {
+			if writeOSC8 {
 				r.buf.WriteString(osc8End)
+			}
+			if writeReset {
 				r.buf.WriteString("\x1b[39m")
 			}
 			for j := 0; j < padding; j++ {
