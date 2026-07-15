@@ -141,7 +141,7 @@ func TestRender_Link(t *testing.T) {
 			check: []string{
 				osc8Link("https://example.com"),
 				"\x1b[1m\x1b[38;2;92;156;245mGruff\x1b[22m\x1b[39m",
-				"\x1b[38;2;92;156;245mhttps://example.com\x1b[39m",
+				"\x1b[38;2;92;156;245m(https://example.com)\x1b[39m",
 				osc8End,
 			},
 		},
@@ -151,7 +151,7 @@ func TestRender_Link(t *testing.T) {
 			check: []string{
 				osc8Link("https://example.com"),
 				"\x1b[1m\x1b[38;2;92;156;245m\x1b[1m\x1b[38;2;224;224;224mbold\x1b[22m\x1b[39m\x1b[22m\x1b[39m",
-				"\x1b[38;2;92;156;245mhttps://example.com\x1b[39m",
+				"\x1b[38;2;92;156;245m(https://example.com)\x1b[39m",
 				osc8End,
 			},
 		},
@@ -162,7 +162,7 @@ func TestRender_Link(t *testing.T) {
 				"\x1b[38;2;224;224;224mclick \x1b[39m",
 				osc8Link("https://example.com"),
 				"\x1b[1m\x1b[38;2;92;156;245mhere\x1b[22m\x1b[39m",
-				"\x1b[38;2;92;156;245mhttps://example.com\x1b[39m",
+				"\x1b[38;2;92;156;245m(https://example.com)\x1b[39m",
 				osc8End,
 				"\x1b[38;2;224;224;224m now\x1b[39m",
 			},
@@ -195,8 +195,8 @@ func TestRender_LongURL_Wrap(t *testing.T) {
 		osc8Link("https://example.com/very-long-path-that-exceeds-line-width"),
 		"\x1b[1m\x1b[38;2;92;156;245mx\x1b[22m\x1b[39m",
 		osc8End,
-		"\x1b[38;2;92;156;245mhttps://example.com/very-long-path-tha",
-		"t-exceeds-line-width",
+		"\x1b[38;2;92;156;245m(https://example.com/very-long-path-th",
+		"at-exceeds-line-width)",
 	}
 	for _, c := range checks {
 		if !strings.Contains(got, c) {

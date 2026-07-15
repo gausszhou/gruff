@@ -155,7 +155,9 @@ func (r *nodeRenderer) renderLink(n *ast.Link) {
 		r.buf.WriteByte(' ')
 		uSt := r.th.LinkURL
 		r.buf.WriteString(string(uSt.start()))
+		r.buf.WriteByte('(')
 		r.buf.WriteString(url)
+		r.buf.WriteByte(')')
 		r.buf.WriteString(string(uSt.end()))
 	}
 	r.buf.WriteString(osc8End)
@@ -174,7 +176,9 @@ func (r *nodeRenderer) renderAutoLink(n *ast.AutoLink) {
 	r.buf.WriteString(osc8Link(url))
 	st := r.th.LinkURL
 	r.buf.WriteString(string(st.start()))
+	r.buf.WriteByte('(')
 	r.buf.Write(n.Label(r.source))
+	r.buf.WriteByte(')')
 	r.buf.WriteString(string(st.end()))
 	r.buf.WriteString(osc8End)
 }
