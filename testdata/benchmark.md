@@ -4,49 +4,20 @@ This document contains a balanced mix of markdown elements for performance testi
 
 ## Links
 
-Visit [GitHub](https://github.com) for more information.
-
-Check out [Gruff](https://github.com/gausszhou/gruff) the markdown renderer.
-
-You can also reference [Go](https://go.dev) documentation.
-
-Example of a long URL: [golang.org/x/term](https://pkg.go.dev/golang.org/x/term#Terminal.ReadPassword) wraps nicely.
-
 Another lengthy link: [goldmark extension](https://github.com/yuin/goldmark/tree/main/extension#table-extension) for table support.
-
-Autolink: <https://github.com/charmbracelet/glamour/tree/master/styles/gallery>
-
-Wikipedia: [Unicode](https://en.wikipedia.org/wiki/Unicode#Standardization_and_development_process) consortium page.
 
 Stack Overflow: [ANSI escape codes](https://stackoverflow.com/questions/4842424/list-of-ansi-color-escape-sequences/33206814#33206814) reference.
 
-RFC: [URI Generic Syntax](https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2).
-
-Go docs: [text/template](https://pkg.go.dev/text/template#pkg-functions) functions reference.
-
-NPM: [chalk](https://www.npmjs.com/package/chalk/v/5.3.0#256-and-truecolor-color-support) color library.
-
-Docker Hub: [golang image](https://hub.docker.com/_/golang/tags?page=1&name=1.23-bookworm).
-
-Go issue: [proposal: spec: generic type aliases](https://github.com/golang/go/issues/46477#issuecomment-1990934563).
-
 Charm: [bubbletea mouse](https://github.com/charmbracelet/bubbletea/blob/master/tutorials/mouse.md#full-mouse-mode-without-scrolling) docs.
 
-Rust lang: [Option](https://doc.rust-lang.org/std/option/enum.Option.html#method.map_or_else) map_or_else method.
+Autolink: Can i use <https://caniuse.com/?search=css-container-queries>
 
-Kubernetes: [pod-lifecycle](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-states) container states.
+Autolink: W3C  <https://www.w3.org/TR/css-color-4/#lab-to-lch-conversion-drafts>
 
-CPAN: [Moose::Manual::Attributes](https://metacpan.org/pod/Moose::Manual::Attributes#Delegation-with-type-coercion-AND-currying) docs.
+Stack Overflow: Plain Text https://stackoverflow.com/questions/4842424/list-of-ansi-color-escape-sequences/33206814#33206814 reference.
 
-LWN: [kernel development](https://lwn.net/Articles/1012580/) latest articles.
+Charm: Plain Text https://github.com/charmbracelet/bubbletea/blob/master/tutorials/mouse.md#full-mouse-mode-without-scrolling docs.
 
-ArXiv: [Attention is All You Need](https://arxiv.org/abs/1706.03762) paper.
-
-Wikipedia: [SQL injection](https://en.wikipedia.org/wiki/SQL_injection#Technical_implementations) technical details.
-
-Autolink: <https://caniuse.com/?search=css-container-queries>
-
-Autolink: <https://www.w3.org/TR/css-color-4/#lab-to-lch-conversion-drafts>
 
 ## 2-Level Title
 

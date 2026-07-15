@@ -35,11 +35,11 @@ func (r *nodeRenderer) renderNode(node ast.Node) {
 		r.renderDocument(n)
 
 	case *ast.Paragraph:
-		r.renderChildren(n)
+		r.renderChildrenMerged(n)
 		r.buf.WriteByte('\n')
 
 	case *ast.TextBlock:
-		r.renderChildren(n)
+		r.renderChildrenMerged(n)
 		r.buf.WriteByte('\n')
 
 	case *ast.Heading:
@@ -107,10 +107,6 @@ func (r *nodeRenderer) renderTextLike(parent ast.Node, value []byte, softBreak b
 	_, isTB := parent.(*ast.TextBlock)
 	_, isTC := parent.(*extensionAst.TableCell)
 	if isPara || isTB || isTC {
-		if len(value) > 0 && value[0] == ' ' {
-			r.buf.WriteByte(' ')
-			value = value[1:]
-		}
 		r.buf.WriteString(string(r.th.Paragraph.start()))
 	}
 	r.buf.Write(value)
@@ -229,11 +225,30 @@ func (r *nodeRenderer) renderChildren(node ast.Node) {
 	}
 }
 
+func (r *nodeRenderer) renderChildrenMerged(node ast.Node) {
+	for c := node.FirstChild(); c != nil; {
+		if _, ok := c.(*ast.Text); ok {
+			var buf []byte
+			for ; c != nil; c = c.NextSibling() {
+				if t, ok := c.(*ast.Text); ok {
+					buf = append(buf, t.Value(r.source)...)
+				} else {
+					break
+				}
+			}
+			r.renderTextLike(node, buf, false)
+		} else {
+			r.renderNode(c)
+			c = c.NextSibling()
+		}
+	}
+}
+
 func (r *nodeRenderer) renderSubtree(node ast.Node) string {
 	var sub nodeRenderer
 	sub.source = r.source
 	sub.th = r.th
-	sub.renderChildren(node)
+	sub.renderChildrenMerged(node)
 	return sub.buf.String()
 }
 
@@ -374,6 +389,10 @@ func wrapCellLines(content string, width int) []string {
 
 	var lines []string
 	var line strings.Builder
+	activeStyle := make([]byte, 0, 64)
+	wordStartStyle := make([]byte, 0, 64)
+	lineStartStyle := make([]byte, 0, 64)
+	tempEsc := make([]byte, 0, 32)
 	word := make([]byte, 0, 64)
 	lineVisLen := 0
 	wordVisLen := 0
@@ -384,8 +403,13 @@ func wrapCellLines(content string, width int) []string {
 			return
 		}
 		if lineVisLen > 0 && lineVisLen+1+wordVisLen > width {
+			if len(lineStartStyle) > 0 {
+				line.WriteString("\x1b[0m")
+			}
 			lines = append(lines, line.String())
 			line.Reset()
+			line.Write(wordStartStyle)
+			lineStartStyle = append(lineStartStyle[:0], wordStartStyle...)
 			lineVisLen = 0
 		}
 		if lineVisLen > 0 && wordVisLen > 0 {
@@ -396,14 +420,21 @@ func wrapCellLines(content string, width int) []string {
 		lineVisLen += wordVisLen
 		wordVisLen = 0
 		word = word[:0]
+		wordStartStyle = append(wordStartStyle[:0], activeStyle...)
+		if len(lineStartStyle) == 0 {
+			lineStartStyle = append(lineStartStyle[:0], activeStyle...)
+		}
 	}
 
 	for _, r := range content {
-		processCellRune(r, &escSt, &word, &wordVisLen, &line, &lineVisLen, &lines, width, flushWord)
+		processCellRune(r, &escSt, &word, &wordVisLen, &line, &lineVisLen, &lines, width, flushWord, &activeStyle, &tempEsc, &lineStartStyle)
 	}
 	flushWord()
 
 	if line.Len() > 0 {
+		if len(lineStartStyle) > 0 {
+			line.WriteString("\x1b[0m")
+		}
 		lines = append(lines, line.String())
 	} else if len(lines) == 0 {
 		lines = []string{""}
@@ -412,8 +443,9 @@ func wrapCellLines(content string, width int) []string {
 	return lines
 }
 
-func processCellRune(r rune, escSt *escapeState, word *[]byte, wordVisLen *int, line *strings.Builder, lineVisLen *int, lines *[]string, width int, flushWord func()) {
+func processCellRune(r rune, escSt *escapeState, word *[]byte, wordVisLen *int, line *strings.Builder, lineVisLen *int, lines *[]string, width int, flushWord func(), activeStyle, tempEsc, lineStartStyle *[]byte) {
 	*word = utf8.AppendRune(*word, r)
+	*tempEsc = utf8.AppendRune(*tempEsc, r)
 	switch *escSt {
 	case escStart:
 		if r == '[' {
@@ -422,25 +454,37 @@ func processCellRune(r rune, escSt *escapeState, word *[]byte, wordVisLen *int, 
 			*escSt = escOSC
 		} else {
 			*escSt = escNone
+			*tempEsc = (*tempEsc)[:0]
 		}
 	case escCSI:
 		if r >= 0x40 && r <= 0x7E {
 			*escSt = escNone
+			updateActiveStyle(activeStyle, *tempEsc)
+			*tempEsc = (*tempEsc)[:0]
 		}
 	case escOSC:
 		if r == '\x1b' {
 			*escSt = escOSCSt
 		} else if r == '\x07' {
 			*escSt = escNone
+			updateActiveStyle(activeStyle, *tempEsc)
+			*tempEsc = (*tempEsc)[:0]
 		}
 	case escOSCSt:
 		if r == '\\' {
 			*escSt = escNone
+			updateActiveStyle(activeStyle, *tempEsc)
+			*tempEsc = (*tempEsc)[:0]
 		} else {
 			*escSt = escOSC
 		}
 	default:
 		*word = (*word)[:len(*word)-utf8.RuneLen(r)]
+		if r == '\x1b' {
+			*word = utf8.AppendRune(*word, r)
+			*escSt = escStart
+			return
+		}
 		if r == ' ' {
 			flushWord()
 			return
@@ -448,8 +492,13 @@ func processCellRune(r rune, escSt *escapeState, word *[]byte, wordVisLen *int, 
 		if r == '\n' {
 			flushWord()
 			if line.Len() > 0 {
+				if len(*lineStartStyle) > 0 {
+					line.WriteString("\x1b[0m")
+				}
 				*lines = append(*lines, line.String())
 				line.Reset()
+				line.Write(*activeStyle)
+				*lineStartStyle = append((*lineStartStyle)[:0], *activeStyle...)
 				*lineVisLen = 0
 			} else {
 				*lines = append(*lines, "")
@@ -460,8 +509,13 @@ func processCellRune(r rune, escSt *escapeState, word *[]byte, wordVisLen *int, 
 			flushWord()
 			rw := runewidth.RuneWidth(r)
 			if *lineVisLen+rw > width && *lineVisLen > 0 {
+				if len(*lineStartStyle) > 0 {
+					line.WriteString("\x1b[0m")
+				}
 				*lines = append(*lines, line.String())
 				line.Reset()
+				line.Write(*activeStyle)
+				*lineStartStyle = append((*lineStartStyle)[:0], *activeStyle...)
 				*lineVisLen = 0
 			}
 			line.WriteRune(r)
@@ -652,7 +706,7 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 					r.buf.WriteByte(' ')
 				}
 				r.buf.WriteString(content)
-				r.buf.WriteString("\x1b[39m")
+				r.buf.WriteString("\x1b[0m")
 			case extensionAst.AlignCenter:
 				leftPad := padding / 2
 				rightPad := padding - leftPad
@@ -660,13 +714,13 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 					r.buf.WriteByte(' ')
 				}
 				r.buf.WriteString(content)
-				r.buf.WriteString("\x1b[39m")
+				r.buf.WriteString("\x1b[0m")
 				for j := 0; j < rightPad; j++ {
 					r.buf.WriteByte(' ')
 				}
 			default:
 				r.buf.WriteString(content)
-				r.buf.WriteString("\x1b[39m")
+				r.buf.WriteString("\x1b[0m")
 				for j := 0; j < padding; j++ {
 					r.buf.WriteByte(' ')
 				}

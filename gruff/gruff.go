@@ -50,9 +50,7 @@ func Render(source string, opts ...Option) (string, error) {
 
 	md := goldmark.New(
 		goldmark.WithExtensions(
-			extension.Table,
-			extension.Strikethrough,
-			extension.TaskList,
+			extension.GFM,
 		),
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
