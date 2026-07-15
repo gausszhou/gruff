@@ -103,31 +103,16 @@ gruff 的架构是「先渲染出完整 ANSI 字符串，再用自研的 `wrapTe
 
 #### 换行处理（模仿 glamour 的 close-write-reopen）
 
-```
-newLine():
-  1. 如果 activeStyle 非空:
-     输出 \x1b[0m       // 全量关闭所有 CSI 样式
-     输出 osc8End        // 关闭 OSC 8 链接
-  2. 填充当前行至 width
-  3. 输出 \n
-  4. 输出 bgCode + padding 空格
-  5. 输出 activeStyle (重放活跃样式+链接)
-  6. 重置 lineLen = padding
-```
-
-#### 换行时样式重放
-
-`newLine()` 通过 `activeStyle` 实现：
+gruff 遵循 AGENTS.md 禁止 inline 使用 `\x1b[0m`（全复位）的规范，换行时**不写入 `\x1b[0m` 关闭 CSI 样式**——CSI 样式通过 `activeStyle` 跟随到新行自然延续。仅 OSC8 链接需要在换行前关闭、新行首重开：
 
 ```
 newLine():
-  1. 如果 activeStyle 非空:
-      输出 \x1b[0m       // 全量关闭所有 CSI 样式
+  1. 如果 activeStyle 含 OSC 8 前缀:
       输出 osc8End        // 关闭 OSC 8 链接
-  2. 填充当前行至 width
+  2. 填充当前行至 width（bgCode + 空格）
   3. 输出 \n
   4. 输出 bgCode + padding 空格
-  5. 输出 activeStyle (重放活跃样式+链接)
+  5. 输出 activeStyle (重放活跃样式+链接，CSI 样式自然延续)
   6. 重置 lineLen = padding
 ```
 
@@ -143,7 +128,17 @@ newLine():
 
 | 文件 | 内容 |
 |------|------|
-| `gruff_ansi.go` | `osc8Link`/`osc8End` 常量、`updateActiveStyle`、`removeExact`/`removeCSIPrefix`/`removeOSC` 辅助函数、`breakChunk` 增加 style 参数追踪 |
-| `gruff.go` | `wrapText` 新增 activeStyle 全局追踪 + wordStartStyle + newLine close-write-reopen |
-| `gruff_renderer.go` | `*ast.Link` 外包 OSC 8、`*ast.AutoLink` 加 OSC 8 |
-| `gruff_test.go` | Link 测试加入 OSC 8、新增 TestRender_LongURL_Wrap |
+| `gruff_ansi.go` | `osc8Link()` 函数 / `osc8End` 常量、`updateActiveStyle`、`removeExact`/`removeCSIPrefix`/`removeOSC` 辅助函数、`breakChunk` 增加 style 参数追踪 |
+| `gruff.go` | `wrapText` 新增 activeStyle 全局追踪 + wordStartStyle + newLine close-write-reopen；`extension.GFM` 替换独立扩展集（含 `Linkify` 支持裸 URL 自动链接）；`breakLongWord` 增加 `lineLen = padding` 同步修复 OSC8 泄漏 |
+| `gruff_renderer.go` | `*ast.Link` 外包 OSC 8、`*ast.AutoLink` 加 OSC 8；`renderChildrenMerged` 合并连续 Text 节点（处理 `Linkify` 拆分）；`wrapCellLines` + `processCellRune` 样式快照（activeStyle/wordStartStyle/lineStartStyle）确保 table cell 换行时 OSC8 + SGR 正确延续；`renderTableRow` 仅用 `\x1b[39m` 收束 fg（非 `\x1b[0m`） |
+| `gruff_test.go` | Link 测试加入 OSC 8、新增 TestRender_AutoLink / TestRender_BareURL / TestRender_LinkInTable / TestRender_MultiLink / TestRender_LongURL_Wrap |
+
+### 表格内链接：wrapCellLines 样式快照
+
+`wrapCellLines` 负责将 table cell 内容按列宽拆分多行。与 `wrapText` 类似，它需要追踪活跃样式以在换行时正确关闭/重开：
+
+- **`activeStyle`** — 当前累积的活跃转义序列（CSI + OSC8），由 `processCellRune` 中的 `updateActiveStyle` 持续更新
+- **`wordStartStyle`** — 每个 word 开始前复制 `activeStyle`，换行时新的 cell 行用它重开样式
+- **`lineStartStyle`** — 当前行首的样式快照，行尾闭合时判定是否需要写复位码
+
+`processCellRune` 在 CSI/OSC/OSCSt 状态下调用 `updateActiveStyle` 维护样式栈；遇到空格触发 `flushWord`（必要时换行 + styles reopen）；遇到硬 `\n` 或宽字符溢出时换行并重开样式。
