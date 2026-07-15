@@ -750,7 +750,7 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 				r.buf.WriteString(osc8End)
 			}
 			if writeReset {
-				r.buf.WriteString("\x1b[39m")
+				r.buf.WriteString("\x1b[22m\x1b[23m\x1b[24m\x1b[39m")
 			}
 		case extensionAst.AlignCenter:
 			leftPad := padding / 2
@@ -763,7 +763,7 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 				r.buf.WriteString(osc8End)
 			}
 			if writeReset {
-				r.buf.WriteString("\x1b[39m")
+				r.buf.WriteString("\x1b[22m\x1b[23m\x1b[24m\x1b[39m")
 			}
 			for j := 0; j < rightPad; j++ {
 				r.buf.WriteByte(' ')
@@ -774,7 +774,7 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 				r.buf.WriteString(osc8End)
 			}
 			if writeReset {
-				r.buf.WriteString("\x1b[39m")
+				r.buf.WriteString("\x1b[22m\x1b[23m\x1b[24m\x1b[39m")
 			}
 			for j := 0; j < padding; j++ {
 				r.buf.WriteByte(' ')

@@ -24,6 +24,8 @@
 ## Important
 
 - Do NOT use `\x1b[0m` (full reset) in inline styles — use specific undo codes (`\x1b[22m` noBold, `\x1b[39m` default fg, `\x1b[49m` default bg) to preserve outer style state during nesting
+- `renderTableRow` closes cell content with `\x1b[22m\x1b[23m\x1b[24m\x1b[39m` — four no-ops targeting bold/italic/underline/fg independently, no bg impact. DO NOT replace with `\x1b[0m`.
+- `wrapCellLines` deliberately does NOT close styles at line boundaries — `renderTableRow` handles per-cell closure
 - goldmark `Emphasis{Level: 2}` = bold; `Emphasis{Level: 1}` = italic; `***both***` nests Level 1 wrapping Level 2. `ast.Strong` does NOT exist
 - `name` and `Theme` struct fields in `ansi.go` must be kept in sync
 - `displayWidth` uses `go-runewidth` (not hand-rolled ranges); handles U+FE0F by forcing preceding char to width 2

@@ -18,6 +18,8 @@ Stack Overflow: Plain Text https://stackoverflow.com/questions/4842424/list-of-a
 
 Charm: Plain Text https://github.com/charmbracelet/bubbletea/blob/master/tutorials/mouse.md#full-mouse-mode-without-scrolling docs.
 
+Multiple: [Hiragana](https://en.wikipedia.org/wiki/Hiragana) / [Katakana](https://en.wikipedia.org/wiki/Katakana) / [Kanji](https://en.wikipedia.org/wiki/Kanji).
+
 
 ## 2-Level Title
 

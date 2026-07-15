@@ -594,6 +594,77 @@ func TestOptions(t *testing.T) {
 	})
 }
 
+// TestRender_MultiLinkInTable 单元格内双链接 OSC8 存在且配对。
+func TestRender_MultiLinkInTable(t *testing.T) {
+	input := "| Col |\n|-----|\n| [A](https://a.com) / [B](https://b.com) |\n"
+	got, err := Render(input, WithWordWrap(80))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, u := range []string{"https://a.com", "https://b.com"} {
+		if !strings.Contains(got, osc8Link(u)) {
+			t.Errorf("output missing OSC8 link for %s", u)
+		}
+	}
+
+	osc8Open := strings.Count(got, osc8Link("https://a.com")) +
+		strings.Count(got, osc8Link("https://b.com"))
+	osc8Close := strings.Count(got, osc8End)
+	if osc8Open > osc8Close {
+		t.Errorf("fewer OSC8 closes than opens: open=%d close=%d", osc8Open, osc8Close)
+	}
+
+	boldClose := strings.Count(got, "\x1b[22m") + strings.Count(got, "\x1b[0m")
+	if strings.Count(got, "\x1b[1m") > boldClose {
+		t.Errorf("more bold opens than closes: open=%d close_all=%d",
+			strings.Count(got, "\x1b[1m"), boldClose)
+	}
+}
+
+// TestRender_TableNoStyleLeak 表格 cell 边界无样式泄漏。
+func TestRender_TableNoStyleLeak(t *testing.T) {
+	input := "| Col |\n|-----|\n| **bold** text |\n"
+	got, err := Render(input, WithWordWrap(80))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Check per-line balance: each line should have bold opens ≤ closes + [0m] coverage
+	for _, seg := range strings.Split(got, "\n") {
+		if seg == "" {
+			continue
+		}
+		open := strings.Count(seg, "\x1b[1m")
+		close := strings.Count(seg, "\x1b[22m") + strings.Count(seg, "\x1b[0m")
+		if open > close {
+			t.Errorf("line has more bold opens than closes: open=%d close=%d\n  %q",
+				open, close, seg)
+		}
+	}
+}
+
+// TestRender_TableLinkWrapStyle 窄列链接换行后每行样式自闭合。
+func TestRender_TableLinkWrapStyle(t *testing.T) {
+	input := "| Col |\n|-----|\n| [Long Link Text](https://example.com/very/long/url) |\n"
+	got, err := Render(input, WithWordWrap(30))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, seg := range strings.Split(got, "\n") {
+		if seg == "" {
+			continue
+		}
+		boldOpen := strings.Count(seg, "\x1b[1m")
+		boldClose := strings.Count(seg, "\x1b[22m") + strings.Count(seg, "\x1b[0m")
+		if boldOpen > boldClose {
+			t.Errorf("bold unbalanced in line: open=%d close=%d\n  %q",
+				boldOpen, boldClose, seg)
+		}
+	}
+}
+
 // TestRenderBytes []byte 接口。
 func TestRenderBytes(t *testing.T) {
 	out, err := RenderBytes([]byte("# Hello"))
