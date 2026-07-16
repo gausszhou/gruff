@@ -1,6 +1,31 @@
 linters:
   enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
     - gocyclo
+    - revive
+    - exhaustive
+    - errorlint
+    - nilerr
+    - unconvert
+    - unparam
 linters-settings:
   gocyclo:
     min-complexity: 20
+  exhaustive:
+    default-signifies-exhaustive: true
+  revive:
+    rules:
+      - name: var-naming
+      - name: error-strings
+      - name: error-naming
+      - name: range-val-address
+      - name: context-as-argument
+  errcheck:
+    check-blank: false
+issues:
+  exclude-use-default: false

@@ -15,7 +15,7 @@ func hasOSC8String(s string) bool {
 }
 
 func endsWithOSC8End(s string) bool {
-	return len(s) >= 7 && s[len(s)-7] == '\x1b' && s[len(s)-6] == ']' && s[len(s)-5] == '8' && s[len(s)-4] == ';' && s[len(s)-3] == ';' && string(s[len(s)-2:]) == "\x1b\\"
+	return len(s) >= 7 && s[len(s)-7] == '\x1b' && s[len(s)-6] == ']' && s[len(s)-5] == '8' && s[len(s)-4] == ';' && s[len(s)-3] == ';' && s[len(s)-2:] == "\x1b\\"
 }
 
 type nodeRenderer struct {
@@ -717,71 +717,74 @@ func (r *nodeRenderer) renderTableRow(cells []cellData, widths []int, aligns []e
 			if i >= len(widths) {
 				break
 			}
-
-			if i > 0 {
-				r.buf.WriteString(string(r.th.Border.start()))
-				r.buf.WriteString("\u2502")
-				r.buf.WriteString(string(r.th.Border.end()))
-			}
-
-			var content string
-			if lineIdx < len(cell.lines) {
-				content = cell.lines[lineIdx]
-			}
-
-			visLen := displayWidth(stripANSI(content))
-			padding := widths[i] - visLen
-			if padding < 0 {
-				padding = 0
-			}
-
-		r.buf.WriteByte(' ')
-
-		writeReset := content != ""
-		writeOSC8 := writeReset && hasOSC8String(content) && !endsWithOSC8End(content)
-
-		switch aligns[i] {
-		case extensionAst.AlignRight:
-			for j := 0; j < padding; j++ {
-				r.buf.WriteByte(' ')
-			}
-			r.buf.WriteString(content)
-			if writeOSC8 {
-				r.buf.WriteString(osc8End)
-			}
-			if writeReset {
-				r.buf.WriteString("\x1b[22m\x1b[23m\x1b[24m\x1b[39m")
-			}
-		case extensionAst.AlignCenter:
-			leftPad := padding / 2
-			rightPad := padding - leftPad
-			for j := 0; j < leftPad; j++ {
-				r.buf.WriteByte(' ')
-			}
-			r.buf.WriteString(content)
-			if writeOSC8 {
-				r.buf.WriteString(osc8End)
-			}
-			if writeReset {
-				r.buf.WriteString("\x1b[22m\x1b[23m\x1b[24m\x1b[39m")
-			}
-			for j := 0; j < rightPad; j++ {
-				r.buf.WriteByte(' ')
-			}
-		default:
-			r.buf.WriteString(content)
-			if writeOSC8 {
-				r.buf.WriteString(osc8End)
-			}
-			if writeReset {
-				r.buf.WriteString("\x1b[22m\x1b[23m\x1b[24m\x1b[39m")
-			}
-			for j := 0; j < padding; j++ {
-				r.buf.WriteByte(' ')
-			}
-		}
-		r.buf.WriteByte(' ')
+			r.writeTableCell(lineIdx, i, cell, widths, aligns)
 		}
 		r.buf.WriteByte('\n')
 	}
+}
+
+func (r *nodeRenderer) writeTableCell(lineIdx, i int, cell cellData, widths []int, aligns []extensionAst.Alignment) {
+	if i > 0 {
+		r.buf.WriteString(string(r.th.Border.start()))
+		r.buf.WriteString("\u2502")
+		r.buf.WriteString(string(r.th.Border.end()))
+	}
+
+	var content string
+	if lineIdx < len(cell.lines) {
+		content = cell.lines[lineIdx]
+	}
+
+	visLen := displayWidth(stripANSI(content))
+	padding := widths[i] - visLen
+	if padding < 0 {
+		padding = 0
+	}
+
+	r.buf.WriteByte(' ')
+
+	writeReset := content != ""
+	writeOSC8 := writeReset && hasOSC8String(content) && !endsWithOSC8End(content)
+
+	switch aligns[i] {
+	case extensionAst.AlignRight:
+		for j := 0; j < padding; j++ {
+			r.buf.WriteByte(' ')
+		}
+		r.buf.WriteString(content)
+		if writeOSC8 {
+			r.buf.WriteString(osc8End)
+		}
+		if writeReset {
+			r.buf.WriteString("\x1b[22m\x1b[23m\x1b[24m\x1b[39m")
+		}
+	case extensionAst.AlignCenter:
+		leftPad := padding / 2
+		rightPad := padding - leftPad
+		for j := 0; j < leftPad; j++ {
+			r.buf.WriteByte(' ')
+		}
+		r.buf.WriteString(content)
+		if writeOSC8 {
+			r.buf.WriteString(osc8End)
+		}
+		if writeReset {
+			r.buf.WriteString("\x1b[22m\x1b[23m\x1b[24m\x1b[39m")
+		}
+		for j := 0; j < rightPad; j++ {
+			r.buf.WriteByte(' ')
+		}
+	default:
+		r.buf.WriteString(content)
+		if writeOSC8 {
+			r.buf.WriteString(osc8End)
+		}
+		if writeReset {
+			r.buf.WriteString("\x1b[22m\x1b[23m\x1b[24m\x1b[39m")
+		}
+		for j := 0; j < padding; j++ {
+			r.buf.WriteByte(' ')
+		}
+	}
+	r.buf.WriteByte(' ')
 }
