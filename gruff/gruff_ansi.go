@@ -80,9 +80,9 @@ func ansiFg(c string) ansiCode {
 		return ansiCode("\x1b[38;2;" + itoa(int(r)) + ";" + itoa(int(g)) + ";" + itoa(int(b)) + "m")
 	}
 	if is4bit(c) {
-		return ansiCode("\x1b[3") + ansiCode(string(c)) + ansiCode("m")
+		return ansiCode("\x1b[3") + ansiCode(c) + ansiCode("m")
 	}
-	return ansiCode("\x1b[38;5;" + string(c) + "m")
+	return ansiCode("\x1b[38;5;" + c + "m")
 }
 
 func ansiBg(c string) ansiCode {
@@ -94,9 +94,9 @@ func ansiBg(c string) ansiCode {
 		return ansiCode("\x1b[48;2;" + itoa(int(r)) + ";" + itoa(int(g)) + ";" + itoa(int(b)) + "m")
 	}
 	if is4bit(c) {
-		return ansiCode("\x1b[4") + ansiCode(string(c)) + ansiCode("m")
+		return ansiCode("\x1b[4") + ansiCode(c) + ansiCode("m")
 	}
-	return ansiCode("\x1b[48;5;" + string(c) + "m")
+	return ansiCode("\x1b[48;5;" + c + "m")
 }
 
 type Style struct {

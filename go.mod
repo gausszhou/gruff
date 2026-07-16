@@ -10,7 +10,7 @@ require (
 	github.com/gausszhou/bubbleflex v0.0.2
 	github.com/mattn/go-runewidth v0.0.24
 	github.com/spf13/cobra v1.10.2
-	github.com/yuin/goldmark v1.7.13
+	github.com/yuin/goldmark v1.7.17
 	golang.org/x/term v0.43.0
 )
 

@@ -1,4 +1,4 @@
-.PHONY: build test clean build-all build-linux build-darwin build-windows lint fmt vet
+.PHONY: build test clean build-all build-linux build-darwin build-windows lint fmt vet ci install-tools test-race vulncheck osvscanner nilaway
 
 BINARY_NAME=gruff
 BIN_DIR=bin
@@ -33,17 +33,42 @@ build-windows:
 test:
 	go test ./...
 
+test-race:
+	go test -race ./...
+
 clean:
 	rm -rf $(BIN_DIR)
 	rm -rf $(DIST_DIR)
 	rm -f coverage.out
 
+GOPATH_BIN := $(shell go env GOPATH)/bin
+
 lint:
-	@which golangci-lint >/dev/null 2>&1 || go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-	golangci-lint run ./...
+	@test -x "$(GOPATH_BIN)/golangci-lint" || go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	$(GOPATH_BIN)/golangci-lint run ./...
 
 fmt:
 	go fmt ./...
 
 vet:
 	go vet ./...
+
+install-tools:
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	go install golang.org/x/vuln/cmd/govulncheck@latest
+	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
+	go install go.uber.org/nilaway/cmd/nilaway@latest
+
+vulncheck:
+	@test -x "$(GOPATH_BIN)/govulncheck" || go install golang.org/x/vuln/cmd/govulncheck@latest
+	$(GOPATH_BIN)/govulncheck ./...
+
+osvscanner:
+	@test -x "$(GOPATH_BIN)/osv-scanner" || go install github.com/google/osv-scanner/cmd/osv-scanner@latest
+	$(GOPATH_BIN)/osv-scanner -r .
+
+nilaway:
+	@test -x "$(GOPATH_BIN)/nilaway" || go install go.uber.org/nilaway/cmd/nilaway@latest
+	$(GOPATH_BIN)/nilaway -include-pkgs "github.com/gausszhou/gruff/..." ./...
+
+ci: vet test-race lint vulncheck osvscanner nilaway
