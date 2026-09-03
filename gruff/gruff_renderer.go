@@ -487,11 +487,12 @@ func processCellRune(r rune, escSt *escapeState, word *[]byte, wordVisLen *int, 
 	*tempEsc = utf8.AppendRune(*tempEsc, r)
 	switch *escSt {
 	case escStart:
-		if r == '[' {
+		switch r {
+		case '[':
 			*escSt = escCSI
-		} else if r == ']' {
+		case ']':
 			*escSt = escOSC
-		} else {
+		default:
 			*escSt = escNone
 			*tempEsc = (*tempEsc)[:0]
 		}
@@ -502,9 +503,10 @@ func processCellRune(r rune, escSt *escapeState, word *[]byte, wordVisLen *int, 
 			*tempEsc = (*tempEsc)[:0]
 		}
 	case escOSC:
-		if r == '\x1b' {
+		switch r {
+		case '\x1b':
 			*escSt = escOSCSt
-		} else if r == '\x07' {
+		case '\x07':
 			*escSt = escNone
 			updateActiveStyle(activeStyle, *tempEsc)
 			*tempEsc = (*tempEsc)[:0]
