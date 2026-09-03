@@ -122,6 +122,13 @@ func wrapText(s string, width int, padding int, bgCode string) string {
 		spaces = 0
 	}
 
+	// breakLongWord runs its own line accounting; seed the outer lineLen so
+	// newLine's fill (which reads it) pads from the real current width.
+	newLineFrom := func(from int) {
+		lineLen = from
+		newLine()
+	}
+
 	flushWord := func() {
 		if len(word) == 0 {
 			return
@@ -144,7 +151,7 @@ func wrapText(s string, width int, padding int, bgCode string) string {
 			remaining := word
 			splitStyle := make([]byte, len(wordStartStyle))
 			copy(splitStyle, wordStartStyle)
-			lineLen = breakLongWord(&out, remaining, width, padding, lineLen, &splitStyle, &activeStyle, newLine)
+			lineLen = breakLongWord(&out, remaining, width, padding, lineLen, &splitStyle, &activeStyle, newLineFrom)
 			word = word[:0]
 			activeStyle = append(activeStyle[:0], splitStyle...)
 			wordStartStyle = append(wordStartStyle[:0], splitStyle...)
@@ -175,7 +182,7 @@ func wrapText(s string, width int, padding int, bgCode string) string {
 	return out.String()
 }
 
-func breakLongWord(out *strings.Builder, word []byte, width, padding, lineLen int, splitStyle, activeStyle *[]byte, newLine func()) int {
+func breakLongWord(out *strings.Builder, word []byte, width, padding, lineLen int, splitStyle, activeStyle *[]byte, newLine func(int)) int {
 	remaining := word
 	for len(remaining) > 0 {
 		available := width - padding - lineLen
@@ -191,7 +198,7 @@ func breakLongWord(out *strings.Builder, word []byte, width, padding, lineLen in
 		if len(remaining) > 0 {
 			savedStyle := *activeStyle
 			*activeStyle = *splitStyle
-			newLine()
+			newLine(lineLen)
 			*activeStyle = savedStyle
 			lineLen = padding
 		}
