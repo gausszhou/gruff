@@ -41,7 +41,6 @@ type model struct {
 
 	darkView  component.ViewportWithScrollbar
 	lightView component.ViewportWithScrollbar
-	renderW   int
 
 	dirty bool
 

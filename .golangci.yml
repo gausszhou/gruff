@@ -1,6 +1,37 @@
+version: "2"
 linters:
   enable:
+    - errorlint
+    - exhaustive
     - gocyclo
-linters-settings:
-  gocyclo:
-    min-complexity: 20
+    - nilerr
+    - revive
+    - unconvert
+    - unparam
+  settings:
+    errcheck:
+      check-blank: false
+    exhaustive:
+      default-signifies-exhaustive: true
+    gocyclo:
+      min-complexity: 20
+    revive:
+      rules:
+        - name: var-naming
+        - name: error-strings
+        - name: error-naming
+        - name: range-val-address
+        - name: context-as-argument
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

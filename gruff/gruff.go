@@ -211,11 +211,12 @@ func processWrapRune(r rune, escSt *escapeState, word, tempEsc, activeStyle *[]b
 	case escStart:
 		*word = utf8.AppendRune(*word, r)
 		*tempEsc = utf8.AppendRune(*tempEsc, r)
-		if r == '[' {
+		switch r {
+		case '[':
 			*escSt = escCSI
-		} else if r == ']' {
+		case ']':
 			*escSt = escOSC
-		} else {
+		default:
 			*escSt = escNone
 			*tempEsc = (*tempEsc)[:0]
 		}
@@ -230,9 +231,10 @@ func processWrapRune(r rune, escSt *escapeState, word, tempEsc, activeStyle *[]b
 	case escOSC:
 		*word = utf8.AppendRune(*word, r)
 		*tempEsc = utf8.AppendRune(*tempEsc, r)
-		if r == '\x1b' {
+		switch r {
+		case '\x1b':
 			*escSt = escOSCSt
-		} else if r == '\x07' {
+		case '\x07':
 			*escSt = escNone
 			updateActiveStyle(activeStyle, *tempEsc)
 			*tempEsc = (*tempEsc)[:0]

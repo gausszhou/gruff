@@ -216,11 +216,6 @@ func (m model) headerFor(left bool) string {
 }
 
 func (m model) View() tea.View {
-	width := m.termWidth
-	if width == 0 {
-		width = 80
-	}
-
 	leftPane := m.paneBorder(m.focus == focusLeft, lipgloss.Color("#059669")).Render(
 		m.headerFor(true) + "\n" + m.leftView.View(),
 	)
